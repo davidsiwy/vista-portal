@@ -368,6 +368,70 @@ h1,h2,h3,h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.2p
 .setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: monospace; }
 .divider { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
 
+/* ===== INVOICES ===== */
+.invoice-grid { display: grid; gap: 12px; }
+.invoice-card { background: var(--white); border-radius: var(--r); padding: 18px 22px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); display: flex; align-items: center; gap: 18px; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+.invoice-card:hover { box-shadow: var(--shadow-md); border-color: var(--line-dark); }
+.invoice-icon { width: 46px; height: 46px; border-radius: 9px; background: var(--cedar); color: var(--tan); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+.invoice-info { flex: 1; min-width: 0; }
+.invoice-title { font-size: 16px; font-weight: 600; color: var(--ink); font-family: var(--sans); margin-bottom: 3px; }
+.invoice-meta { font-size: 12px; color: var(--ink-faint); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.invoice-amount { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--peacock); white-space: nowrap; }
+.inv-status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.inv-status.pending { background: var(--amber-soft); color: var(--amber); }
+.inv-status.approved { background: var(--green-ok-soft); color: var(--green-ok); }
+.inv-status.rejected { background: var(--red-soft); color: var(--red); }
+
+/* PDF / file viewer */
+.file-viewer { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: var(--r); background: var(--cream-100); margin: 4px 0 0; }
+.file-viewer-fallback { padding: 40px; text-align: center; color: var(--ink-faint); font-family: var(--sans); }
+.modal.xwide { max-width: 820px; }
+.inv-decision-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.btn-approve { padding: 13px 26px; background: var(--fern); color: var(--white); border: none; border-radius: 8px; font-family: var(--sans); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 7px; }
+.btn-approve:hover { background: #4a5a3a; }
+.btn-reject { padding: 13px 26px; background: var(--white); color: var(--red); border: 2px solid var(--red); border-radius: 8px; font-family: var(--sans); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 7px; }
+.btn-reject:hover { background: var(--red); color: var(--white); }
+.inv-decided-banner { padding: 14px 18px; border-radius: var(--r); font-size: 14px; font-weight: 600; font-family: var(--sans); margin-top: 4px; }
+.inv-decided-banner.approved { background: var(--green-ok-soft); color: var(--green-ok); border: 1px solid #c2d1b3; }
+.inv-decided-banner.rejected { background: var(--red-soft); color: var(--red); border: 1px solid #e3c4bd; }
+
+/* ===== WORKLOG ===== */
+.worklog-entry { background: var(--white); border-radius: var(--r); padding: 16px 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 10px; }
+.worklog-entry-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 10px; }
+.worklog-date { font-size: 12px; font-weight: 700; color: var(--fern); }
+.worklog-author { font-size: 13px; font-weight: 600; color: var(--ink); font-family: var(--sans); }
+.worklog-text { font-size: 14px; color: var(--ink-soft); line-height: 1.5; font-family: var(--sans); white-space: pre-wrap; }
+.worklog-compose { background: var(--white); border-radius: var(--r); padding: 22px 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 24px; }
+.worklog-compose textarea { width: 100%; min-height: 90px; padding: 12px 15px; border: 1.5px solid var(--line); border-radius: var(--r); font-family: var(--sans); font-size: 15px; resize: vertical; }
+.worklog-compose textarea:focus { outline: none; border-color: var(--fern); box-shadow: 0 0 0 3px rgba(88,104,69,0.1); }
+.worklog-day-group { margin-bottom: 24px; }
+.worklog-day-label { font-family: var(--serif); font-size: 18px; color: var(--peacock); margin-bottom: 10px; }
+
+/* ===== OWNER DASHBOARD ===== */
+.dash-greeting { font-family: var(--serif); font-size: 34px; color: var(--peacock); margin-bottom: 4px; }
+.dash-sub { font-size: 14px; color: var(--ink-faint); margin-bottom: 30px; font-family: var(--sans); }
+.dash-block { background: var(--white); border-radius: var(--r-lg); padding: 28px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 20px; }
+.dash-block-head { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.dash-block-icon { width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; }
+.dash-block-icon.gold { background: var(--tan); }
+.dash-block-icon.green { background: var(--green-ok-soft); }
+.dash-block-icon.dark { background: var(--peacock); }
+.dash-block-title { font-family: var(--serif); font-size: 23px; color: var(--peacock); }
+.dash-block-count { margin-left: auto; font-family: var(--serif); font-size: 30px; font-weight: 600; color: var(--peacock); }
+.dash-seg-row { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.dash-seg-row:last-child { border-bottom: none; }
+.dash-seg-name { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--peacock); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.dash-seg-item { font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; padding-left: 4px; font-family: var(--sans); }
+.dash-seg-item .who { color: var(--ink-faint); font-size: 12px; }
+.dash-empty { font-size: 14px; color: var(--ink-faint); font-family: var(--sans); padding: 8px 0; }
+.dash-task-summary { display: flex; gap: 28px; flex-wrap: wrap; }
+.dash-task-stat { text-align: center; }
+.dash-task-stat .num { font-family: var(--serif); font-size: 38px; font-weight: 600; color: var(--peacock); line-height: 1; }
+.dash-task-stat .lbl { font-size: 12px; color: var(--ink-faint); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; font-family: var(--sans); }
+.dash-inv-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.dash-inv-row:last-child { border-bottom: none; }
+.dash-inv-row:hover { background: var(--cream-100); margin: 0 -12px; padding: 14px 12px; border-radius: 8px; }
+
 @media (max-width: 920px) {
   .kanban { grid-template-columns: 1fr 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
@@ -389,7 +453,7 @@ h1,h2,h3,h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.2p
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxL-O0Y0T1HRbCaH-CTXv4X52zTGR1VX_HHQO2tlAMoxxDytGingkaBrD5FxF6ShpWx/exec',
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzEhWon8ezmU2VjSYTW1btn9X3QQDk9vSHGCLMVL6WUvb65mYyF3HQvYU7y6GmQoLot/exec',
   // Role PINs (admin/gm/owner). Employees have their own PINs in the system.
   PINS: {
     owner: 'VistaMajitel2050',
@@ -442,11 +506,7 @@ const VISTA_V_DARK = VISTA_V.replace(/#dfc196/g, '#13302e');
     </div>
   </div>
 
-  <div class="tabs" id="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('tasks')" data-tab="tasks">Úkoly</button>
-    <button class="tab-btn" onclick="switchTab('docs')" data-tab="docs">Dokumenty</button>
-    <button class="tab-btn" onclick="switchTab('admin')" data-tab="admin" id="admin-tab" style="display:none">Správa</button>
-  </div>
+  <div class="tabs" id="tab-nav"></div>
 
   <!-- ============ TASKS TAB ============ -->
   <div id="tab-tasks" class="main">
@@ -588,6 +648,99 @@ const VISTA_V_DARK = VISTA_V.replace(/#dfc196/g, '#13302e');
       </div>
     </div>
   </div><!-- /admin -->
+
+  <!-- ============ FAKTURY TAB ============ -->
+  <div id="tab-invoices" class="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Faktury</div>
+        <div class="section-subtitle" id="invoices-subtitle">Faktury ke schválení majitelem</div>
+      </div>
+      <button class="btn-sm primary" id="add-invoice-btn" onclick="toggleInvoiceForm()">+ Nahrát fakturu</button>
+    </div>
+    <div id="invoice-upload-section" style="display:none">
+      <div class="admin-card">
+        <div class="upload-area" id="inv-upload-area" onclick="document.getElementById('inv-file-input').click()">
+          <div class="upload-icon">⬆</div>
+          <p>Klikněte pro výběr faktury (PDF) nebo přetáhněte sem</p>
+          <span>PDF nebo obrázek — max 20 MB</span>
+        </div>
+        <input type="file" id="inv-file-input" class="file-hidden" accept="application/pdf,image/*" onchange="onInvFileSelected(this)">
+        <div class="upload-form" id="inv-upload-form">
+          <div class="form-row" style="margin-top:14px;">
+            <div class="form-group" style="margin:0"><label>Označení faktury</label><input type="text" id="inv-title" placeholder="např. Faktura ČEZ 06/2025"></div>
+            <div class="form-group" style="margin:0"><label>Dodavatel</label><input type="text" id="inv-supplier" placeholder="např. ČEZ a.s."></div>
+          </div>
+          <div class="form-row-3">
+            <div class="form-group" style="margin:0"><label>Částka</label><input type="number" id="inv-amount" placeholder="15000" step="0.01"></div>
+            <div class="form-group" style="margin:0"><label>Měna</label><select id="inv-currency"><option>CZK</option><option>EUR</option><option>USD</option></select></div>
+            <div class="form-group" style="margin:0"><label>Splatnost</label><input type="date" id="inv-due"></div>
+          </div>
+          <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="uploadInvoice()">Nahrát fakturu</button><button class="btn-sm secondary" onclick="cancelInvoiceUpload()">Zrušit</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="filters" id="invoice-filters">
+      <select class="filter-select" id="inv-status-filter" onchange="renderInvoices()">
+        <option value="">Všechny faktury</option>
+        <option value="pending">Čekající na schválení</option>
+        <option value="approved">Schválené</option>
+        <option value="rejected">Zamítnuté</option>
+      </select>
+    </div>
+    <div id="invoices-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
+  </div>
+
+  <!-- ============ DENÍK TAB ============ -->
+  <div id="tab-worklog" class="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title" id="worklog-title">Můj deník</div>
+        <div class="section-subtitle" id="worklog-subtitle">Zapište co jste dnes udělal</div>
+      </div>
+    </div>
+    <div class="worklog-compose" id="worklog-compose">
+      <div class="form-group" style="margin-bottom:12px"><label>Datum</label><input type="date" id="worklog-date" style="max-width:200px"></div>
+      <div class="form-group" style="margin-bottom:12px"><label>Co jste dnes udělal/a?</label><textarea id="worklog-text" placeholder="Stručně popište svou dnešní práci..."></textarea></div>
+      <button class="btn-sm primary" onclick="addWorklogEntry()">Uložit zápis</button>
+    </div>
+    <div class="filters" id="worklog-filters" style="display:none">
+      <select class="filter-select" id="worklog-emp-filter" onchange="renderWorklog()"><option value="">Všichni zaměstnanci</option></select>
+      <select class="filter-select" id="worklog-seg-filter" onchange="renderWorklog()"><option value="">Všechny segmenty</option></select>
+    </div>
+    <div id="worklog-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
+  </div>
+
+  <!-- ============ PŘEHLED TAB (majitel) ============ -->
+  <div id="tab-overview" class="main" style="display:none">
+    <div class="dash-greeting" id="dash-greeting">Dobrý den</div>
+    <div class="dash-sub" id="dash-sub">Přehled dění ve Vista Resortu</div>
+
+    <div class="dash-block">
+      <div class="dash-block-head">
+        <div class="dash-block-icon gold">📄</div>
+        <div class="dash-block-title">Faktury ke schválení</div>
+        <div class="dash-block-count" id="dash-inv-count">0</div>
+      </div>
+      <div id="dash-invoices"></div>
+    </div>
+
+    <div class="dash-block">
+      <div class="dash-block-head">
+        <div class="dash-block-icon green">📊</div>
+        <div class="dash-block-title">Co se dělo (14 dní)</div>
+      </div>
+      <div id="dash-activity"></div>
+    </div>
+
+    <div class="dash-block">
+      <div class="dash-block-head">
+        <div class="dash-block-icon dark" style="color:var(--tan)">✓</div>
+        <div class="dash-block-title">Úkoly</div>
+      </div>
+      <div class="dash-task-summary" id="dash-tasks"></div>
+    </div>
+  </div>
 </div><!-- /app -->
 
 <!-- CONFIRM DOCUMENT MODAL -->
@@ -650,6 +803,23 @@ const VISTA_V_DARK = VISTA_V.replace(/#dfc196/g, '#13302e');
   <div class="modal wide" id="task-detail-content"></div>
 </div>
 
+<!-- INVOICE DETAIL MODAL -->
+<div class="modal-overlay" id="invoice-modal">
+  <div class="modal xwide" id="invoice-modal-content"></div>
+</div>
+
+<!-- FILE PREVIEW MODAL (documents inline view) -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal xwide">
+    <div class="task-detail-header">
+      <div class="task-detail-title" id="preview-title" style="font-size:21px">Náhled</div>
+      <a id="preview-download" href="#" target="_blank" class="btn-sm secondary" style="margin-right:8px">Stáhnout</a>
+      <button class="btn-icon" onclick="closePreview()" title="Zavřít">✕</button>
+    </div>
+    <div id="preview-body" style="margin-top:14px"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-box">
@@ -664,7 +834,7 @@ const VISTA_V_DARK = VISTA_V.replace(/#dfc196/g, '#13302e');
 // ============================================================
 
 // ===== STATE =====
-let employees = [], documents = [], confirmations = [], tasks = [], comments = [];
+let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [];
 let currentUser = null;       // { id, name, role, dept } or role-user
 let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
 let isAdmin = false;          // gm or admin (full rights)
@@ -677,6 +847,10 @@ let uploadFormVisible = false;
 let pendingConfirmDocId = null;
 let currentTaskId = null;     // open task detail
 let taskAttachFile = null;
+let canApproveInv = false;    // owner/gm/admin can approve invoices
+let currentInvoiceId = null;
+let invoiceFile = null;
+let TABS = [];                // tabs for current role
 
 // ===== INIT =====
 document.getElementById('login-logo-mark').innerHTML = VISTA_V_DARK;
@@ -686,7 +860,7 @@ restoreSession();
 
 function populateDropdowns() {
   // segments
-  ['task-segment','new-emp-dept','edit-emp-dept','tasks-segment-filter','conf-dept-filter'].forEach(id => {
+  ['task-segment','new-emp-dept','edit-emp-dept','tasks-segment-filter','conf-dept-filter','worklog-seg-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     SEGMENTS.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; el.appendChild(o); });
@@ -697,6 +871,9 @@ function populateDropdowns() {
     if (!el) return;
     CATEGORIES.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; el.appendChild(o); });
   });
+  // worklog default date = today
+  const wd = document.getElementById('worklog-date');
+  if (wd) wd.value = new Date().toISOString().slice(0,10);
 }
 
 // ===== SESSION =====
@@ -747,24 +924,60 @@ function applyRole() {
   isOwner   = currentRole === 'owner';
   isAdmin   = currentRole === 'gm' || currentRole === 'admin';
   canManage = currentRole === 'gm' || currentRole === 'admin';
+  canApproveInv = isOwner || isAdmin;
   const badge = document.getElementById('role-badge');
   const labels = { owner: 'Majitel', gm: 'General Manager', admin: 'Administrátor', employee: 'Zaměstnanec' };
   badge.textContent = labels[currentRole] || 'Zaměstnanec';
   document.getElementById('topbar-username').textContent = currentUser ? currentUser.name : '';
-
-  // Admin tab: gm + admin only. Owner gets a read overview via stats inside admin tab too? 
-  // Owner can see overview (stats + who does what) but not manage employees.
-  const adminTab = document.getElementById('admin-tab');
-  if (isAdmin || isOwner) { adminTab.style.display = 'block'; adminTab.textContent = isOwner ? 'Přehled' : 'Správa'; }
-  else { adminTab.style.display = 'none'; }
+  buildTabs();
 }
+
+// Tab definitions per role
+function tabsForRole() {
+  if (isOwner) return [
+    { key:'overview', label:'Přehled' },
+    { key:'invoices', label:'Faktury' },
+    { key:'tasks',    label:'Úkoly' },
+    { key:'docs',     label:'Dokumenty' }
+  ];
+  if (isAdmin) return [
+    { key:'tasks',    label:'Úkoly' },
+    { key:'docs',     label:'Dokumenty' },
+    { key:'invoices', label:'Faktury' },
+    { key:'worklog',  label:'Deník' },
+    { key:'admin',    label:'Správa' }
+  ];
+  // employee
+  return [
+    { key:'tasks',    label:'Úkoly' },
+    { key:'docs',     label:'Dokumenty' },
+    { key:'invoices', label:'Faktury' },
+    { key:'worklog',  label:'Můj deník' }
+  ];
+}
+
+function buildTabs() {
+  TABS = tabsForRole();
+  const nav = document.getElementById('tab-nav');
+  nav.innerHTML = '';
+  TABS.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'tab-btn';
+    b.dataset.tab = t.key;
+    b.textContent = t.label;
+    b.onclick = () => switchTab(t.key);
+    nav.appendChild(b);
+  });
+}
+
+const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview'];
 
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  if (DEMO_MODE()) { document.getElementById('setup-banner').style.display = 'block'; loadDemoData(); return; }
+  if (DEMO_MODE()) { document.getElementById('setup-banner').style.display = 'block'; loadDemoData(); switchTab(TABS[0].key); return; }
   await loadData();
-  switchTab('tasks');
+  switchTab(TABS[0].key);
 }
 
 function logout() {
@@ -777,15 +990,18 @@ function logout() {
 
 // ===== TABS =====
 function switchTab(tab) {
-  // Owner uses admin tab as overview; block manage actions there via render logic
   activeTab = tab;
-  ['tasks','docs','admin'].forEach(t => {
-    document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
+  ALL_TAB_KEYS.forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.style.display = (t === tab) ? 'block' : 'none';
   });
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   if (tab === 'tasks') renderTasks();
   if (tab === 'docs') renderDocuments();
   if (tab === 'admin') renderAdmin();
+  if (tab === 'invoices') renderInvoices();
+  if (tab === 'worklog') renderWorklog();
+  if (tab === 'overview') renderOverview();
 }
 
 // ===== LOAD DATA =====
@@ -797,6 +1013,8 @@ async function loadData() {
     confirmations = res.confirmations || [];
     tasks         = res.tasks || [];
     comments      = res.comments || [];
+    invoices      = res.invoices || [];
+    worklog       = res.worklog || [];
     refreshAll();
   } catch(e) {
     showToast('Chyba při načítání dat: ' + e.message, 'error');
@@ -808,6 +1026,9 @@ function refreshAll() {
   if (activeTab === 'tasks') renderTasks();
   if (activeTab === 'docs') renderDocuments();
   if (activeTab === 'admin') renderAdmin();
+  if (activeTab === 'invoices') renderInvoices();
+  if (activeTab === 'worklog') renderWorklog();
+  if (activeTab === 'overview') renderOverview();
 }
 
 function buildFilterOptions() {
@@ -826,6 +1047,14 @@ function buildFilterOptions() {
     cdf.innerHTML = '<option value="">Všechny dokumenty</option>';
     documents.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.title; cdf.appendChild(o); });
     cdf.value = cur;
+  }
+  // worklog employee filter
+  const wf = document.getElementById('worklog-emp-filter');
+  if (wf) {
+    const cur = wf.value;
+    wf.innerHTML = '<option value="">Všichni zaměstnanci</option>';
+    employees.forEach(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = e.name; wf.appendChild(o); });
+    wf.value = cur;
   }
 }
 
@@ -887,7 +1116,7 @@ function taskCardHtml(t) {
   const assignees = (t.assignees || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
   const avatarsHtml = assignees.slice(0, 4).map(e => `<div class="task-avatar" title="${esc(e.name)}">${initials(e.name)}</div>`).join('');
   const moreCount = assignees.length > 4 ? `<div class="task-avatar" title="další">+${assignees.length - 4}</div>` : '';
-  const cmtCount = comments.filter(cm => cm.taskId === t.id).length;
+  const cmtCount = comments.filter(cm => cm.taskId === t.id && (cm.entityType === 'task' || !cm.entityType)).length;
   const attCount = (t.attachments || []).length;
   const dl = deadlineInfo(t.deadline, t.status);
   const segClass = t.segment ? 'dept-' + segSlug(t.segment) : '';
@@ -915,7 +1144,7 @@ function openTaskDetail(taskId) {
   currentTaskId = taskId;
   const assignees = (t.assignees || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
   const deps = (t.dependsOn || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
-  const taskComments = comments.filter(cm => cm.taskId === taskId).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+  const taskComments = comments.filter(cm => cm.taskId === taskId && (cm.entityType === 'task' || !cm.entityType)).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
   const dl = deadlineInfo(t.deadline, t.status);
   const canEdit = isAdmin || isOwner || t.createdBy === currentUser?.id || (t.assignees||[]).includes(currentUser?.id);
   const canDelete = isAdmin || t.createdBy === currentUser?.id;
@@ -1017,11 +1246,11 @@ async function postComment() {
   const text = input.value.trim();
   if (!text || !currentTaskId) return;
   const taskId = currentTaskId;
-  const comment = { id: 'cmt_'+Date.now(), taskId, authorId: currentUser?.id || '', authorName: currentUser?.name || '', text, createdAt: new Date().toISOString() };
+  const comment = { id: 'cmt_'+Date.now(), taskId, authorId: currentUser?.id || '', authorName: currentUser?.name || '', text, createdAt: new Date().toISOString(), entityType: 'task' };
   comments.push(comment);
   input.value = '';
   if (!DEMO_MODE()) {
-    try { await apiCall('addComment', { taskId, authorId: comment.authorId, authorName: comment.authorName, text }); }
+    try { await apiCall('addComment', { taskId, entityType: 'task', authorId: comment.authorId, authorName: comment.authorName, text }); }
     catch(e) { showToast('Chyba při ukládání komentáře', 'error'); }
   }
   openTaskDetail(taskId);
@@ -1735,6 +1964,404 @@ function getDocIcon(title, category) {
   return '📄';
 }
 
+// ===== DRIVE FILE URL HELPERS =====
+function drivePreviewUrl(fileId) { return 'https://drive.google.com/file/d/' + fileId + '/preview'; }
+function driveDownloadUrl(fileId) { return 'https://drive.google.com/uc?export=download&id=' + fileId; }
+
+// Generic file preview modal (for documents)
+function openPreview(title, fileId, url) {
+  document.getElementById('preview-title').textContent = title || 'Náhled';
+  const dl = document.getElementById('preview-download');
+  dl.href = fileId ? driveDownloadUrl(fileId) : (url || '#');
+  const body = document.getElementById('preview-body');
+  if (fileId) {
+    body.innerHTML = `<iframe class="file-viewer" src="${drivePreviewUrl(fileId)}" allow="autoplay"></iframe>`;
+  } else if (url && url !== '#') {
+    body.innerHTML = `<div class="file-viewer-fallback">Náhled není k dispozici.<br><a href="${esc(url)}" target="_blank" style="color:var(--fern);font-weight:600">Otevřít soubor v novém okně →</a></div>`;
+  } else {
+    body.innerHTML = `<div class="file-viewer-fallback">Soubor není k dispozici.</div>`;
+  }
+  document.getElementById('preview-modal').classList.add('open');
+}
+function closePreview() {
+  document.getElementById('preview-modal').classList.remove('open');
+  document.getElementById('preview-body').innerHTML = '';
+}
+
+// ============================================================
+// INVOICES (Faktury)
+// ============================================================
+function invStatusCz(s) { return s === 'approved' ? 'Schváleno' : s === 'rejected' ? 'Zamítnuto' : 'Čeká na schválení'; }
+
+function visibleInvoices() {
+  const sf = document.getElementById('inv-status-filter')?.value || '';
+  let list = invoices.slice();
+  if (sf) list = list.filter(i => (i.status||'pending') === sf);
+  // sort: pending first, then by uploadedAt desc
+  list.sort((a,b) => {
+    const ap = (a.status||'pending')==='pending'?0:1, bp=(b.status||'pending')==='pending'?0:1;
+    if (ap !== bp) return ap - bp;
+    return new Date(b.uploadedAt||0) - new Date(a.uploadedAt||0);
+  });
+  return list;
+}
+
+function renderInvoices() {
+  const c = document.getElementById('invoices-container');
+  // employees can upload; everyone can view. Approve only canApproveInv.
+  document.getElementById('add-invoice-btn').style.display = '';
+  const pending = invoices.filter(i => (i.status||'pending')==='pending').length;
+  document.getElementById('invoices-subtitle').textContent = invoices.length === 0 ? 'Zatím žádné faktury' : `${invoices.length} ${plural(invoices.length,'faktura','faktury','faktur')} · ${pending} ke schválení`;
+  const list = visibleInvoices();
+  if (list.length === 0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">🧾</div><h3>${invoices.length===0?'Žádné faktury':'Nic nenalezeno'}</h3><p>${invoices.length===0?'Nahrajte fakturu tlačítkem výše.':'Zkuste jiný filtr.'}</p></div>`;
+    return;
+  }
+  c.innerHTML = '';
+  const grid = document.createElement('div'); grid.className = 'invoice-grid';
+  list.forEach(inv => {
+    const status = inv.status || 'pending';
+    const card = document.createElement('div'); card.className = 'invoice-card';
+    card.onclick = () => openInvoiceDetail(inv.id);
+    card.innerHTML = `
+      <div class="invoice-icon">🧾</div>
+      <div class="invoice-info">
+        <div class="invoice-title">${esc(inv.title)}</div>
+        <div class="invoice-meta">
+          ${inv.supplier ? `<span>${esc(inv.supplier)}</span>` : ''}
+          ${inv.dueDate ? `<span>Splatnost ${fmtDate(inv.dueDate)}</span>` : ''}
+          <span>Nahrál ${esc(inv.uploadedByName||'—')}</span>
+        </div>
+      </div>
+      ${inv.amount!=='' ? `<div class="invoice-amount">${fmtMoney(inv.amount, inv.currency)}</div>` : ''}
+      <span class="inv-status ${status}">${invStatusCz(status)}</span>`;
+    grid.appendChild(card);
+  });
+  c.appendChild(grid);
+}
+
+function openInvoiceDetail(invoiceId) {
+  const inv = invoices.find(i => i.id === invoiceId);
+  if (!inv) return;
+  currentInvoiceId = invoiceId;
+  const status = inv.status || 'pending';
+  const invComments = comments.filter(cm => cm.taskId === invoiceId && cm.entityType === 'invoice').sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+
+  const viewer = inv.fileId
+    ? `<iframe class="file-viewer" src="${drivePreviewUrl(inv.fileId)}" allow="autoplay"></iframe>`
+    : (inv.url && inv.url !== '#' ? `<div class="file-viewer-fallback">Náhled není k dispozici.<br><a href="${esc(inv.url)}" target="_blank" style="color:var(--fern);font-weight:600">Otevřít fakturu →</a></div>` : `<div class="file-viewer-fallback">Soubor faktury není k dispozici.</div>`);
+
+  let decisionBlock = '';
+  if (status === 'pending' && canApproveInv) {
+    decisionBlock = `<div class="inv-decision-row">
+      <button class="btn-approve" onclick="decideInvoice('${inv.id}','approved')">✓ Schválit</button>
+      <button class="btn-reject" onclick="decideInvoice('${inv.id}','rejected')">✕ Zamítnout</button>
+    </div>`;
+  } else if (status !== 'pending') {
+    decisionBlock = `<div class="inv-decided-banner ${status}">${status==='approved'?'✓ Schváleno':'✕ Zamítnuto'}${inv.decidedByName?' — '+esc(inv.decidedByName):''}${inv.decidedAt?' · '+fmtDate(inv.decidedAt):''}</div>`;
+  } else {
+    decisionBlock = `<div class="inv-decided-banner" style="background:var(--amber-soft);color:var(--amber)">Čeká na schválení majitelem.</div>`;
+  }
+
+  let commentsHtml = invComments.length ? invComments.map(cm => `
+    <div class="comment">
+      <div class="comment-avatar">${initials(cm.authorName)}</div>
+      <div class="comment-body">
+        <div class="comment-head"><span class="comment-author">${esc(cm.authorName)}</span><span class="comment-time">${fmtDateTime(cm.createdAt)}</span></div>
+        <div class="comment-text">${esc(cm.text)}</div>
+      </div>
+    </div>`).join('') : '<p style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)">Zatím žádné komentáře.</p>';
+
+  const canDelete = isAdmin || inv.uploadedBy === currentUser?.id;
+
+  document.getElementById('invoice-modal-content').innerHTML = `
+    <div class="task-detail-header">
+      <div class="invoice-icon" style="width:38px;height:38px;font-size:17px">🧾</div>
+      <div class="task-detail-title">${esc(inv.title)}</div>
+      <button class="btn-icon" onclick="closeInvoiceDetail()" title="Zavřít">✕</button>
+    </div>
+    <div class="task-detail-row">
+      ${inv.supplier ? `<div class="tdr-item"><div class="tdr-label">Dodavatel</div><div class="tdr-value">${esc(inv.supplier)}</div></div>` : ''}
+      ${inv.amount!=='' ? `<div class="tdr-item"><div class="tdr-label">Částka</div><div class="tdr-value">${fmtMoney(inv.amount,inv.currency)}</div></div>` : ''}
+      ${inv.dueDate ? `<div class="tdr-item"><div class="tdr-label">Splatnost</div><div class="tdr-value">${fmtDate(inv.dueDate)}</div></div>` : ''}
+      <div class="tdr-item"><div class="tdr-label">Nahrál</div><div class="tdr-value">${esc(inv.uploadedByName||'—')}</div></div>
+    </div>
+
+    <div style="margin-bottom:18px">${viewer}</div>
+    <div style="margin-bottom:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${inv.fileId ? `<a href="${driveDownloadUrl(inv.fileId)}" target="_blank" class="btn-sm secondary">⬇ Stáhnout fakturu</a>` : (inv.url&&inv.url!=='#'?`<a href="${esc(inv.url)}" target="_blank" class="btn-sm secondary">Otevřít fakturu</a>`:'')}
+      ${canDelete ? `<button class="btn-sm danger" onclick="deleteInvoice('${inv.id}')">Smazat fakturu</button>` : ''}
+    </div>
+
+    ${decisionBlock}
+
+    <div class="comments-section">
+      <div class="comments-title">Komentáře (${invComments.length})</div>
+      <div id="inv-comments-list">${commentsHtml}</div>
+      <div class="comment-input-row">
+        <input type="text" id="inv-comment-input" placeholder="Napsat komentář..." onkeydown="if(event.key==='Enter')postInvoiceComment()">
+        <button class="btn-sm primary" onclick="postInvoiceComment()">Odeslat</button>
+      </div>
+    </div>`;
+  document.getElementById('invoice-modal').classList.add('open');
+}
+function closeInvoiceDetail() { document.getElementById('invoice-modal').classList.remove('open'); currentInvoiceId = null; }
+
+async function decideInvoice(invoiceId, status) {
+  const inv = invoices.find(i => i.id === invoiceId);
+  if (!inv) return;
+  const verb = status === 'approved' ? 'schválit' : 'zamítnout';
+  if (!confirm(`Opravdu ${verb} tuto fakturu?`)) return;
+  inv.status = status; inv.decidedBy = currentUser?.id || ''; inv.decidedByName = currentUser?.name || ''; inv.decidedAt = new Date().toISOString();
+  if (!DEMO_MODE()) {
+    showLoading(status==='approved'?'Schvaluji fakturu...':'Zamítám fakturu...');
+    try { await apiCall('decideInvoice', { id: invoiceId, status, decidedBy: currentUser?.id||'', decidedByName: currentUser?.name||'' }); }
+    catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
+    hideLoading();
+  }
+  openInvoiceDetail(invoiceId);
+  renderInvoices();
+  if (activeTab === 'overview') renderOverview();
+  showToast(status==='approved'?'Faktura schválena':'Faktura zamítnuta', status==='approved'?'success':'');
+}
+
+async function postInvoiceComment() {
+  const input = document.getElementById('inv-comment-input');
+  const text = input.value.trim();
+  if (!text || !currentInvoiceId) return;
+  const invoiceId = currentInvoiceId;
+  const cm = { id:'cmt_'+Date.now(), taskId: invoiceId, authorId: currentUser?.id||'', authorName: currentUser?.name||'', text, createdAt: new Date().toISOString(), entityType:'invoice' };
+  comments.push(cm);
+  input.value = '';
+  if (!DEMO_MODE()) {
+    try { await apiCall('addComment', { taskId: invoiceId, entityType:'invoice', authorId: cm.authorId, authorName: cm.authorName, text }); }
+    catch(e) { showToast('Chyba při ukládání komentáře', 'error'); }
+  }
+  openInvoiceDetail(invoiceId);
+}
+
+async function deleteInvoice(invoiceId) {
+  const inv = invoices.find(i => i.id === invoiceId);
+  if (!inv || !confirm(`Opravdu smazat fakturu „${inv.title}"?`)) return;
+  if (!DEMO_MODE()) {
+    showLoading('Mažu fakturu...');
+    try { await apiCall('deleteInvoice', { id: invoiceId }); }
+    catch(e) { hideLoading(); showToast('Chyba při mazání', 'error'); return; }
+    hideLoading();
+  }
+  invoices = invoices.filter(i => i.id !== invoiceId);
+  comments = comments.filter(c => !(c.taskId === invoiceId && c.entityType === 'invoice'));
+  closeInvoiceDetail(); renderInvoices();
+  if (activeTab === 'overview') renderOverview();
+  showToast('Faktura smazána');
+}
+
+// ===== INVOICE UPLOAD =====
+function toggleInvoiceForm() {
+  const s = document.getElementById('invoice-upload-section');
+  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+}
+function onInvFileSelected(input) {
+  if (!input.files[0]) return;
+  invoiceFile = input.files[0];
+  const t = document.getElementById('inv-title');
+  if (!t.value) t.value = invoiceFile.name.replace(/\.[^.]+$/, '');
+  document.getElementById('inv-upload-form').classList.add('visible');
+}
+const invUploadArea = document.getElementById('inv-upload-area');
+if (invUploadArea) {
+  invUploadArea.addEventListener('dragover', e => { e.preventDefault(); invUploadArea.classList.add('drag-over'); });
+  invUploadArea.addEventListener('dragleave', () => invUploadArea.classList.remove('drag-over'));
+  invUploadArea.addEventListener('drop', e => { e.preventDefault(); invUploadArea.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { document.getElementById('inv-file-input').files = e.dataTransfer.files; onInvFileSelected(document.getElementById('inv-file-input')); } });
+}
+async function uploadInvoice() {
+  const title = document.getElementById('inv-title').value.trim();
+  const supplier = document.getElementById('inv-supplier').value.trim();
+  const amount = document.getElementById('inv-amount').value;
+  const currency = document.getElementById('inv-currency').value;
+  const dueRaw = document.getElementById('inv-due').value;
+  if (!title) { showToast('Zadejte označení faktury', 'error'); return; }
+  const dueDate = dueRaw ? new Date(dueRaw + 'T00:00:00').toISOString() : '';
+
+  if (DEMO_MODE()) {
+    invoices.push({ id:'inv_'+Date.now(), title, supplier, amount, currency, url:'#', fileId:'', fileName:'demo.pdf', dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' });
+    cancelInvoiceUpload(); toggleInvoiceForm(); renderInvoices();
+    showToast('Faktura nahrána (demo)', 'success'); return;
+  }
+  if (!invoiceFile) { showToast('Vyberte soubor faktury', 'error'); return; }
+  showLoading('Nahrávám fakturu a upozorňuji majitele...');
+  try {
+    const b64 = await fileToB64(invoiceFile);
+    const res = await apiCall('addInvoice', { title, supplier, amount, currency, dueDate, fileName: invoiceFile.name, fileType: invoiceFile.type, fileData: b64, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'' });
+    invoices.push({ id: res.id, title, supplier, amount, currency, url: res.url, fileId: res.fileId, fileName: invoiceFile.name, dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' });
+    cancelInvoiceUpload(); toggleInvoiceForm(); renderInvoices();
+    hideLoading();
+    showToast('Faktura nahrána a odeslána majiteli', 'success');
+  } catch(e) { hideLoading(); showToast('Chyba při nahrávání: ' + e.message, 'error'); }
+}
+function cancelInvoiceUpload() {
+  invoiceFile = null;
+  document.getElementById('inv-upload-form').classList.remove('visible');
+  document.getElementById('inv-file-input').value = '';
+  ['inv-title','inv-supplier','inv-amount','inv-due'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inv-currency').value = 'CZK';
+}
+
+// ============================================================
+// WORKLOG (Deník)
+// ============================================================
+function renderWorklog() {
+  const isStaff = currentRole === 'employee';
+  // employees write + see their own; admin/gm see all (no compose)
+  document.getElementById('worklog-compose').style.display = isStaff ? 'block' : 'none';
+  document.getElementById('worklog-filters').style.display = isStaff ? 'none' : 'flex';
+  document.getElementById('worklog-title').textContent = isStaff ? 'Můj deník' : 'Deník zaměstnanců';
+  document.getElementById('worklog-subtitle').textContent = isStaff ? 'Zapište co jste dnes udělal' : 'Denní zápisy všech zaměstnanců';
+
+  const c = document.getElementById('worklog-container');
+  let entries = worklog.slice();
+  if (isStaff) {
+    entries = entries.filter(w => w.employeeId === currentUser?.id);
+  } else {
+    const ef = document.getElementById('worklog-emp-filter')?.value || '';
+    const sf = document.getElementById('worklog-seg-filter')?.value || '';
+    if (ef) entries = entries.filter(w => w.employeeId === ef);
+    if (sf) entries = entries.filter(w => w.segment === sf);
+  }
+  entries.sort((a,b) => new Date(b.date||b.createdAt) - new Date(a.date||a.createdAt));
+
+  if (entries.length === 0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📓</div><h3>Žádné zápisy</h3><p>${isStaff?'Napište svůj první zápis výše.':'Zatím žádné zápisy v deníku.'}</p></div>`;
+    return;
+  }
+
+  // group by date
+  const groups = {};
+  entries.forEach(w => { const d = (w.date||w.createdAt||'').slice(0,10); (groups[d] = groups[d] || []).push(w); });
+  const dates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+  let html = '';
+  dates.forEach(d => {
+    html += `<div class="worklog-day-group"><div class="worklog-day-label">${fmtDateLong(d)}</div>`;
+    groups[d].forEach(w => {
+      const canDel = isStaff && w.employeeId === currentUser?.id;
+      html += `<div class="worklog-entry">
+        <div class="worklog-entry-head">
+          <div><span class="worklog-author">${esc(w.employeeName)}</span>${w.segment?` <span class="emp-dept dept-${segSlug(w.segment)}" style="margin-left:6px">${esc(w.segment)}</span>`:''}</div>
+          ${canDel ? `<button class="btn-icon danger" onclick="deleteWorklogEntry('${w.id}')" title="Smazat">🗑</button>` : ''}
+        </div>
+        <div class="worklog-text">${esc(w.text)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  c.innerHTML = html;
+}
+
+async function addWorklogEntry() {
+  const date = document.getElementById('worklog-date').value || new Date().toISOString().slice(0,10);
+  const text = document.getElementById('worklog-text').value.trim();
+  if (!text) { showToast('Napište co jste udělal', 'error'); return; }
+  const entry = { id:'wl_'+Date.now(), employeeId: currentUser?.id||'', employeeName: currentUser?.name||'', segment: currentUser?.dept||'', date, text, createdAt: new Date().toISOString() };
+  worklog.push(entry);
+  document.getElementById('worklog-text').value = '';
+  if (!DEMO_MODE()) {
+    showLoading('Ukládám zápis...');
+    try { await apiCall('addWorklog', { employeeId: entry.employeeId, employeeName: entry.employeeName, segment: entry.segment, date, text }); }
+    catch(e) { hideLoading(); showToast('Chyba při ukládání', 'error'); return; }
+    hideLoading();
+  }
+  renderWorklog();
+  showToast('Zápis uložen', 'success');
+}
+
+async function deleteWorklogEntry(id) {
+  if (!confirm('Smazat tento zápis?')) return;
+  if (!DEMO_MODE()) {
+    try { await apiCall('deleteWorklog', { id }); }
+    catch(e) { showToast('Chyba při mazání', 'error'); return; }
+  }
+  worklog = worklog.filter(w => w.id !== id);
+  renderWorklog();
+  showToast('Zápis smazán');
+}
+
+// ============================================================
+// OWNER OVERVIEW (Přehled)
+// ============================================================
+function renderOverview() {
+  // greeting
+  document.getElementById('dash-greeting').textContent = 'Dobrý den';
+  document.getElementById('dash-sub').textContent = 'Přehled dění ve Vista Resortu k ' + fmtDate(new Date().toISOString());
+
+  // pending invoices
+  const pending = invoices.filter(i => (i.status||'pending')==='pending').sort((a,b)=>new Date(b.uploadedAt||0)-new Date(a.uploadedAt||0));
+  document.getElementById('dash-inv-count').textContent = pending.length;
+  const invWrap = document.getElementById('dash-invoices');
+  if (pending.length === 0) {
+    invWrap.innerHTML = '<div class="dash-empty">Žádné faktury nečekají na schválení. ✓</div>';
+  } else {
+    invWrap.innerHTML = pending.map(inv => `
+      <div class="dash-inv-row" onclick="openInvoiceDetail('${inv.id}')">
+        <div class="invoice-icon" style="width:40px;height:40px;font-size:18px">🧾</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(inv.title)}</div>
+          <div style="font-size:12px;color:var(--ink-faint)">${inv.supplier?esc(inv.supplier)+' · ':''}nahrál ${esc(inv.uploadedByName||'—')}${inv.dueDate?' · splatnost '+fmtDate(inv.dueDate):''}</div>
+        </div>
+        ${inv.amount!==''?`<div class="invoice-amount" style="font-size:19px">${fmtMoney(inv.amount,inv.currency)}</div>`:''}
+        <span class="btn-sm primary" style="pointer-events:none">Zobrazit</span>
+      </div>`).join('');
+  }
+
+  // activity (14 days) — done tasks + worklog grouped by segment
+  const since = new Date(Date.now() - 14*24*60*60*1000);
+  const segData = {};
+  const seg = (n) => { n = n || 'Bez segmentu'; if (!segData[n]) segData[n] = { done: [], logs: {} }; return segData[n]; };
+  tasks.forEach(t => {
+    if (t.status === 'done' && t.completedAt && new Date(t.completedAt) >= since) {
+      const who = (t.assignees||[]).map(id => { const e = employees.find(x=>x.id===id); return e?e.name:''; }).filter(Boolean).join(', ');
+      seg(t.segment).done.push({ title: t.title, who });
+    }
+  });
+  worklog.forEach(w => {
+    const d = w.date ? new Date(w.date) : (w.createdAt?new Date(w.createdAt):null);
+    if (d && d >= since) { const s = seg(w.segment); (s.logs[w.employeeName] = s.logs[w.employeeName] || []).push(w.text); }
+  });
+  const segNames = Object.keys(segData).sort();
+  const actWrap = document.getElementById('dash-activity');
+  if (segNames.length === 0) {
+    actWrap.innerHTML = '<div class="dash-empty">Za posledních 14 dní zatím není zaznamenána žádná aktivita.</div>';
+  } else {
+    actWrap.innerHTML = segNames.map(sn => {
+      const s = segData[sn];
+      let items = '';
+      s.done.forEach(t => { items += `<div class="dash-seg-item">✓ ${esc(t.title)}${t.who?` <span class="who">— ${esc(t.who)}</span>`:''}</div>`; });
+      Object.keys(s.logs).forEach(en => { s.logs[en].forEach(txt => { items += `<div class="dash-seg-item">• <strong>${esc(en)}:</strong> ${esc(txt)}</div>`; }); });
+      if (!items) items = '<div class="dash-empty">Žádná aktivita.</div>';
+      return `<div class="dash-seg-row"><div class="dash-seg-name"><span class="emp-dept dept-${segSlug(sn)}">${esc(sn)}</span></div>${items}</div>`;
+    }).join('');
+  }
+
+  // task summary
+  const active = tasks.filter(t => t.status !== 'done').length;
+  const done = tasks.filter(t => t.status === 'done').length;
+  const overdue = tasks.filter(t => t.status !== 'done' && t.deadline && new Date(t.deadline) < new Date()).length;
+  document.getElementById('dash-tasks').innerHTML = `
+    <div class="dash-task-stat"><div class="num">${active}</div><div class="lbl">Aktivních</div></div>
+    <div class="dash-task-stat"><div class="num">${done}</div><div class="lbl">Hotových</div></div>
+    <div class="dash-task-stat"><div class="num" style="color:${overdue?'var(--red)':'var(--peacock)'}">${overdue}</div><div class="lbl">Po termínu</div></div>`;
+}
+
+function fmtMoney(amount, currency) {
+  if (amount === '' || amount === null || amount === undefined) return '';
+  const n = Number(amount);
+  if (isNaN(n)) return String(amount) + (currency?(' '+currency):'');
+  return n.toLocaleString('cs-CZ') + ' ' + (currency || 'CZK');
+}
+function fmtDateLong(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'long' }); } catch { return iso; }
+}
+
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
@@ -1758,11 +2385,23 @@ function loadDemoData() {
   tasks = [
     { id:'t1', title:'Připravit víkendové menu', desc:'Sestavit nabídku na sobotu a neděli', segment:'Gastro', priority:'high', status:'inprogress', assignees:['e3'], dependsOn:[], deadline:new Date(Date.now()+86400000*2).toISOString(), createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
     { id:'t2', title:'Revize tenisových kurtů', desc:'Zkontrolovat stav povrchu', segment:'Sport', priority:'medium', status:'todo', assignees:['e4'], dependsOn:['e1'], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
-    { id:'t3', title:'Úklid wellness po rekonstrukci', desc:'Hloubkový úklid', segment:'Wellness', priority:'low', status:'done', assignees:['e2'], dependsOn:[], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] }
+    { id:'t3', title:'Úklid wellness po rekonstrukci', desc:'Hloubkový úklid', segment:'Wellness', priority:'low', status:'done', assignees:['e2'], dependsOn:[], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), completedAt:new Date(Date.now()-86400000*2).toISOString(), attachments:[] }
   ];
-  comments = [ { id:'c1', taskId:'t1', authorId:'e3', authorName:'Eva Dvořáková', text:'Začínám pracovat na návrhu, do zítřka pošlu.', createdAt:new Date().toISOString() } ];
+  comments = [
+    { id:'c1', taskId:'t1', authorId:'e3', authorName:'Eva Dvořáková', text:'Začínám pracovat na návrhu, do zítřka pošlu.', createdAt:new Date().toISOString(), entityType:'task' },
+    { id:'c2', taskId:'inv1', authorId:'__owner__', authorName:'Majitel', text:'Souhlasí to s objednávkou?', createdAt:new Date().toISOString(), entityType:'invoice' }
+  ];
+  invoices = [
+    { id:'inv1', title:'Faktura ČEZ 06/2025', supplier:'ČEZ a.s.', amount:'15400', currency:'CZK', url:'#', fileId:'', fileName:'cez.pdf', dueDate:new Date(Date.now()+86400000*10).toISOString(), uploadedBy:'e1', uploadedByName:'Jana Nováková', uploadedAt:new Date(Date.now()-86400000).toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' },
+    { id:'inv2', title:'Faktura úklid Tasker', supplier:'Tasker s.r.o.', amount:'8200', currency:'CZK', url:'#', fileId:'', fileName:'tasker.pdf', dueDate:new Date(Date.now()+86400000*5).toISOString(), uploadedBy:'e3', uploadedByName:'Eva Dvořáková', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' },
+    { id:'inv3', title:'Faktura zahradnictví', supplier:'Zelená zahrada', amount:'3500', currency:'CZK', url:'#', fileId:'', fileName:'zahrada.pdf', dueDate:'', uploadedBy:'e4', uploadedByName:'Tomáš Horák', uploadedAt:new Date(Date.now()-86400000*6).toISOString(), status:'approved', decidedBy:'__owner__', decidedByName:'Majitel', decidedAt:new Date(Date.now()-86400000*5).toISOString() }
+  ];
+  worklog = [
+    { id:'wl1', employeeId:'e3', employeeName:'Eva Dvořáková', segment:'Gastro', date:new Date().toISOString().slice(0,10), text:'Připravila jsem nové víkendové menu a objednala suroviny.', createdAt:new Date().toISOString() },
+    { id:'wl2', employeeId:'e2', employeeName:'Petr Svoboda', segment:'Wellness', date:new Date().toISOString().slice(0,10), text:'Dokončil úklid wellness po rekonstrukci, vše připraveno pro hosty.', createdAt:new Date().toISOString() },
+    { id:'wl3', employeeId:'e1', employeeName:'Jana Nováková', segment:'Hotel', date:new Date(Date.now()-86400000).toISOString().slice(0,10), text:'Check-in 12 hostů, vyřízeny 3 rezervace na příští týden.', createdAt:new Date(Date.now()-86400000).toISOString() }
+  ];
   buildFilterOptions();
-  switchTab('tasks');
 }
 </script>
 </body>
