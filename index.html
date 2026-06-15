@@ -1057,22 +1057,6 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       </div>
       <div id="dash-invoices"></div>
     </div>
-
-    <div class="dash-block">
-      <div class="dash-block-head">
-        <div class="dash-block-icon green">📊</div>
-        <div class="dash-block-title">Co se dělo (14 dní)</div>
-      </div>
-      <div id="dash-activity"></div>
-    </div>
-
-    <div class="dash-block">
-      <div class="dash-block-head">
-        <div class="dash-block-icon dark" style="color:var(--tan)">✓</div>
-        <div class="dash-block-title">Úkoly</div>
-      </div>
-      <div class="dash-task-summary" id="dash-tasks"></div>
-    </div>
   </div>
   <!-- ============ TRŽBY TAB ============ -->
   <div id="tab-trzby" class="main" style="display:none">
@@ -1473,9 +1457,7 @@ function tabsForRole() {
   if (isOwner) return [
     { key:'overview', label:'Přehled' },
     { key:'invoices', label:'Faktury' },
-    { key:'trzby',   label:'Tržby' },
-    { key:'tasks',   label:'Úkoly' },
-    { key:'docs',    label:'Dokumenty' }
+    { key:'trzby',   label:'Tržby' }
   ];
   if (isAdmin) return [
     { key:'tasks',   label:'Úkoly' },
@@ -3120,7 +3102,7 @@ async function saveEditWorklog(id) {
 function renderOverview() {
   // greeting
   document.getElementById('dash-greeting').textContent = 'Dobrý den';
-  document.getElementById('dash-sub').textContent = 'Přehled dění ve Vista Resortu k ' + fmtDate(new Date().toISOString());
+  document.getElementById('dash-sub').textContent = 'Faktury ke schválení a přehled tržeb';
 
   // pending invoices
   const pending = invoices.filter(i => (i.status||'pending')==='pending').sort((a,b)=>new Date(b.uploadedAt||0)-new Date(a.uploadedAt||0));
@@ -3140,44 +3122,6 @@ function renderOverview() {
         <span class="btn-sm primary" style="pointer-events:none">Zobrazit</span>
       </div>`).join('');
   }
-
-  // activity (14 days) — done tasks + worklog grouped by segment
-  const since = new Date(Date.now() - 14*24*60*60*1000);
-  const segData = {};
-  const seg = (n) => { n = n || 'Bez segmentu'; if (!segData[n]) segData[n] = { done: [], logs: {} }; return segData[n]; };
-  tasks.forEach(t => {
-    if (t.status === 'done' && t.completedAt && new Date(t.completedAt) >= since) {
-      const who = (t.assignees||[]).map(id => { const e = employees.find(x=>x.id===id); return e?e.name:''; }).filter(Boolean).join(', ');
-      seg(t.segment).done.push({ title: t.title, who });
-    }
-  });
-  worklog.forEach(w => {
-    const d = w.date ? new Date(w.date) : (w.createdAt?new Date(w.createdAt):null);
-    if (d && d >= since) { const s = seg(w.segment); (s.logs[w.employeeName] = s.logs[w.employeeName] || []).push(w.text); }
-  });
-  const segNames = Object.keys(segData).sort();
-  const actWrap = document.getElementById('dash-activity');
-  if (segNames.length === 0) {
-    actWrap.innerHTML = '<div class="dash-empty">Za posledních 14 dní zatím není zaznamenána žádná aktivita.</div>';
-  } else {
-    actWrap.innerHTML = segNames.map(sn => {
-      const s = segData[sn];
-      let items = '';
-      s.done.forEach(t => { items += `<div class="dash-seg-item">✓ ${esc(t.title)}${t.who?` <span class="who">— ${esc(t.who)}</span>`:''}</div>`; });
-      Object.keys(s.logs).forEach(en => { s.logs[en].forEach(txt => { items += `<div class="dash-seg-item">• <strong>${esc(en)}:</strong> ${esc(txt)}</div>`; }); });
-      if (!items) items = '<div class="dash-empty">Žádná aktivita.</div>';
-      return `<div class="dash-seg-row"><div class="dash-seg-name"><span class="emp-dept dept-${segSlug(sn)}">${esc(sn)}</span></div>${items}</div>`;
-    }).join('');
-  }
-
-  // task summary
-  const active = tasks.filter(t => t.status !== 'done').length;
-  const done = tasks.filter(t => t.status === 'done').length;
-  const overdue = tasks.filter(t => t.status !== 'done' && t.deadline && new Date(t.deadline) < new Date()).length;
-  document.getElementById('dash-tasks').innerHTML = `
-    <div class="dash-task-stat"><div class="num">${active}</div><div class="lbl">Aktivních</div></div>
-    <div class="dash-task-stat"><div class="num">${done}</div><div class="lbl">Hotových</div></div>
-    <div class="dash-task-stat"><div class="num" style="color:${overdue?'var(--red)':'var(--peacock)'}">${overdue}</div><div class="lbl">Po termínu</div></div>`;
 }
 
 function fmtMoney(amount, currency) {
