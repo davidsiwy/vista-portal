@@ -515,7 +515,17 @@ a { color: inherit; }
 .signed-link:hover { text-decoration: underline; }
 .urge-btn { padding: 7px 14px; background: var(--warn-soft, #f7eed8); color: var(--warn, #a6781f); border: 1.5px solid var(--warn-line, #ecd6a3); border-radius: var(--r-pill); font-family: var(--sans); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.16s var(--ease); display: inline-flex; align-items: center; gap: 6px; }
 .urge-btn:hover { background: var(--warn, #a6781f); color: #fff; border-color: var(--warn, #a6781f); }
-.dash-doc-row { display: flex; align-items: center; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--line, #e7e0d2); }
+.dash-trzby-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.dash-trzby-card { background: var(--paper, #f6f3ec); border-radius: var(--r, 10px); padding: 16px 18px; border: 1px solid var(--line, #e7e0d2); }
+.dash-trzby-label { font-size: 11px; font-weight: 700; color: var(--ink-faint, #9a9b8c); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--sans); margin-bottom: 6px; }
+.dash-trzby-val { font-family: var(--serif); font-size: 22px; color: var(--peacock, #13302e); font-weight: 500; }
+.dash-trzby-diff { font-size: 12px; font-family: var(--sans); margin-top: 3px; }
+.dash-trzby-segs { display: flex; flex-direction: column; gap: 8px; }
+.dash-trzby-seg-row { display: flex; align-items: center; gap: 10px; }
+.dash-trzby-seg-label { font-size: 13px; font-family: var(--sans); color: var(--ink-soft, #5f6357); width: 90px; flex-shrink: 0; }
+.dash-trzby-bar { flex: 1; height: 8px; background: var(--line, #e7e0d2); border-radius: 4px; overflow: hidden; }
+.dash-trzby-bar-fill { height: 100%; background: var(--fern, #586845); border-radius: 4px; transition: width 0.5s; }
+.dash-trzby-seg-val { font-size: 12px; font-family: var(--sans); color: var(--ink-faint, #9a9b8c); text-align: right; min-width: 70px; }
 .dash-doc-row:last-child { border-bottom: none; }
 .dash-doc-prog { flex: 1; min-width: 0; }
 
@@ -1058,6 +1068,14 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div class="dash-block-count" id="dash-inv-count">0</div>
       </div>
       <div id="dash-invoices"></div>
+    </div>
+
+    <div class="dash-block" id="dash-trzby-block" style="display:none">
+      <div class="dash-block-head">
+        <div class="dash-block-icon green">📊</div>
+        <div class="dash-block-title" id="dash-trzby-title">Tržby</div>
+      </div>
+      <div id="dash-trzby"></div>
     </div>
   </div>
   <!-- ============ TRŽBY TAB ============ -->
@@ -3166,7 +3184,6 @@ async function saveEditWorklog(id) {
 // OWNER OVERVIEW (Přehled)
 // ============================================================
 function renderOverview() {
-  // greeting
   document.getElementById('dash-greeting').textContent = 'Dobrý den';
   document.getElementById('dash-sub').textContent = 'Faktury ke schválení a přehled tržeb';
 
@@ -3188,6 +3205,60 @@ function renderOverview() {
         <span class="btn-sm primary" style="pointer-events:none">Zobrazit</span>
       </div>`).join('');
   }
+
+  // tržby summary
+  const trzbyBlock = document.getElementById('dash-trzby-block');
+  if (!trzbyData || trzbyData.length === 0) { trzbyBlock.style.display = 'none'; return; }
+  trzbyBlock.style.display = 'block';
+
+  const last = trzbyData[trzbyData.length - 1];
+  const curY = last.y, curM = last.m;
+  const MONTHS_SHORT = ['','Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+  const MONTHS_FULL2 = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+  const pm = curM === 1 ? 12 : curM-1, py = curM === 1 ? curY-1 : curY;
+  const curRows  = trzbyData.filter(r => r.y === curY && r.m === curM);
+  const prevRows = trzbyData.filter(r => r.y === py && r.m === pm);
+  const sumRows = arr => arr.reduce((s,r) => s+r.celkem, 0);
+  const curTotal = sumRows(curRows), prevTotal = sumRows(prevRows);
+  const diff = prevTotal > 0 ? ((curTotal-prevTotal)/prevTotal*100).toFixed(1) : null;
+  const avg = curRows.length ? curTotal/curRows.length : 0;
+  const bestRow = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
+
+  document.getElementById('dash-trzby-title').textContent = 'Tržby — ' + MONTHS_FULL2[curM] + ' ' + curY;
+
+  const SEGS_OV = ['Hotel','F&B','Wellness','Sport','C&B','Akademie'];
+  const segTotals = SEGS_OV.map(s => curRows.reduce((sum,r) => sum+(r.segs?.[s]||0), 0));
+  const maxSeg = Math.max(...segTotals, 1);
+
+  document.getElementById('dash-trzby').innerHTML = `
+    <div class="dash-trzby-kpi">
+      <div class="dash-trzby-card">
+        <div class="dash-trzby-label">Měsíc celkem</div>
+        <div class="dash-trzby-val">${Math.round(curTotal).toLocaleString('cs-CZ')} Kč</div>
+        ${diff !== null ? `<div class="dash-trzby-diff" style="color:${diff>=0?'var(--ok)':'var(--danger)'}">${diff>=0?'▲':'▼'} ${Math.abs(diff)} % vs ${MONTHS_SHORT[pm]}</div>` : ''}
+      </div>
+      <div class="dash-trzby-card">
+        <div class="dash-trzby-label">Průměr / den</div>
+        <div class="dash-trzby-val">${Math.round(avg).toLocaleString('cs-CZ')} Kč</div>
+        <div class="dash-trzby-diff" style="color:var(--ink-faint)">${curRows.length} dní dat</div>
+      </div>
+      <div class="dash-trzby-card">
+        <div class="dash-trzby-label">Nejlepší den</div>
+        <div class="dash-trzby-val">${Math.round(bestRow.celkem||0).toLocaleString('cs-CZ')} Kč</div>
+        <div class="dash-trzby-diff" style="color:var(--ink-faint)">${bestRow.date ? bestRow.date.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'}) : ''}</div>
+      </div>
+    </div>
+    <div class="dash-trzby-segs">
+      ${SEGS_OV.map((s,i) => segTotals[i] > 100 ? `
+        <div class="dash-trzby-seg-row">
+          <div class="dash-trzby-seg-label">${s}</div>
+          <div class="dash-trzby-bar"><div class="dash-trzby-bar-fill" style="width:${Math.round(segTotals[i]/maxSeg*100)}%"></div></div>
+          <div class="dash-trzby-seg-val">${Math.round(segTotals[i]/1000)} tis.</div>
+        </div>` : '').join('')}
+    </div>
+    <div style="margin-top:14px;text-align:right">
+      <button class="btn-sm secondary" onclick="switchTab('trzby')" style="font-size:12px;padding:7px 14px">Zobrazit celé Tržby →</button>
+    </div>`;
 }
 
 function fmtMoney(amount, currency) {
@@ -3856,6 +3927,7 @@ const DEMO_PRIJMY = [
 let repFile = null;
 
 function renderReports() {
+  applyOwnerRestrictions();
   const cat = document.getElementById('rep-cat-filter')?.value || '';
   const filtered = cat ? reports.filter(r => r.category === cat) : reports;
 
