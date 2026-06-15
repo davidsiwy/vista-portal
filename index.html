@@ -592,6 +592,11 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
               <div class="hint">Klikni 🎲 pro náhodný 4-místný PIN. PIN bude viditelný při uložení.</div>
             </div>
           </div>
+          <div class="form-group">
+            <label>Email (pro notifikace)</label>
+            <input type="email" id="new-emp-email" placeholder="jana.novakova@vistaresort.cz">
+            <div class="hint">Zaměstnanec dostane email při nahrání nového dokumentu.</div>
+          </div>
           <div style="display:flex;gap:8px;">
             <button class="btn-sm primary" onclick="addEmployee()">Uložit zaměstnance</button>
             <button class="btn-sm secondary" onclick="toggleAddEmpForm()">Zrušit</button>
@@ -1034,7 +1039,7 @@ function renderEmployees() {
 
   let html = `<table class="emp-table"><thead><tr>
     <th>Jméno</th><th>Pozice</th><th>Oddělení</th><th>PIN</th>
-    <th style="text-align:center">Potvrzení</th><th></th>
+    <th style="text-align:center">Potvrzení</th><th>Email</th><th></th>
   </tr></thead><tbody>`;
 
   employees.forEach(emp => {
@@ -1055,6 +1060,8 @@ function renderEmployees() {
       <td style="text-align:center">
         <span style="font-weight:700;color:${pct===100?'var(--green-ok)':pct>50?'var(--orange)':'var(--red)'}">${pct}%</span>
         <div style="font-size:11px;color:var(--gray-400)">${empConfs.length}/${documents.length}</div>
+      </td>
+      <td style="font-size:12px;color:var(--gray-400)">${emp.email ? '<a href="mailto:'+esc(emp.email)+'" style="color:var(--green-mid)">'+esc(emp.email)+'</a>' : '<span style="color:var(--gray-300)">bez emailu</span>'}
       </td>
       <td style="text-align:right">
         <div style="display:flex;gap:6px;justify-content:flex-end">
@@ -1099,7 +1106,8 @@ async function addEmployee() {
   if (!name || !pin) { showToast('Vyplňte jméno a PIN', 'error'); return; }
   if (pin.length < 4) { showToast('PIN musí mít alespoň 4 znaky', 'error'); return; }
   if (employees.some(e => e.pin === pin)) { showToast('Tento PIN už existuje', 'error'); return; }
-  const emp = { id: 'emp_' + Date.now(), name, role, dept, pin };
+  const email = document.getElementById('new-emp-email').value.trim();
+  const emp = { id: 'emp_' + Date.now(), name, role, dept, pin, email };
   if (!DEMO_MODE()) {
     try { await apiCall('addEmployee', emp); }
     catch(e) { showToast('Chyba při přidávání', 'error'); return; }
@@ -1111,6 +1119,7 @@ async function addEmployee() {
   document.getElementById('new-emp-role').value = '';
   document.getElementById('new-emp-dept').value = '';
   document.getElementById('new-emp-pin').value  = '';
+  document.getElementById('new-emp-email').value = '';
   showToast(`${name} přidán/a · PIN: ${pin}`, 'success');
   setTimeout(() => { pinVisible[emp.id] = false; renderEmployees(); }, 8000); // hide PIN after 8s
 }
@@ -1123,6 +1132,7 @@ function openEditEmp(id) {
   document.getElementById('edit-emp-role').value = emp.role || '';
   document.getElementById('edit-emp-dept').value = emp.dept || '';
   document.getElementById('edit-emp-pin').value  = emp.pin;
+  document.getElementById('edit-emp-email').value = emp.email || '';
   document.getElementById('edit-emp-modal').classList.add('open');
 }
 function closeEditModal() { document.getElementById('edit-emp-modal').classList.remove('open'); }
@@ -1132,16 +1142,17 @@ async function saveEditEmployee() {
   const name = document.getElementById('edit-emp-name').value.trim();
   const role = document.getElementById('edit-emp-role').value.trim();
   const dept = document.getElementById('edit-emp-dept').value;
-  const pin  = document.getElementById('edit-emp-pin').value.trim();
+  const pin   = document.getElementById('edit-emp-pin').value.trim();
+  const email = document.getElementById('edit-emp-email').value.trim();
   if (!name || !pin) { showToast('Jméno a PIN jsou povinné', 'error'); return; }
   const dup = employees.find(e => e.pin === pin && e.id !== id);
   if (dup) { showToast(`PIN ${pin} už má ${dup.name}`, 'error'); return; }
   if (!DEMO_MODE()) {
-    try { await apiCall('updateEmployee', { id, name, role, dept, pin }); }
+    try { await apiCall('updateEmployee', { id, name, role, dept, pin, email }); }
     catch(e) { showToast('Chyba při ukládání', 'error'); return; }
   }
   const emp = employees.find(e => e.id === id);
-  if (emp) { emp.name = name; emp.role = role; emp.dept = dept; emp.pin = pin; }
+  if (emp) { emp.name = name; emp.role = role; emp.dept = dept; emp.pin = pin; emp.email = email; }
   closeEditModal();
   pinVisible[id] = true;
   renderEmployees();
