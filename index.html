@@ -1449,6 +1449,7 @@ const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','tr
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  initTrzbyData();   // načte Vista demo data (duben–červen 2026) jako výchozí stav
   if (DEMO_MODE()) {
     document.getElementById('setup-banner').style.display = 'block';
     loadDemoData();
@@ -3321,6 +3322,17 @@ function generateInitialNotifs() {
 // ============================================================
 let trzbyData = null;
 let chartDaily = null, chartSegs = null, chartMonthly = null;
+
+// Přednahrát reálná Vista data (duben–červen 2026) — uživatel může nahrát novější soubor
+function initTrzbyData() {
+  if (typeof DEMO_TRZBY !== 'undefined' && DEMO_TRZBY.length) {
+    // Convert date strings back to Date objects if needed
+    trzbyData = DEMO_TRZBY.map(r => ({
+      ...r,
+      date: r.date instanceof Date ? r.date : new Date(r.date)
+    }));
+  }
+}
 
 const SEGS = ['Hotel', 'F&B', 'C&B', 'Wellness', 'Sport', 'Akademie'];
 const SEG_COLORS = ['#13302e','#586845','#9da38b','#dfc196','#9c7852','#3d301f'];
