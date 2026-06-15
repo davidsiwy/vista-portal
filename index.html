@@ -613,175 +613,193 @@ a { color: inherit; }
    =================================================== */
 @media (max-width: 640px) {
 
-  /* topbar */
-  .topbar { padding: 0 14px; height: 56px; }
+  /* ── TOPBAR ── */
+  .topbar { padding: 0 12px; height: 54px; }
   .topbar-title { display: none; }
-  .topbar-logo img { height: 26px; }
+  .topbar-logo img { height: 24px; }
   .topbar-divider { display: none; }
-  .topbar-badge { font-size: 9.5px; padding: 4px 9px; }
+  .topbar-badge { font-size: 9px; padding: 3px 8px; }
   .topbar-user { display: none; }
-  .btn-logout { padding: 7px 12px; font-size: 12px; }
+  .topbar-right { gap: 8px; }
+  .btn-logout { padding: 6px 11px; font-size: 12px; }
 
-  /* tabs — scrollable, bigger tap targets */
-  .tabs { top: 56px; padding: 0 8px; gap: 0; }
-  .tab-btn { padding: 14px 13px 12px; font-size: 13px; }
-  .tab-btn::after { left: 13px; right: 13px; }
+  /* ── NOTIFICATION BELL & PANEL ── */
+  .notif-bell { width: 34px; height: 34px; }
+  .notif-wrap { position: static; }
+  .notif-panel {
+    position: fixed;
+    top: 54px; left: 0; right: 0;
+    width: 100%;
+    border-radius: 0 0 16px 16px;
+    z-index: 600;
+    max-height: 70vh;
+    overflow: hidden;
+  }
+  .notif-list { max-height: calc(70vh - 56px); overflow-y: auto; }
 
-  /* main content */
-  .main { padding: 20px 14px 80px; }
-  .section-header { margin-bottom: 20px; gap: 12px; }
-  .section-title { font-size: 24px; }
-  .section-subtitle { font-size: 12.5px; }
+  /* ── TABS ── */
+  .tabs { top: 54px; padding: 0 6px; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .tab-btn { padding: 13px 12px 11px; font-size: 12.5px; white-space: nowrap; flex-shrink: 0; }
+  .tab-btn::after { left: 12px; right: 12px; }
 
-  /* stats */
-  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .stat-card { padding: 18px 16px; }
-  .stat-value { font-size: 32px; }
+  /* ── MAIN CONTENT ── */
+  .main { padding: 18px 12px 90px; }
+  .section-header { margin-bottom: 18px; gap: 10px; flex-wrap: wrap; }
+  .section-title { font-size: 22px; }
+  .section-subtitle { font-size: 12px; }
+  .section-header .btn-sm { white-space: nowrap; flex-shrink: 0; }
 
-  /* forms */
-  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 12px; }
-  .form-group input, .form-group select, .form-group textarea { font-size: 16px; } /* prevents iOS zoom */
+  /* ── STATS GRID ── */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .stat-card { padding: 14px 14px; }
+  .stat-value { font-size: 28px; }
+  .stat-label { font-size: 11px; }
 
-  /* login */
-  #login-screen::before { opacity: 0.04; right: -20%; width: 90vw; }
+  /* ── FORMS ── */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 10px; }
+  .form-group input, .form-group select, .form-group textarea { font-size: 16px !important; } /* no iOS zoom */
+
+  /* ── LOGIN ── */
+  #login-screen::before { opacity: 0.03; right: -30%; width: 100vw; }
   .login-card { max-width: 100%; }
-  .login-logo img.brand-full { width: 190px; }
-  .login-panel { padding: 24px 20px; }
+  .login-logo img.brand-full { width: 170px; }
+  .login-panel { padding: 22px 18px; }
 
-  /* kanban — single column on mobile */
-  .kanban { grid-template-columns: 1fr; gap: 10px; }
-  .kanban-col-header { margin-bottom: 10px; }
-  .task-card { padding: 14px; margin-bottom: 10px; }
+  /* ── KANBAN ── */
+  .kanban { grid-template-columns: 1fr; gap: 8px; }
+  .kanban-col-header { margin-bottom: 8px; }
+  .task-card { padding: 13px; margin-bottom: 8px; }
   .task-card-title { font-size: 14px; }
 
-  /* task modal person chips — 1 per row on very small screens */
-  .person-pick { gap: 7px; }
-  .person-chip { padding: 9px 13px 9px 9px; width: 100%; }
+  /* ── PERSON CHIPS (task assign) ── */
+  .person-pick { gap: 6px; }
+  .person-chip { padding: 9px 12px 9px 9px; width: 100%; box-sizing: border-box; }
   .pc-name { font-size: 14px; }
 
-  /* documents */
-  .doc-card { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
-  .doc-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  /* ── DOCUMENTS ── */
+  .doc-card { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; }
+  .doc-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 7px; }
   .doc-actions .btn-download,
   .doc-actions .btn-confirm,
-  .doc-actions .confirmed-badge { flex: 1; justify-content: center; }
-  .btn-download, .btn-confirm { min-height: 42px; font-size: 13px; }
+  .doc-actions .confirmed-badge { flex: 1; min-width: 0; justify-content: center; text-align: center; }
+  .btn-download, .btn-confirm { min-height: 40px; font-size: 13px; }
 
-  /* invoices */
-  .invoice-card { flex-wrap: wrap; gap: 12px; padding: 16px; }
-  .invoice-amount { font-size: 20px; width: 100%; }
-  .inv-status { font-size: 11.5px; }
-  .invoice-grid { gap: 10px; }
+  /* ── INVOICES ── */
+  .invoice-card { flex-wrap: wrap; gap: 10px; padding: 14px; }
+  .invoice-amount { font-size: 19px; width: 100%; }
+  .inv-status { font-size: 11px; }
+  .invoice-grid { gap: 8px; }
+  .inv-decision-row { gap: 7px; flex-wrap: wrap; }
+  .btn-approve, .btn-reject { flex: 1; min-width: 0; justify-content: center; padding: 12px 10px; font-size: 14px; }
 
-  /* invoice / preview modal */
-  .file-viewer { height: 55vh; }
-  .inv-decision-row { gap: 8px; }
-  .btn-approve, .btn-reject { flex: 1; justify-content: center; padding: 13px 12px; font-size: 14px; }
+  /* ── FILE VIEWER ── */
+  .file-viewer { height: 52vh; }
 
-  /* modals */
+  /* ── MODALS (bottom sheet) ── */
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal, .modal.wide, .modal.xwide {
-    max-width: 100%; width: 100%; border-radius: 20px 20px 0 0;
-    padding: 28px 20px 36px; max-height: 92vh; overflow-y: auto;
+    max-width: 100% !important; width: 100% !important;
+    border-radius: 20px 20px 0 0;
+    padding: 26px 18px 40px;
+    max-height: 92vh; overflow-y: auto;
   }
-  .modal h2 { font-size: 22px; }
-  .modal-actions { flex-direction: column-reverse; }
-  .modal-actions .btn-sm { width: 100%; justify-content: center; padding: 14px; font-size: 14px; }
+  .modal h2 { font-size: 20px; margin-bottom: 12px; }
+  .modal-actions { flex-direction: column-reverse; gap: 8px; }
+  .modal-actions .btn-sm { width: 100% !important; justify-content: center; padding: 14px; font-size: 14px; }
 
-  /* task detail modal */
-  .task-detail-title { font-size: 20px; }
-  .task-detail-row { gap: 14px; }
-  .status-selector { gap: 6px; }
-  .status-opt { padding: 8px 11px; font-size: 11.5px; }
+  /* ── TASK DETAIL ── */
+  .task-detail-title { font-size: 19px; }
+  .task-detail-row { gap: 12px; flex-wrap: wrap; }
+  .tdr-item { min-width: 140px; }
+  .status-selector { gap: 5px; flex-wrap: wrap; }
+  .status-opt { padding: 8px 10px; font-size: 11px; }
 
-  /* admin cards */
-  .admin-card { padding: 20px 16px; }
-  .admin-card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  /* ── ADMIN ── */
+  .admin-card { padding: 18px 14px; }
+  .admin-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .admin-card-title { font-size: 17px; }
 
-  /* worklog */
-  .worklog-compose { padding: 18px 16px; }
-  .worklog-entry { padding: 14px 16px; }
-  .worklog-day-label { font-size: 17px; }
+  /* ── WORKLOG ── */
+  .worklog-compose { padding: 16px 14px; }
+  .worklog-entry { padding: 12px 14px; }
+  .worklog-day-label { font-size: 16px; }
 
-  /* owner dashboard */
-  .dash-trzby-kpi { grid-template-columns: 1fr 1fr; }
-  .dash-trzby-val { font-size: 18px; }
-  .dash-hero { padding: 22px 16px; }
-  .dash-greeting { font-size: 24px; }
-  .dash-sub { font-size: 12px; }
+  /* ── OWNER DASHBOARD ── */
+  .dash-hero { padding: 20px 16px; border-radius: var(--r, 10px); }
   .dash-hero::before { display: none; }
-  .dash-greeting { font-size: 26px; }
-  .dash-sub { font-size: 12.5px; }
-  .dash-block { padding: 20px 16px; border-radius: var(--r); }
-  .dash-block-title { font-size: 20px; }
-  .dash-block-icon { width: 38px; height: 38px; font-size: 18px; }
-  .dash-task-summary { gap: 22px; }
-  .dash-task-stat .num { font-size: 34px; }
-  .dash-inv-row { gap: 10px; }
-  .dash-inv-row:hover { margin: 0; padding: 15px 0; border-radius: 0; } /* no hover offset on mobile */
-  .dash-doc-row { gap: 10px; }
+  .dash-greeting { font-size: 22px; }
+  .dash-sub { font-size: 12px; }
+  .dash-block { padding: 18px 14px; border-radius: var(--r, 10px); }
+  .dash-block-head { gap: 10px; margin-bottom: 16px; }
+  .dash-block-title { font-size: 18px; }
+  .dash-block-icon { width: 36px; height: 36px; font-size: 17px; }
+  .dash-inv-row { gap: 8px; padding: 12px 0; }
+  .dash-inv-row .invoice-amount { font-size: 15px; width: auto; }
 
-  /* chips */
-  .chips { gap: 7px; }
-  .chip { padding: 9px 13px; font-size: 13px; }
+  /* tržby summary v přehledu */
+  .dash-trzby-kpi { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dash-trzby-card { padding: 12px 14px; }
+  .dash-trzby-val { font-size: 16px; }
+  .dash-trzby-label { font-size: 10px; }
+  .dash-trzby-diff { font-size: 11px; }
+  .dash-trzby-seg-label { width: 72px; font-size: 12px; }
+  .dash-trzby-seg-val { font-size: 11px; min-width: 54px; }
 
-  /* filters */
-  .filters { gap: 8px; }
-  .filter-select { font-size: 13px; padding: 8px 30px 8px 12px; }
-  .search-input { font-size: 13px; }
-
-  /* buttons */
-  /* trzby grid stacks on mobile */
+  /* ── TRŽBY TAB ── */
   #trzby-grid-2 { grid-template-columns: 1fr !important; }
-  .trzby-filters { flex-direction: column; align-items: stretch; gap: 10px; }
+  .trzby-filters { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 16px; }
   .tf-group { width: 100%; }
   .tf-group .filter-select, .tf-group input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
-  .seg-toggle { display: flex; width: 100%; box-sizing: border-box; }
-  .seg-toggle-btn { flex: 1; text-align: center; padding: 12px 6px; font-size: 12px; }
-  .cmp-grid { grid-template-columns: 1fr; gap: 10px; }
-  .cmp-arrow { text-align: center; font-size: 22px; padding: 4px 0; }
-  .btn-sm { padding: 10px 16px; font-size: 13px; }
-  .section-header .btn-sm { white-space: nowrap; }
-  /* notif panel — full width bottom on mobile */
-  .notif-panel { width: calc(100vw - 28px); right: -14px; }
-  .notif-list { max-height: 60vh; }
+  .seg-toggle { display: flex; width: 100%; box-sizing: border-box; border-radius: 10px; }
+  .seg-toggle-btn { flex: 1; text-align: center; padding: 11px 4px; font-size: 11.5px; border-radius: 8px; }
+  .cmp-grid { grid-template-columns: 1fr; gap: 8px; }
+  .cmp-arrow { text-align: center; font-size: 20px; padding: 2px 0; }
+  .cmp-box-val { font-size: 20px; }
 
-  /* checklist */
+  /* ── CHIPS / FILTERS ── */
+  .chips { gap: 6px; }
+  .chip { padding: 8px 12px; font-size: 12.5px; }
+  .filters { gap: 7px; flex-wrap: wrap; }
+  .filter-select { font-size: 13px; padding: 8px 28px 8px 11px; }
+  .search-input { font-size: 13px; }
+
+  /* ── BUTTONS ── */
+  .btn-sm { padding: 10px 15px; font-size: 13px; }
+  .urge-btn { padding: 8px 12px; font-size: 12px; }
+
+  /* ── CHECKLIST ── */
   .checklist { grid-template-columns: 1fr; }
 
-  /* doc admin rows */
-  .doc-admin-row { flex-direction: column; gap: 12px; }
-  .doc-admin-row > div[data-manage] { width: 100%; flex-wrap: wrap; }
+  /* ── DOC ADMIN ROWS ── */
+  .doc-admin-row { flex-direction: column; gap: 10px; }
+  .doc-admin-row > div[data-manage] { width: 100%; flex-wrap: wrap; display: flex; }
   .doc-admin-row > div[data-manage] .btn-sm,
   .doc-admin-row > div[data-manage] .urge-btn { flex: 1; justify-content: center; }
 
-  /* sign upload */
-  .sign-toggle { padding: 12px 14px; font-size: 13px; }
+  /* ── SIGNATURES ── */
+  .sign-toggle { padding: 11px 13px; font-size: 13px; }
+  .upload-area { padding: 18px 12px; }
 
-  /* upd modal file area */
-  .upload-area { padding: 20px 14px; }
+  /* ── CONFIRMATIONS ── */
+  .conf-person { flex-direction: column; align-items: flex-start; gap: 3px; }
 
-  /* confirmation detail */
-  .conf-detail { padding: 14px; }
-  .conf-person { flex-direction: column; align-items: flex-start; gap: 4px; }
-
-  /* progress bars */
-  .progress-bar-wrap { margin-top: 10px; }
-
-  /* table on small screen */
-  .data-table { font-size: 13px; }
-  .data-table th, .data-table td { padding: 10px 10px; }
+  /* ── TABLE ── */
+  .data-table { font-size: 12px; }
+  .data-table th, .data-table td { padding: 8px 8px; }
 }
 
 /* ===================================================
    RESPONSIVE — very small 375px (iPhone SE etc.)
    =================================================== */
 @media (max-width: 375px) {
-  .main { padding: 16px 12px 80px; }
-  .tab-btn { padding: 13px 10px 11px; font-size: 12px; }
+  .main { padding: 14px 10px 90px; }
+  .tab-btn { padding: 12px 9px 10px; font-size: 11.5px; }
   .stats-row { grid-template-columns: 1fr; }
-  .section-title { font-size: 22px; }
-  .dash-task-summary { flex-direction: column; gap: 16px; }
+  .dash-trzby-kpi { grid-template-columns: 1fr; }
+  .section-title { font-size: 20px; }
+  .modal, .modal.wide, .modal.xwide { padding: 22px 14px 36px; }
+  .topbar { padding: 0 10px; height: 52px; }
+  .notif-panel { top: 52px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
