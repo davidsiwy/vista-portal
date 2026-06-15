@@ -836,7 +836,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="login-panel">
       <div class="form-group" style="margin-bottom:14px">
         <label>Přístupový PIN</label>
-        <input type="password" id="login-pin" placeholder="••••" maxlength="32" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+        <input type="password" id="login-pin" placeholder="••••" maxlength="32" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
       </div>
       <button class="btn-primary" onclick="doLogin()">Vstoupit</button>
       <p class="login-error" id="login-error">Nesprávný PIN kód.</p>
@@ -1510,23 +1510,24 @@ function clearSession() { try { sessionStorage.removeItem('vista_session'); } ca
 
 // ===== LOGIN =====
 async function doLogin() {
-  const pin = document.getElementById('login-pin').value.trim();
+  const raw = document.getElementById('login-pin').value;
+  const pin = raw.trim().replace(/[\u200B-\u200D\uFEFF\s]/g, '');  // odstraň neviditelné znaky a mezery
   const err = document.getElementById('login-error');
   err.style.display = 'none';
   if (!pin) { err.textContent = 'Zadejte PIN kód.'; err.style.display = 'block'; return; }
 
-  // Role PINs first
+  // Role PINs first (přesná shoda)
   if (pin === CONFIG.PINS.owner) { currentRole = 'owner'; currentUser = { id: '__owner__', name: 'Majitel', role: 'Majitel', dept: '' }; }
   else if (pin === CONFIG.PINS.gm) { currentRole = 'gm'; currentUser = { id: '__gm__', name: 'General Manager', role: 'GM', dept: '' }; }
   else if (pin === CONFIG.PINS.admin) { currentRole = 'admin'; currentUser = { id: '__admin__', name: 'Administrátor', role: 'Admin', dept: '' }; }
   else {
-    // Employee PIN — need to load employees first if not loaded
+    // Employee PIN — load employees first if not loaded
     if (employees.length === 0 && !DEMO_MODE()) {
       showLoading('Ověřuji přístup...');
       try { await loadData(); } catch(e) {}
       hideLoading();
     }
-    const emp = employees.find(e => String(e.pin) === pin);
+    const emp = employees.find(e => String(e.pin).trim() === pin);
     if (emp) { currentRole = 'employee'; currentUser = { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }; }
     else { err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return; }
   }
@@ -1569,7 +1570,6 @@ function tabsForRole() {
   return [
     { key:'tasks',    label:'Úkoly' },
     { key:'docs',     label:'Dokumenty' },
-    { key:'invoices', label:'Faktury' },
     { key:'reports',  label:'Reporty' },
     { key:'worklog',  label:'Můj deník' }
   ];
