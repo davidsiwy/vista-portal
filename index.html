@@ -1041,15 +1041,6 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 
     <div class="dash-block">
       <div class="dash-block-head">
-        <div class="dash-block-icon gold">📝</div>
-        <div class="dash-block-title">Dokumenty k potvrzení</div>
-        <div class="dash-block-count" id="dash-doc-count">0</div>
-      </div>
-      <div id="dash-docs"></div>
-    </div>
-
-    <div class="dash-block">
-      <div class="dash-block-head">
         <div class="dash-block-icon green">📊</div>
         <div class="dash-block-title">Co se dělo (14 dní)</div>
       </div>
@@ -3103,33 +3094,6 @@ function renderOverview() {
       Object.keys(s.logs).forEach(en => { s.logs[en].forEach(txt => { items += `<div class="dash-seg-item">• <strong>${esc(en)}:</strong> ${esc(txt)}</div>`; }); });
       if (!items) items = '<div class="dash-empty">Žádná aktivita.</div>';
       return `<div class="dash-seg-row"><div class="dash-seg-name"><span class="emp-dept dept-${segSlug(sn)}">${esc(sn)}</span></div>${items}</div>`;
-    }).join('');
-  }
-
-  // documents awaiting confirmation
-  const docRows = [];
-  documents.forEach(doc => {
-    const targets = docTargets(doc);
-    const confIds = new Set(confirmations.filter(c => c.docId === doc.id).map(c => c.employeeId));
-    const pending = targets.filter(e => !confIds.has(e.id));
-    if (targets.length > 0 && pending.length > 0) docRows.push({ doc, done: targets.length - pending.length, total: targets.length, pending: pending.length });
-  });
-  document.getElementById('dash-doc-count').textContent = docRows.length;
-  const docWrap = document.getElementById('dash-docs');
-  if (docRows.length === 0) {
-    docWrap.innerHTML = '<div class="dash-empty">Všechny dokumenty jsou potvrzené. ✓</div>';
-  } else {
-    docWrap.innerHTML = docRows.map(r => {
-      const pct = Math.round(r.done / r.total * 100);
-      return `<div class="dash-doc-row">
-        <div style="font-size:20px">${getDocIcon(r.doc.title, r.doc.category)}</div>
-        <div class="dash-doc-prog">
-          <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:14px;margin-bottom:6px">${esc(r.doc.title)}${r.doc.requiresSignature?' <span class="sign-badge">✍ Podpis</span>':''}</div>
-          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-          <div style="font-size:12px;color:var(--ink-faint);margin-top:5px">${r.done} z ${r.total} ${r.doc.requiresSignature?'podepsalo':'potvrdilo'} · chybí ${r.pending}</div>
-        </div>
-        <button class="urge-btn" onclick="openUrge('doc','${r.doc.id}')">🔔 Zaurgovat</button>
-      </div>`;
     }).join('');
   }
 
