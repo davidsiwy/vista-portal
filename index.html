@@ -519,6 +519,62 @@ a { color: inherit; }
 .dash-doc-prog { flex: 1; min-width: 0; }
 
 /* ===================================================
+   NOTIFICATIONS
+   =================================================== */
+.notif-wrap { position: relative; }
+.notif-bell {
+  width: 38px; height: 38px; border-radius: 10px; background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.88); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; position: relative;
+  transition: all 0.16s var(--ease); flex-shrink: 0;
+}
+.notif-bell:hover { background: rgba(255,255,255,0.16); border-color: rgba(223,193,150,0.4); color: var(--tan); }
+.notif-bell.has-unread { color: var(--tan); border-color: rgba(223,193,150,0.5); }
+.notif-badge {
+  position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px;
+  background: var(--danger); color: #fff; border-radius: var(--r-pill);
+  font-size: 10px; font-weight: 700; font-family: var(--sans);
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  border: 2px solid var(--peacock); line-height: 1;
+}
+.notif-panel {
+  position: absolute; right: 0; top: calc(100% + 10px); width: 340px;
+  background: var(--card); border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  border: 1px solid var(--line); z-index: 500; display: none; overflow: hidden;
+  animation: modalIn 0.22s var(--ease);
+}
+.notif-panel.open { display: block; }
+.notif-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 14px; border-bottom: 1px solid var(--line);
+}
+.notif-panel-title { font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--peacock); text-transform: uppercase; letter-spacing: 0.07em; }
+.notif-clear-btn { background: none; border: none; font-family: var(--sans); font-size: 12px; color: var(--ink-faint); cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: all 0.14s; }
+.notif-clear-btn:hover { background: var(--paper); color: var(--danger); }
+.notif-list { max-height: 420px; overflow-y: auto; }
+.notif-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px;
+  border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.14s;
+  position: relative;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--paper); }
+.notif-item.unread { background: #f0f5f0; }
+.notif-item.unread::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--fern); border-radius: 0 2px 2px 0; }
+.notif-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.notif-icon.task { background: #e6eef4; }
+.notif-icon.doc { background: var(--ok-soft); }
+.notif-icon.invoice { background: var(--warn-soft); }
+.notif-icon.confirm { background: var(--ok-soft); }
+.notif-icon.urge { background: var(--warn-soft); }
+.notif-body { flex: 1; min-width: 0; }
+.notif-text { font-size: 13px; color: var(--ink); line-height: 1.45; font-family: var(--sans); }
+.notif-text strong { color: var(--peacock); }
+.notif-time { font-size: 11px; color: var(--ink-faint); margin-top: 4px; font-family: var(--sans); }
+.notif-empty { padding: 36px 18px; text-align: center; color: var(--ink-faint); font-size: 13.5px; font-family: var(--sans); }
+.notif-empty-icon { font-size: 28px; margin-bottom: 10px; }
+
+/* ===================================================
    RESPONSIVE — tablet 960px
    =================================================== */
 @media (max-width: 960px) {
@@ -648,6 +704,9 @@ a { color: inherit; }
   /* buttons */
   .btn-sm { padding: 10px 16px; font-size: 13px; }
   .section-header .btn-sm { white-space: nowrap; }
+  /* notif panel — full width bottom on mobile */
+  .notif-panel { width: calc(100vw - 28px); right: -14px; }
+  .notif-list { max-height: 60vh; }
 
   /* checklist */
   .checklist { grid-template-columns: 1fr; }
@@ -740,6 +799,19 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     </div>
     <div class="topbar-right">
       <span class="topbar-user" id="topbar-username"></span>
+      <div class="notif-wrap" id="notif-wrap">
+        <button class="notif-bell" id="notif-bell" onclick="toggleNotifPanel()" title="Notifikace" aria-label="Notifikace">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-head">
+            <span class="notif-panel-title">Notifikace</span>
+            <button class="notif-clear-btn" onclick="clearNotifications()">Smazat vše</button>
+          </div>
+          <div class="notif-list" id="notif-list"></div>
+        </div>
+      </div>
       <button class="btn-logout" onclick="logout()">Odhlásit</button>
     </div>
   </div>
@@ -1294,8 +1366,17 @@ const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview'];
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  if (DEMO_MODE()) { document.getElementById('setup-banner').style.display = 'block'; loadDemoData(); switchTab(TABS[0].key); return; }
+  if (DEMO_MODE()) {
+    document.getElementById('setup-banner').style.display = 'block';
+    loadDemoData();
+    initNotifications();
+    generateInitialNotifs();
+    switchTab(TABS[0].key);
+    return;
+  }
   await loadData();
+  initNotifications();
+  generateInitialNotifs();
   switchTab(TABS[0].key);
 }
 
@@ -1722,6 +1803,8 @@ async function saveTask() {
     if (DEMO_MODE()) {
       tasks.push(newTask); closeTaskModal(); renderTasks();
       if (activeTab === 'overview') renderOverview();
+      // notify assignees in-app if they are the current user (self-assign)
+      newTask.assignees.forEach(id => { if (id === currentUser?.id) pushNotif('task','📋',`Nový úkol přiřazen: <strong>${esc(title)}</strong>`,{tab:'tasks',taskId:newTask.id}); });
       showToast('Úkol zadán', 'success'); return;
     }
     showLoading('Zadávám úkol...');
@@ -1732,6 +1815,7 @@ async function saveTask() {
       hideLoading();
       closeTaskModal(); renderTasks();
       if (activeTab === 'overview') renderOverview();
+      newTask.assignees.forEach(id => { if (id === currentUser?.id) pushNotif('task','📋',`Nový úkol přiřazen: <strong>${esc(title)}</strong>`,{tab:'tasks',taskId:newTask.id}); });
       showToast('Úkol zadán', 'success');
     } catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); }
   }
@@ -1859,6 +1943,12 @@ async function confirmDocument() {
   confirmations.push(conf);
   signFile = null;
   renderDocuments();
+  const confDoc = documents.find(d => d.id === docId);
+  if (confDoc) {
+    const icon = needsSign ? '✍️' : '✅';
+    const verb = needsSign ? 'Podepsal/a jste' : 'Potvrdil/a jste';
+    pushNotif('confirm', icon, `${verb}: <strong>${esc(confDoc.title)}</strong>`, { tab:'docs' });
+  }
   showToast(needsSign ? 'Podepsaný dokument nahrán. Děkujeme.' : 'Potvrzení zaznamenáno. Děkujeme.', 'success');
 }
 function closeConfirmModalKeepFile() { document.getElementById('confirm-modal').classList.remove('open'); pendingConfirmDocId = null; }
@@ -1885,12 +1975,16 @@ async function sendUrge() {
   const message = document.getElementById('urge-message').value.trim();
   const kind = urgeKind, id = urgeId;
   closeUrge();
-  if (DEMO_MODE()) { showToast('Připomínka odeslána (demo)', 'success'); return; }
+  if (DEMO_MODE()) {
+    pushNotif('urge','🔔',`Připomínka odeslána${urgeKind==='task'?' k úkolu':' k dokumentu'}`,null);
+    showToast('Připomínka odeslána (demo)', 'success'); return;
+  }
   showLoading('Odesílám připomínku...');
   try {
     if (kind === 'doc') await apiCall('urgeDocument', { docId: id, message, byName: currentUser?.name || '' });
     else if (kind === 'task') await apiCall('urgeTask', { taskId: id, message, byName: currentUser?.name || '' });
     hideLoading();
+    pushNotif('urge','🔔',`Připomínka odeslána${kind==='task'?' k úkolu':' k dokumentu'}`,null);
     showToast('Připomínka odeslána', 'success');
   } catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); }
 }
@@ -2657,6 +2751,12 @@ async function decideInvoice(invoiceId, status) {
   openInvoiceDetail(invoiceId);
   renderInvoices();
   if (activeTab === 'overview') renderOverview();
+  const inv2 = invoices.find(i => i.id === invoiceId);
+  if (inv2) {
+    const icon = status === 'approved' ? '✅' : '❌';
+    const label = status === 'approved' ? 'schválena' : 'zamítnuta';
+    pushNotif('invoice', icon, `Faktura <strong>${esc(inv2.title)}</strong> byla ${label}`, { tab:'invoices', invoiceId });
+  }
   showToast(status==='approved'?'Faktura schválena':'Faktura zamítnuta', status==='approved'?'success':'');
 }
 
@@ -2719,8 +2819,10 @@ async function uploadInvoice() {
   const dueDate = dueRaw ? new Date(dueRaw + 'T00:00:00').toISOString() : '';
 
   if (DEMO_MODE()) {
-    invoices.push({ id:'inv_'+Date.now(), title, supplier, amount, currency, url:'#', fileId:'', fileName:'demo.pdf', dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' });
+    const newInv = { id:'inv_'+Date.now(), title, supplier, amount, currency, url:'#', fileId:'', fileName:'demo.pdf', dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' };
+    invoices.push(newInv);
     cancelInvoiceUpload(); toggleInvoiceForm(); renderInvoices();
+    if (canApproveInv) pushNotif('invoice','🧾',`Nová faktura ke schválení: <strong>${esc(title)}</strong>${amount?' · '+fmtMoney(amount,currency):''}`,{tab:'invoices',invoiceId:newInv.id});
     showToast('Faktura nahrána (demo)', 'success'); return;
   }
   if (!invoiceFile) { showToast('Vyberte soubor faktury', 'error'); return; }
@@ -2728,9 +2830,11 @@ async function uploadInvoice() {
   try {
     const b64 = await fileToB64(invoiceFile);
     const res = await apiCall('addInvoice', { title, supplier, amount, currency, dueDate, fileName: invoiceFile.name, fileType: invoiceFile.type, fileData: b64, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'' });
-    invoices.push({ id: res.id, title, supplier, amount, currency, url: res.url, fileId: res.fileId, fileName: invoiceFile.name, dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' });
+    const newInv2 = { id: res.id, title, supplier, amount, currency, url: res.url, fileId: res.fileId, fileName: invoiceFile.name, dueDate, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt:new Date().toISOString(), status:'pending', decidedBy:'', decidedByName:'', decidedAt:'' };
+    invoices.push(newInv2);
     cancelInvoiceUpload(); toggleInvoiceForm(); renderInvoices();
     hideLoading();
+    if (canApproveInv) pushNotif('invoice','🧾',`Nová faktura ke schválení: <strong>${esc(title)}</strong>${amount?' · '+fmtMoney(amount,currency):''}`,{tab:'invoices',invoiceId:newInv2.id});
     showToast('Faktura nahrána a odeslána majiteli', 'success');
   } catch(e) { hideLoading(); showToast('Chyba při nahrávání: ' + e.message, 'error'); }
 }
@@ -2928,6 +3032,164 @@ function fmtDateLong(iso) {
 document.querySelectorAll('.modal-overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+let notifications = [];   // { id, type, icon, text, time, read, action }
+
+function initNotifications() {
+  try {
+    const saved = sessionStorage.getItem('vista_notifs_' + (currentUser?.id || ''));
+    notifications = saved ? JSON.parse(saved) : [];
+  } catch(e) { notifications = []; }
+  renderNotifications();
+}
+
+function saveNotifications() {
+  try { sessionStorage.setItem('vista_notifs_' + (currentUser?.id || ''), JSON.stringify(notifications.slice(0, 60))); } catch(e) {}
+}
+
+function pushNotif(type, icon, text, action) {
+  const n = { id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), type, icon, text, time: new Date().toISOString(), read: false, action: action || null };
+  notifications.unshift(n);
+  saveNotifications();
+  renderNotifications();
+  // brief bell animation
+  const bell = document.getElementById('notif-bell');
+  if (bell) { bell.style.transform = 'scale(1.25)'; setTimeout(() => bell.style.transform = '', 200); }
+}
+
+function markAllRead() {
+  notifications.forEach(n => n.read = true);
+  saveNotifications();
+  renderNotifications();
+}
+
+function clearNotifications() {
+  notifications = [];
+  saveNotifications();
+  renderNotifications();
+  closeNotifPanel();
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) { closeNotifPanel(); }
+  else {
+    panel.classList.add('open');
+    markAllRead();
+  }
+}
+function closeNotifPanel() {
+  document.getElementById('notif-panel')?.classList.remove('open');
+}
+
+// Close panel on click outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('notif-wrap');
+  if (wrap && !wrap.contains(e.target)) closeNotifPanel();
+});
+
+function renderNotifications() {
+  const unread = notifications.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  const bell = document.getElementById('notif-bell');
+  if (!badge || !bell) return;
+  if (unread > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = unread > 99 ? '99+' : String(unread);
+    bell.classList.add('has-unread');
+  } else {
+    badge.style.display = 'none';
+    bell.classList.remove('has-unread');
+  }
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div>Žádné notifikace</div>';
+    return;
+  }
+  list.innerHTML = notifications.slice(0, 40).map(n => `
+    <div class="notif-item ${n.read?'':'unread'}" onclick="handleNotifClick('${n.id}')">
+      <div class="notif-icon ${n.type}">${n.icon}</div>
+      <div class="notif-body">
+        <div class="notif-text">${n.text}</div>
+        <div class="notif-time">${fmtDateTime(n.time)}</div>
+      </div>
+    </div>`).join('');
+}
+
+function handleNotifClick(id) {
+  const n = notifications.find(x => x.id === id);
+  if (!n) return;
+  n.read = true;
+  saveNotifications();
+  renderNotifications();
+  closeNotifPanel();
+  if (n.action) {
+    const { tab, taskId, invoiceId, docId } = n.action;
+    if (tab) switchTab(tab);
+    if (taskId) setTimeout(() => openTaskDetail(taskId), 50);
+    if (invoiceId) setTimeout(() => openInvoiceDetail(invoiceId), 50);
+  }
+}
+
+// ── generate notifications after data loads ──────────────────
+function generateInitialNotifs() {
+  // only once per session
+  if (sessionStorage.getItem('vista_notifs_init_' + (currentUser?.id||''))) return;
+  sessionStorage.setItem('vista_notifs_init_' + (currentUser?.id||''), '1');
+
+  const uid = currentUser?.id || '';
+  const now = Date.now();
+  const newish = 7 * 24 * 60 * 60 * 1000; // 7 days = "recent"
+
+  // Tasks: assigned to me or created by me
+  tasks.forEach(t => {
+    const isAssigned = (t.assignees||[]).includes(uid);
+    const isCreator = t.createdBy === uid;
+    if (!isAssigned && !isCreator) return;
+    const age = now - new Date(t.createdAt).getTime();
+    if (age > newish) return;
+    if (isAssigned) {
+      pushNotif('task', '📋', `Byl vám přiřazen úkol <strong>${esc(t.title)}</strong>${t.createdByName ? ' od ' + esc(t.createdByName) : ''}`, { tab:'tasks', taskId: t.id });
+    }
+  });
+
+  // Documents: pending for me
+  const myConfs = new Set(confirmations.filter(c => c.employeeId === uid).map(c => c.docId));
+  documents.forEach(doc => {
+    const targets = docTargets(doc);
+    if (!targets.some(e => e.id === uid)) return;
+    if (myConfs.has(doc.id)) return;
+    const age = now - new Date(doc.uploadedAt).getTime();
+    if (age > newish) return;
+    const verb = doc.requiresSignature ? 'k podpisu' : 'k potvrzení';
+    pushNotif('doc', '📄', `Nový dokument ${verb}: <strong>${esc(doc.title)}</strong>`, { tab:'docs' });
+  });
+
+  // Invoices: pending — for canApproveInv
+  if (canApproveInv) {
+    invoices.filter(i => (i.status||'pending') === 'pending').forEach(inv => {
+      const age = now - new Date(inv.uploadedAt).getTime();
+      if (age > newish) return;
+      pushNotif('invoice', '🧾', `Nová faktura ke schválení: <strong>${esc(inv.title)}</strong>${inv.amount ? ' · ' + fmtMoney(inv.amount, inv.currency) : ''}`, { tab:'invoices', invoiceId: inv.id });
+    });
+  }
+
+  // Invoice decided — notify uploader
+  invoices.filter(i => i.decidedAt && i.uploadedBy === uid).forEach(inv => {
+    const age = now - new Date(inv.decidedAt).getTime();
+    if (age > newish) return;
+    const label = inv.status === 'approved' ? '✓ schválena' : '✕ zamítnuta';
+    const icon = inv.status === 'approved' ? '✅' : '❌';
+    pushNotif('invoice', icon, `Faktura <strong>${esc(inv.title)}</strong> byla ${label}`, { tab:'invoices', invoiceId: inv.id });
+  });
+}
+
+// ── live notifs jsou napojeny přímo v action funkcích (pushNotif volání) ──
 
 // ============================================================
 // DEMO DATA
