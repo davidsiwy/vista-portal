@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="assets/vista-mark-dark.png">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   /* Vista forest palette */
@@ -3381,6 +3379,27 @@ function onTrzbyFile(input) {
 
 function renderTrzby() {
   if (!trzbyData || trzbyData.length === 0) { renderTrzbyEmpty(); return; }
+
+  // Chart.js se načítá z CDN — pokud ještě není připraveno, počkáme
+  if (typeof Chart === 'undefined') {
+    document.getElementById('trzby-empty').style.display = 'none';
+    document.getElementById('trzby-kpi').style.display   = 'none';
+    document.getElementById('trzby-charts').style.display= 'none';
+    document.getElementById('trzby-subtitle').textContent = 'Načítám grafy...';
+    const spinner = '<div class="loading"><div class="spinner"></div>Načítám Chart.js...</div>';
+    document.getElementById('trzby-empty').innerHTML = spinner;
+    document.getElementById('trzby-empty').style.display = 'block';
+    let attempts = 0;
+    const wait = setInterval(() => {
+      attempts++;
+      if (typeof Chart !== 'undefined') { clearInterval(wait); renderTrzby(); }
+      else if (attempts > 30) {
+        clearInterval(wait);
+        document.getElementById('trzby-empty').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Grafy se nenačetly</h3><p>Zkontroluj připojení k internetu a obnov stránku (Cmd+Shift+R).</p></div>';
+      }
+    }, 300);
+    return;
+  }
   document.getElementById('trzby-empty').style.display = 'none';
   document.getElementById('trzby-kpi').style.display   = 'grid';
   document.getElementById('trzby-charts').style.display= 'block';
@@ -3600,5 +3619,8 @@ function loadDemoData() {
   trzbyData = DEMO_TRZBY;
 }
 </script>
+<!-- Chart.js a SheetJS se načítají na konci, ať neblokují přihlásení -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </body>
 </html>
