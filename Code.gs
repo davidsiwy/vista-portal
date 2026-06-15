@@ -26,7 +26,8 @@ const SHEETS = {
   TASKS: 'Úkoly',
   COMMENTS: 'Komentáře',
   INVOICES: 'Faktury',
-  WORKLOG: 'Deník'
+  WORKLOG: 'Deník',
+  TRZBY: 'Tržby'
 };
 
 // ============================================================
@@ -66,6 +67,8 @@ function doPost(e) {
       case 'deleteInvoice':   result = deleteInvoice(data.id); break;
       // worklog
       case 'getWorklog':      result = getWorklog(); break;
+      case 'saveTrzby':       result = saveTrzby(data); break;
+      case 'getTrzby':        result = getTrzby(); break;
       case 'addWorklog':      result = addWorklog(data); break;
       case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
@@ -100,6 +103,7 @@ function initSheets() {
   ensureSheet(ss, SHEETS.COMMENTS, ['id','taskId','authorId','authorName','text','createdAt','entityType']);
   ensureSheet(ss, SHEETS.INVOICES, ['id','title','supplier','amount','currency','url','fileId','fileName','dueDate','uploadedBy','uploadedByName','uploadedAt','status','decidedBy','decidedByName','decidedAt']);
   ensureSheet(ss, SHEETS.WORKLOG, ['id','employeeId','employeeName','segment','date','text','createdAt']);
+  ensureSheet(ss, SHEETS.TRZBY, ['key','json','uploadedBy','uploadedAt']);
   return { success: true };
 }
 
@@ -460,6 +464,35 @@ function addWorklog(data) {
 function updateWorklog(data) {
   updateRowByHeaders(SHEETS.WORKLOG, 'id', data.id, { text: data.text || '' });
   return { success: true };
+}
+
+// ============================================================
+// TRŽBY — uložení reportu na server (jen vedení k nim má přístup ve frontendu)
+// ============================================================
+function saveTrzby(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEETS.TRZBY);
+  if (!sheet) { sheet = ss.insertSheet(SHEETS.TRZBY); sheet.appendRow(['key','json','uploadedBy','uploadedAt']); }
+  // vymaž stará data (kromě hlavičky) a ulož nový JSON rozdělený do chunků po 45000 znacích
+  const last = sheet.getLastRow();
+  if (last > 1) sheet.deleteRows(2, last - 1);
+  const json = data.json || '[]';
+  const chunkSize = 45000;
+  const chunks = [];
+  for (let i = 0; i < json.length; i += chunkSize) chunks.push(json.slice(i, i + chunkSize));
+  const now = new Date().toISOString();
+  chunks.forEach((c, i) => sheet.appendRow(['chunk' + i, c, data.uploadedBy || '', now]));
+  return { success: true, chunks: chunks.length, uploadedAt: now };
+}
+function getTrzby() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(SHEETS.TRZBY);
+  if (!sheet || sheet.getLastRow() < 2) return { json: '', uploadedAt: '', uploadedBy: '' };
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues();
+  // seřaď podle chunk indexu a spoj
+  rows.sort((a, b) => parseInt(String(a[0]).replace('chunk','')) - parseInt(String(b[0]).replace('chunk','')));
+  const json = rows.map(r => r[1]).join('');
+  return { json, uploadedAt: rows[0] ? rows[0][3] : '', uploadedBy: rows[0] ? rows[0][2] : '' };
 }
 function deleteWorklog(id) { deleteRowByCol(SHEETS.WORKLOG, 'id', id); return { success: true }; }
 
