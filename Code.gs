@@ -67,6 +67,7 @@ function doPost(e) {
       // worklog
       case 'getWorklog':      result = getWorklog(); break;
       case 'addWorklog':      result = addWorklog(data); break;
+      case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
       // all
       case 'getAll':          result = getAll(); break;
@@ -455,6 +456,10 @@ function addWorklog(data) {
   const id = 'wl_' + Date.now();
   appendByHeaders(SHEETS.WORKLOG, { id, employeeId: data.employeeId||'', employeeName: data.employeeName||'', segment: data.segment||'', date: data.date||new Date().toISOString().slice(0,10), text: data.text||'', createdAt: new Date().toISOString() });
   return { success: true, id };
+}
+function updateWorklog(data) {
+  updateRowByHeaders(SHEETS.WORKLOG, 'id', data.id, { text: data.text || '' });
+  return { success: true };
 }
 function deleteWorklog(id) { deleteRowByCol(SHEETS.WORKLOG, 'id', id); return { success: true }; }
 
