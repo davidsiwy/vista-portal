@@ -860,8 +860,9 @@ function closeModal() {
 }
 async function confirmDocument() {
   if (!pendingConfirmDocId || !currentUser) return;
+  const docId = pendingConfirmDocId;  // capture before closeModal nulls it
   closeModal();
-  const cf = { docId: pendingConfirmDocId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
+  const cf = { docId: docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
   if (!DEMO_MODE()) {
     try { await apiCall('addConfirmation', cf); }
     catch(e) { showToast('Chyba při ukládání potvrzení', 'error'); return; }
