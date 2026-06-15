@@ -5,8 +5,19 @@
 
 const DRIVE_FOLDER_NAME = 'Vista Portal Dokumenty';
 const PORTAL_URL = 'https://internal.vistaresort.cz/';
-const ADMIN_EMAIL = 'dsiwy2000@gmail.com';   // souhrny pro vedení/admina
-const OWNER_EMAIL = '';   // PRÁZDNÉ = majitel NEDOSTÁVÁ žádné emaily (vše vidí v portálu). Pro zapnutí sem dej email.
+const ADMIN_EMAIL = 'gabriela.vachova@vistaresort.cz';  // Administrátor — dostává souhrny potvrzení a přehled termínů
+const GM_EMAIL    = 'katerina.novakova@vistaresort.cz';  // General Manager — kopie důležitých notifikací
+const OWNER_EMAIL = '';   // PRÁZDNÉ = majitel nedostává emaily (vše vidí v portálu). Pro zapnutí: 'siwy@rscredit.cz'
+
+
+// Odešle email na admina i GM (bez duplicit)
+function sendToManagement(subject, plainText, htmlBody) {
+  const recipients = [...new Set([ADMIN_EMAIL, GM_EMAIL].filter(e => e && e.includes('@')))];
+  recipients.forEach(em => {
+    try { GmailApp.sendEmail(em, subject, plainText, { htmlBody, name: 'Vista Resort' }); }
+    catch(err) { Logger.log('mgmt email to ' + em + ': ' + err.message); }
+  });
+}
 
 const SHEETS = {
   EMPLOYEES: 'Zaměstnanci',
@@ -546,7 +557,7 @@ function sendDocumentUpdateNotification(title, category, desc, fileUrl, deadline
 }
 function sendConfirmationNotification(employeeName, docTitle, signed) {
   try {
-    if (!ADMIN_EMAIL) return;
+    if (!ADMIN_EMAIL && !GM_EMAIL) return;
     const now = new Date().toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
     const label = signed ? 'Dokument podepsán a nahrán' : 'Dokument potvrzen';
     const body = `
@@ -556,7 +567,7 @@ function sendConfirmationNotification(employeeName, docTitle, signed) {
         <tr><td style="padding:6px 0;color:#9c7852;">Dokument</td><td style="padding:6px 0;font-weight:bold;">${docTitle}</td></tr>
         <tr><td style="padding:6px 0;color:#9c7852;">Datum</td><td style="padding:6px 0;">${now}</td></tr>
       </table>`;
-    GmailApp.sendEmail(ADMIN_EMAIL, `Vista Portál: ${employeeName} ${signed?'podepsal/a':'potvrdil/a'} dokument`, `${employeeName}: ${docTitle} (${now})`, { htmlBody: emailShell(label, body), name: 'Vista Resort' });
+    sendToManagement(`Vista Portál: ${employeeName} ${signed?'podepsal/a':'potvrdil/a'} dokument`, `${employeeName}: ${docTitle} (${now})`, emailShell(label, body));
   } catch(err) { Logger.log('conf email: ' + err.message); }
 }
 
@@ -760,7 +771,7 @@ function sendTaskReminder(emp, task, afterDeadline) {
 }
 function sendAdminSummary(summary, heading) {
   try {
-    if (!ADMIN_EMAIL) return;
+    if (!ADMIN_EMAIL && !GM_EMAIL) return;
     let rows = '';
     summary.forEach(s => {
       const color = s.afterDeadline ? '#9c3a2e' : '#9c7852';
@@ -771,7 +782,7 @@ function sendAdminSummary(summary, heading) {
         <div style="font-size:13px;color:#9c7852;margin-top:6px;">Dotčení (${s.names.length}): ${s.names.join(', ')}</div></div>`;
     });
     const body = `<p style="color:#3d301f;font-size:15px;margin:0 0 20px;">${heading}:</p>${rows}${btnHtml('Otevřít portál', PORTAL_URL)}`;
-    GmailApp.sendEmail(ADMIN_EMAIL, 'Vista Portál: Denní přehled — ' + heading, heading, { htmlBody: emailShell('Denní přehled', body), name: 'Vista Resort' });
+    sendToManagement('Vista Portál: Denní přehled — ' + heading, heading, emailShell('Denní přehled', body));
   } catch(err) { Logger.log('admin summary: ' + err.message); }
 }
 
