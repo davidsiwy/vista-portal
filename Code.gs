@@ -4,9 +4,9 @@
 // ============================================================
 
 const DRIVE_FOLDER_NAME = 'Vista Portal Dokumenty';
-const PORTAL_URL = 'https://davidsiwy.github.io/vista-portal/';
+const PORTAL_URL = 'https://internal.vistaresort.cz/';
 const ADMIN_EMAIL = 'dsiwy2000@gmail.com';   // souhrny pro vedení/admina
-const OWNER_EMAIL = 'dsiwy2000@gmail.com';   // majitel: faktury ke schválení + 14denní report (lze změnit)
+const OWNER_EMAIL = '';   // PRÁZDNÉ = majitel NEDOSTÁVÁ žádné emaily (vše vidí v portálu). Pro zapnutí sem dej email.
 
 const SHEETS = {
   EMPLOYEES: 'Zaměstnanci',
@@ -35,6 +35,7 @@ function doPost(e) {
       // documents
       case 'getDocuments':    result = getDocuments(); break;
       case 'uploadDocument':  result = uploadDocument(data); break;
+      case 'updateDocument':  result = updateDocument(data); break;
       case 'deleteDocument':  result = deleteDocument(data.id); break;
       case 'addConfirmation': result = addConfirmation(data); break;
       // tasks
@@ -79,7 +80,7 @@ function jsonResponse(data) {
 function initSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
-  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','remindedAt']);
+  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','remindedAt']);
   ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt']);
   ensureSheet(ss, SHEETS.TASKS, ['id','title','desc','segment','priority','status','assignees','dependsOn','deadline','createdBy','createdByName','createdAt','completedAt','attachments','remindedAt']);
   ensureSheet(ss, SHEETS.COMMENTS, ['id','taskId','authorId','authorName','text','createdAt','entityType']);
@@ -183,7 +184,7 @@ function getDocuments() {
   const { items } = readSheet(SHEETS.DOCUMENTS);
   const documents = items.map(r => ({
     id: r.id, title: r.title, category: r.category, desc: r.desc, url: r.url, fileId: r.fileId || '',
-    fileName: r.fileName, uploadedAt: r.uploadedAt, deadline: r.deadline || '',
+    fileName: r.fileName, uploadedAt: r.uploadedAt, deadline: r.deadline || '', version: r.version || 1,
     audienceType: r.audienceType || 'all', audienceList: parseList(r.audienceList)
   })).filter(d => d.id);
   return { documents };
@@ -202,11 +203,35 @@ function uploadDocument(data) {
   appendByHeaders(SHEETS.DOCUMENTS, {
     id: docId, title: data.title, category: data.category||'', desc: data.desc||'', url: fileUrl, fileId,
     fileName: data.fileName||'', uploadedAt: data.uploadedAt||new Date().toISOString(), deadline: data.deadline||'',
-    audienceType: data.audienceType||'all', audienceList: JSON.stringify(data.audienceList||[]), remindedAt: ''
+    audienceType: data.audienceType||'all', audienceList: JSON.stringify(data.audienceList||[]), version: 1, remindedAt: ''
   });
   const targets = resolveAudience(data.audienceType||'all', data.audienceList||[]);
   sendDocumentNotification(data.title, data.category||'', data.desc||'', fileUrl, data.deadline||'', targets);
   return { success: true, docId, url: fileUrl, fileId };
+}
+function updateDocument(data) {
+  const doc = readSheet(SHEETS.DOCUMENTS).items.find(d => d.id === data.id);
+  if (!doc) return { error: 'Document not found' };
+  const obj = {};
+  ['title','category','desc','deadline','audienceType'].forEach(k => { if (data[k] !== undefined) obj[k] = data[k]; });
+  if (data.audienceList !== undefined) obj.audienceList = JSON.stringify(data.audienceList);
+  let fileUrl = doc.url, fileId = doc.fileId;
+  if (data.fileData && data.fileName) {
+    const saved = saveFileToDrive(data.fileData, data.fileType, data.fileName);
+    fileUrl = saved.url; fileId = saved.id;
+    obj.url = fileUrl; obj.fileId = fileId; obj.fileName = data.fileName;
+  }
+  const ver = (parseInt(doc.version) || 1) + 1;
+  obj.version = ver;
+  obj.uploadedAt = new Date().toISOString();
+  updateRowByHeaders(SHEETS.DOCUMENTS, 'id', data.id, obj);
+  // Vymaž všechna potvrzení -> všichni musí znovu potvrdit aktualizovaný dokument
+  deleteRowByCol(SHEETS.CONFIRMATIONS, 'docId', data.id);
+  const aType = obj.audienceType || doc.audienceType;
+  const aList = data.audienceList !== undefined ? data.audienceList : parseList(doc.audienceList);
+  const targets = resolveAudience(aType, aList);
+  sendDocumentUpdateNotification(obj.title || doc.title, obj.category !== undefined ? obj.category : doc.category, obj.desc !== undefined ? obj.desc : doc.desc, fileUrl, obj.deadline !== undefined ? obj.deadline : doc.deadline, targets);
+  return { success: true, version: ver, url: fileUrl, fileId };
 }
 function deleteDocument(id) { deleteRowByCol(SHEETS.DOCUMENTS, 'id', id); return { success: true }; }
 function resolveAudience(audienceType, audienceList) {
@@ -433,6 +458,25 @@ function sendDocumentNotification(title, category, desc, fileUrl, deadline, targ
     const html = emailShell('Interní dokumentový systém', body);
     emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Nový dokument k potvrzení', `${title}${catText} — ${PORTAL_URL}`, { htmlBody: html, name: 'Vista Resort' }));
   } catch(err) { Logger.log('doc email: ' + err.message); }
+}
+function sendDocumentUpdateNotification(title, category, desc, fileUrl, deadline, targets) {
+  try {
+    const emails = (targets || getEmployees().employees).map(e => e.email).filter(em => em && em.includes('@'));
+    if (emails.length === 0) return;
+    const catText = category ? ` [${category}]` : '';
+    const deadlineText = deadline ? fmtDateCz(deadline) : '';
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
+      <div style="background:#f7eed8;border:1px solid #ecd6a3;border-radius:8px;padding:12px 16px;margin-bottom:20px;"><div style="font-size:14px;font-weight:bold;color:#a6781f;">Dokument byl aktualizován</div><div style="font-size:13px;color:#876012;margin-top:3px;">Je třeba ho znovu potvrdit.</div></div>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${title}${catText}</div>
+        ${desc ? `<div style="font-size:13px;color:#9c7852;margin-top:4px;">${desc}</div>` : ''}
+        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Potvrďte do: ${deadlineText}</div>` : ''}
+      </div>
+      <p style="color:#9c7852;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a znovu potvrďte přečtení aktualizovaného dokumentu.</p>
+      ${btnHtml('Otevřít Vista Portál', PORTAL_URL)}`;
+    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Aktualizovaný dokument k potvrzení', `${title}${catText} byl aktualizován — ${PORTAL_URL}`, { htmlBody: emailShell('Aktualizace dokumentu', body), name: 'Vista Resort' }));
+  } catch(err) { Logger.log('doc update email: ' + err.message); }
 }
 function sendConfirmationNotification(employeeName, docTitle) {
   try {
@@ -760,15 +804,14 @@ function setup() {
   Logger.log('Vista Portál v5 setup hotov. Listy: Zaměstnanci, Dokumenty, Potvrzení, Úkoly, Komentáře, Faktury, Deník.');
 }
 
-// Nastaví VŠECHNY automatické spouštěče: denní kontrola termínů (8:00) + 14denní report majiteli (pondělí 7:00).
+// Nastaví automatický spouštěč: denní kontrola termínů (8:00). Majiteli se NEodesílají žádné emaily.
 function setupTrigger() {
   ScriptApp.getProjectTriggers().forEach(t => {
     const fn = t.getHandlerFunction();
     if (fn === 'checkDeadlines' || fn === 'sendBiweeklyReport') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('checkDeadlines').timeBased().atHour(8).everyDays(1).inTimezone('Europe/Prague').create();
-  ScriptApp.newTrigger('sendBiweeklyReport').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).everyWeeks(2).atHour(7).inTimezone('Europe/Prague').create();
-  Logger.log('Spouštěče nastaveny: denní kontrola 8:00, 14denní report pondělí 7:00.');
+  Logger.log('Spouštěč nastaven: denní kontrola termínů v 8:00. Majiteli nechodí žádné emaily (přehled vidí v portálu).');
 }
 
 function resetEmployees() {
