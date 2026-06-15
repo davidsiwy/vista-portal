@@ -308,6 +308,7 @@ a { color: inherit; }
   display: inline-flex; align-items: center; gap: 9px; padding: 8px 15px 8px 9px; border: 1.5px solid var(--line-strong);
   border-radius: var(--r-pill); background: var(--card); cursor: pointer; transition: all 0.16s var(--ease); user-select: none;
 }
+.person-chip * { pointer-events: none; }
 .person-chip:hover { border-color: var(--fern); background: var(--paper); }
 .person-chip.selected { background: var(--peacock); border-color: var(--peacock); }
 .person-chip.selected .pc-name { color: #fff; }
@@ -1513,11 +1514,27 @@ function buildPeoplePick() {
     aWrap.innerHTML = msg; dWrap.innerHTML = '<div class="person-pick-empty">—</div>';
     return;
   }
-  aWrap.innerHTML = employees.map(e => personChipHtml(e, taskSelAssignees.has(e.id), 'a')).join('');
-  dWrap.innerHTML = employees.map(e => personChipHtml(e, taskSelDeps.has(e.id), 'd')).join('');
+  aWrap.innerHTML = employees.map(e => personChipHtml(e, taskSelAssignees.has(e.id))).join('');
+  dWrap.innerHTML = employees.map(e => personChipHtml(e, taskSelDeps.has(e.id))).join('');
+
+  // event delegation — works on dynamically injected HTML in all browsers
+  aWrap.onclick = (ev) => {
+    const chip = ev.target.closest('.person-chip');
+    if (!chip) return;
+    const id = chip.dataset.id;
+    if (taskSelAssignees.has(id)) { taskSelAssignees.delete(id); chip.classList.remove('selected'); }
+    else { taskSelAssignees.add(id); chip.classList.add('selected'); }
+  };
+  dWrap.onclick = (ev) => {
+    const chip = ev.target.closest('.person-chip');
+    if (!chip) return;
+    const id = chip.dataset.id;
+    if (taskSelDeps.has(id)) { taskSelDeps.delete(id); chip.classList.remove('selected'); }
+    else { taskSelDeps.add(id); chip.classList.add('selected'); }
+  };
 }
-function personChipHtml(e, selected, kind) {
-  return `<div class="person-chip ${selected?'selected':''}" data-id="${e.id}" onclick="togglePerson('${kind}','${e.id}',this)">
+function personChipHtml(e, selected) {
+  return `<div class="person-chip ${selected?'selected':''}" data-id="${e.id}">
     <span class="pc-avatar">${initials(e.name)}</span>
     <span><span class="pc-name">${esc(e.name)}</span>${e.dept?`<span class="pc-dept">${esc(e.dept)}</span>`:''}</span>
   </div>`;
