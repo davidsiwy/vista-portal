@@ -138,7 +138,20 @@ function getEmployees() {
 function addEmployee(data) {
   const sheet = getSheet(SHEETS.EMPLOYEES);
   const id = data.id || 'emp_' + Date.now();
-  sheet.appendRow([id, data.name, data.role || '', data.dept || '', data.pin, data.email || '', new Date().toISOString()]);
+
+  // Write by actual column positions (handles upgraded sheets with shifted columns)
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const row = new Array(headers.length).fill('');
+  const set = (col, val) => { const i = headers.indexOf(col); if (i >= 0) row[i] = val; };
+  set('id', id);
+  set('name', data.name || '');
+  set('role', data.role || '');
+  set('dept', data.dept || '');
+  set('pin', data.pin || '');
+  set('email', data.email || '');
+  set('createdAt', new Date().toISOString());
+  sheet.appendRow(row);
+
   return { success: true, id };
 }
 
@@ -378,4 +391,17 @@ function setup() {
   initSheets();
   Logger.log('Vista Portál setup dokončen.');
   Logger.log('Nyní nasaď web app: Nasadit > Nové nasazení > Web app');
+}
+
+// Smaže rozbitý list Zaměstnanci a vytvoří čistý se správnými sloupci.
+// Spusť jednou ručně pokud máš rozhozené sloupce. POZOR: smaže všechny zaměstnance.
+function resetEmployees() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const old = ss.getSheetByName(SHEETS.EMPLOYEES);
+  if (old) ss.deleteSheet(old);
+  const s = ss.insertSheet(SHEETS.EMPLOYEES);
+  s.appendRow(['id', 'name', 'role', 'dept', 'pin', 'email', 'createdAt']);
+  s.setFrozenRows(1);
+  s.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
+  Logger.log('List Zaměstnanci resetován. Sloupce: id, name, role, dept, pin, email, createdAt');
 }
