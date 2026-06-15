@@ -1197,14 +1197,51 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="section-header">
       <div>
         <div class="section-title">Reporty</div>
-        <div class="section-subtitle">Přehledy a exporty pro vedení</div>
+        <div class="section-subtitle" id="reports-subtitle">Reporty a zápisy z porad</div>
+      </div>
+      <button class="btn-sm primary" id="report-upload-btn" onclick="toggleReportUpload()">+ Nahrát report</button>
+    </div>
+
+    <!-- upload form -->
+    <div id="report-upload-section" style="display:none" class="admin-card" style="margin-bottom:18px">
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group" style="margin:0"><label>Název</label><input type="text" id="rep-title" placeholder="např. Zápis z porady 10.6.2026"></div>
+        <div class="form-group" style="margin:0">
+          <label>Kategorie</label>
+          <select id="rep-category">
+            <option value="Zápis z porady">Zápis z porady</option>
+            <option value="Měsíční report">Měsíční report</option>
+            <option value="Provozní report">Provozní report</option>
+            <option value="Ostatní">Ostatní</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Popis (nepovinné)</label><input type="text" id="rep-desc" placeholder="Krátký popis"></div>
+      <div class="upload-area" id="rep-upload-area" onclick="document.getElementById('rep-file-input').click()">
+        <div class="upload-icon">⬆</div>
+        <p id="rep-file-label">Klikněte pro výběr souboru</p>
+        <span>PDF, Word, Excel, obrázky — max 20 MB</span>
+      </div>
+      <input type="file" id="rep-file-input" class="file-hidden" onchange="onRepFileSelected(this)">
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn-sm primary" onclick="uploadReport()">Nahrát</button>
+        <button class="btn-sm secondary" onclick="toggleReportUpload()">Zrušit</button>
       </div>
     </div>
-    <div class="admin-card" style="text-align:center;padding:60px 30px">
-      <div style="font-size:48px;margin-bottom:16px">📋</div>
-      <div style="font-family:var(--serif);font-size:22px;color:var(--peacock);margin-bottom:10px">Reporty</div>
-      <div style="font-family:var(--sans);font-size:14px;color:var(--ink-faint);max-width:380px;margin:0 auto">Tato sekce se teprve připravuje. Brzy zde bude možné stahovat měsíční přehledy, výkazy docházky a souhrny schválených faktur.</div>
+
+    <!-- filter bar -->
+    <div class="filters" id="reports-filters" style="display:none;margin-bottom:18px">
+      <select class="filter-select" id="rep-cat-filter" onchange="renderReports()">
+        <option value="">Všechny kategorie</option>
+        <option value="Zápis z porady">Zápisy z porad</option>
+        <option value="Měsíční report">Měsíční reporty</option>
+        <option value="Provozní report">Provozní reporty</option>
+        <option value="Ostatní">Ostatní</option>
+      </select>
     </div>
+
+    <!-- list -->
+    <div id="reports-list"></div>
   </div>
 
 </div><!-- /app -->
@@ -1373,7 +1410,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 // ============================================================
 
 // ===== STATE =====
-let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [];
+let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [];
 let currentUser = null;       // { id, name, role, dept } or role-user
 let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
 let isAdmin = false;          // gm or admin (full rights)
@@ -1479,18 +1516,20 @@ function tabsForRole() {
     { key:'reports',  label:'Reporty' }
   ];
   if (isAdmin) return [
-    { key:'tasks',   label:'Úkoly' },
-    { key:'docs',    label:'Dokumenty' },
-    { key:'invoices',label:'Faktury' },
-    { key:'trzby',   label:'Tržby' },
-    { key:'worklog', label:'Deník' },
-    { key:'admin',   label:'Správa' }
+    { key:'tasks',    label:'Úkoly' },
+    { key:'docs',     label:'Dokumenty' },
+    { key:'invoices', label:'Faktury' },
+    { key:'trzby',    label:'Tržby' },
+    { key:'reports',  label:'Reporty' },
+    { key:'worklog',  label:'Deník' },
+    { key:'admin',    label:'Správa' }
   ];
   return [
-    { key:'tasks',   label:'Úkoly' },
-    { key:'docs',    label:'Dokumenty' },
-    { key:'invoices',label:'Faktury' },
-    { key:'worklog', label:'Můj deník' }
+    { key:'tasks',    label:'Úkoly' },
+    { key:'docs',     label:'Dokumenty' },
+    { key:'invoices', label:'Faktury' },
+    { key:'reports',  label:'Reporty' },
+    { key:'worklog',  label:'Můj deník' }
   ];
 }
 
@@ -1552,6 +1591,7 @@ function switchTab(tab) {
   if (tab === 'worklog') renderWorklog();
   if (tab === 'overview') renderOverview();
   if (tab === 'trzby') { if (trzbyData || prijmyData) renderTrzby(); else renderTrzbyEmpty(); }
+  if (tab === 'reports') renderReports();
 }
 
 // ===== LOAD DATA =====
@@ -1565,6 +1605,7 @@ async function loadData() {
     comments      = res.comments || [];
     invoices      = res.invoices || [];
     worklog       = res.worklog || [];
+    reports       = res.reports || [];
     refreshAll();
   } catch(e) {
     showToast('Chyba při načítání dat: ' + e.message, 'error');
@@ -1579,6 +1620,7 @@ function refreshAll() {
   if (activeTab === 'invoices') renderInvoices();
   if (activeTab === 'worklog') renderWorklog();
   if (activeTab === 'overview') renderOverview();
+  if (activeTab === 'reports') renderReports();
 }
 
 function buildFilterOptions() {
@@ -2152,15 +2194,14 @@ function renderAdmin() {
 }
 
 function applyOwnerRestrictions() {
-  // Owner can view + approve, but not upload docs/invoices/trzby or manage employees
   const hide = isOwner;
   document.querySelectorAll('[data-manage]').forEach(el => el.style.display = hide ? 'none' : '');
-  // invoice upload button — jen admin/GM
   const addInvBtn = document.getElementById('add-invoice-btn');
-  if (addInvBtn) addInvBtn.style.display = (isOwner) ? 'none' : '';
-  // trzby upload label — jen admin/GM
+  if (addInvBtn) addInvBtn.style.display = isOwner ? 'none' : '';
   const trzbyUploadLabel = document.querySelector('#tab-trzby .section-header label.btn-sm');
-  if (trzbyUploadLabel) trzbyUploadLabel.style.display = (isOwner) ? 'none' : '';
+  if (trzbyUploadLabel) trzbyUploadLabel.style.display = isOwner ? 'none' : '';
+  const repUploadBtn = document.getElementById('report-upload-btn');
+  if (repUploadBtn) repUploadBtn.style.display = isOwner ? 'none' : '';
 }
 
 function updateStats() {
@@ -3810,6 +3851,111 @@ const DEMO_PRIJMY = [
   ];
 
 // ============================================================
+// REPORTY
+// ============================================================
+let repFile = null;
+
+function renderReports() {
+  const cat = document.getElementById('rep-cat-filter')?.value || '';
+  const filtered = cat ? reports.filter(r => r.category === cat) : reports;
+
+  document.getElementById('reports-filters').style.display = reports.length ? 'flex' : 'none';
+  document.getElementById('reports-subtitle').textContent =
+    reports.length + ' ' + plural(reports.length, 'report', 'reporty', 'reportů');
+
+  const c = document.getElementById('reports-list');
+  if (filtered.length === 0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>
+      <h3>${reports.length === 0 ? 'Zatím žádné reporty' : 'Nic v této kategorii'}</h3>
+      <p>${reports.length === 0 ? 'Nahrajte první report nebo zápis z porady.' : 'Zkuste jinou kategorii.'}</p></div>`;
+    return;
+  }
+
+  // group by month
+  const groups = {};
+  filtered.slice().sort((a,b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)).forEach(r => {
+    const d = new Date(r.uploadedAt);
+    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+
+  const MONTHS = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+  const canDel = isAdmin;
+
+  c.innerHTML = Object.keys(groups).sort().reverse().map(key => {
+    const [y, m] = key.split('-');
+    const header = `<div style="font-family:var(--serif);font-size:18px;color:var(--peacock);margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)">${MONTHS[parseInt(m)]} ${y}</div>`;
+    const rows = groups[key].map(r => {
+      const icon = r.category === 'Zápis z porady' ? '📝' : r.category === 'Měsíční report' ? '📊' : r.category === 'Provozní report' ? '🔧' : '📄';
+      const previewBtn = r.fileId ? `<button class="btn-download" onclick="openPreview('${escAttr(r.title)}','${r.fileId}','')">Zobrazit</button>` : '';
+      const dlBtn = r.fileId ? `<a href="${driveDownloadUrl(r.fileId)}" target="_blank" class="btn-download">Stáhnout</a>` : (r.url && r.url !== '#' ? `<a href="${esc(r.url)}" target="_blank" class="btn-download">Stáhnout</a>` : '');
+      const delBtn = canDel ? `<button class="btn-icon danger" onclick="deleteReport('${r.id}')" title="Smazat">🗑</button>` : '';
+      return `<div class="doc-card">
+        <div class="doc-icon">${icon}</div>
+        <div class="doc-info">
+          <div class="doc-name">${esc(r.title)} <span class="doc-cat-pill">${esc(r.category)}</span></div>
+          <div class="doc-meta">
+            ${r.desc ? `<span>${esc(r.desc)}</span>` : ''}
+            <span>Nahrál ${esc(r.uploadedByName || '—')} · ${fmtDate(r.uploadedAt)}</span>
+          </div>
+        </div>
+        <div class="doc-actions">${previewBtn}${dlBtn}${delBtn}</div>
+      </div>`;
+    }).join('');
+    return header + rows;
+  }).join('');
+}
+
+function toggleReportUpload() {
+  const s = document.getElementById('report-upload-section');
+  const open = s.style.display !== 'none';
+  s.style.display = open ? 'none' : 'block';
+  if (open) { repFile = null; document.getElementById('rep-title').value = ''; document.getElementById('rep-desc').value = ''; document.getElementById('rep-file-label').textContent = 'Klikněte pro výběr souboru'; document.getElementById('rep-file-input').value = ''; }
+}
+
+function onRepFileSelected(input) {
+  if (!input.files[0]) return;
+  repFile = input.files[0];
+  document.getElementById('rep-file-label').textContent = 'Vybráno: ' + repFile.name;
+}
+
+async function uploadReport() {
+  const title = document.getElementById('rep-title').value.trim();
+  const category = document.getElementById('rep-category').value;
+  const desc = document.getElementById('rep-desc').value.trim();
+  if (!title) { showToast('Zadejte název', 'error'); return; }
+
+  if (DEMO_MODE()) {
+    reports.unshift({ id:'rep_'+Date.now(), title, category, desc, url:'#', fileId:'', fileName:'demo.pdf', uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt: new Date().toISOString() });
+    toggleReportUpload(); renderReports();
+    showToast('Report nahrán (demo)', 'success'); return;
+  }
+  if (!repFile) { showToast('Vyberte soubor', 'error'); return; }
+  showLoading('Nahrávám report...');
+  try {
+    const b64 = await fileToB64(repFile);
+    const res = await apiCall('uploadReport', { title, category, desc, fileName: repFile.name, fileType: repFile.type, fileData: b64, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt: new Date().toISOString() });
+    reports.unshift({ id: res.id, title, category, desc, url: res.url, fileId: res.fileId||'', fileName: repFile.name, uploadedBy: currentUser?.id||'', uploadedByName: currentUser?.name||'', uploadedAt: new Date().toISOString() });
+    toggleReportUpload(); renderReports();
+    hideLoading();
+    showToast('Report nahrán', 'success');
+    pushNotif('doc','📋','Nový report: <strong>'+esc(title)+'</strong>',{tab:'reports'});
+  } catch(e) { hideLoading(); showToast('Chyba: '+e.message, 'error'); }
+}
+
+async function deleteReport(id) {
+  if (!confirm('Smazat tento report?')) return;
+  if (!DEMO_MODE()) {
+    try { await apiCall('deleteReport', { id }); }
+    catch(e) { showToast('Chyba při mazání', 'error'); return; }
+  }
+  reports = reports.filter(r => r.id !== id);
+  renderReports();
+  showToast('Report smazán');
+}
+
+// ============================================================
 // DEMO DATA
 // ============================================================
 function loadDemoData() {
@@ -3844,8 +3990,12 @@ function loadDemoData() {
     { id:'wl2', employeeId:'e2', employeeName:'Petr Svoboda', segment:'Wellness', date:new Date().toISOString().slice(0,10), text:'Dokončil úklid wellness po rekonstrukci, vše připraveno pro hosty.', createdAt:new Date().toISOString() },
     { id:'wl3', employeeId:'e1', employeeName:'Jana Nováková', segment:'Hotel', date:new Date(Date.now()-86400000).toISOString().slice(0,10), text:'Check-in 12 hostů, vyřízeny 3 rezervace na příští týden.', createdAt:new Date(Date.now()-86400000).toISOString() }
   ];
+  reports = [
+    { id:'r1', title:'Zápis z porady vedení — červen 2026', category:'Zápis z porady', desc:'Projednány investice, personální záležitosti a příprava léta', url:'#', fileId:'', fileName:'zapis_porady_cerven.pdf', uploadedBy:'__admin__', uploadedByName:'Administrátor', uploadedAt:new Date(Date.now()-86400000*2).toISOString() },
+    { id:'r2', title:'Měsíční report Wellness — květen 2026', category:'Měsíční report', desc:'Obsazenost, tržby a zákaznické hodnocení', url:'#', fileId:'', fileName:'wellness_kv_2026.pdf', uploadedBy:'e2', uploadedByName:'Petr Svoboda', uploadedAt:new Date(Date.now()-86400000*14).toISOString() },
+    { id:'r3', title:'Provozní report Hotel — květen 2026', category:'Provozní report', desc:'ADR, RevPAR, obsazenost pokojů', url:'#', fileId:'', fileName:'hotel_kv_2026.pdf', uploadedBy:'e1', uploadedByName:'Jana Nováková', uploadedAt:new Date(Date.now()-86400000*15).toISOString() }
+  ];
   buildFilterOptions();
-  // přednahrát reálná tržby data z Vista reportu (duben–červen 2026)
   trzbyData = DEMO_TRZBY;
 }
 </script>
