@@ -519,6 +519,20 @@ a { color: inherit; }
 .dash-doc-row:last-child { border-bottom: none; }
 .dash-doc-prog { flex: 1; min-width: 0; }
 
+/* Tržby controls */
+.seg-toggle { display: inline-flex; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 4px; gap: 4px; }
+.seg-toggle-btn { padding: 9px 20px; border: none; background: transparent; border-radius: var(--r-pill); font-family: var(--sans); font-size: 13.5px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: all 0.16s var(--ease); white-space: nowrap; }
+.seg-toggle-btn.active { background: var(--peacock); color: #fff; box-shadow: var(--shadow-sm); }
+.trzby-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.tf-group { display: flex; flex-direction: column; gap: 5px; }
+.tf-label { font-size: 11px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--sans); }
+.tf-group .filter-select { min-width: 130px; }
+.cmp-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+.cmp-box { text-align: center; padding: 18px; background: var(--paper); border-radius: var(--r); }
+.cmp-box-label { font-size: 12px; color: var(--ink-faint); font-family: var(--sans); margin-bottom: 6px; }
+.cmp-box-val { font-size: 26px; font-weight: 700; color: var(--peacock); font-family: var(--serif); }
+.cmp-arrow { font-size: 20px; font-weight: 700; font-family: var(--sans); }
+
 /* ===================================================
    NOTIFICATIONS
    =================================================== */
@@ -705,6 +719,11 @@ a { color: inherit; }
   /* buttons */
   /* trzby grid stacks on mobile */
   #trzby-grid-2 { grid-template-columns: 1fr !important; }
+  .trzby-filters { flex-direction: column; align-items: stretch; }
+  .tf-group .filter-select { width: 100%; }
+  .seg-toggle { width: 100%; }
+  .seg-toggle-btn { flex: 1; padding: 11px 10px; font-size: 12.5px; }
+  .cmp-grid { grid-template-columns: 1fr; gap: 10px; }
   .btn-sm { padding: 10px 16px; font-size: 13px; }
   .section-header .btn-sm { white-space: nowrap; }
   /* notif panel — full width bottom on mobile */
@@ -1060,18 +1079,59 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="section-header">
       <div>
         <div class="section-title">Tržby</div>
-        <div class="section-subtitle" id="trzby-subtitle">Nahrajte denní report pro zobrazení přehledu</div>
+        <div class="section-subtitle" id="trzby-subtitle">Přehled výnosů a příjmů</div>
       </div>
       <label class="btn-sm primary" style="cursor:pointer">
-        📊 Nahrát report (xlsx)
+        📊 Nahrát report
         <input type="file" id="trzby-file-input" accept=".xlsx,.xls" style="display:none" onchange="onTrzbyFile(this)">
       </label>
+    </div>
+
+    <!-- Controls -->
+    <div id="trzby-controls" style="display:none">
+      <!-- View toggle: Výnosy / Příjmy -->
+      <div class="seg-toggle" style="margin-bottom:14px">
+        <button class="seg-toggle-btn active" id="vt-vynosy" onclick="setTrzbyView('vynosy')">Výnosy dle středisek</button>
+        <button class="seg-toggle-btn" id="vt-prijmy" onclick="setTrzbyView('prijmy')">Příjmy dle plateb</button>
+      </div>
+
+      <!-- Period + segment filters -->
+      <div class="trzby-filters">
+        <div class="tf-group">
+          <label class="tf-label">Období</label>
+          <select id="tf-period" class="filter-select" onchange="onPeriodTypeChange()">
+            <option value="month">Měsíc</option>
+            <option value="year">Rok</option>
+            <option value="range">Vlastní rozsah</option>
+          </select>
+        </div>
+        <div class="tf-group" id="tf-month-wrap">
+          <label class="tf-label">Měsíc</label>
+          <select id="tf-month" class="filter-select" onchange="renderTrzby()"></select>
+        </div>
+        <div class="tf-group" id="tf-year-wrap" style="display:none">
+          <label class="tf-label">Rok</label>
+          <select id="tf-year" class="filter-select" onchange="renderTrzby()"></select>
+        </div>
+        <div class="tf-group" id="tf-range-from-wrap" style="display:none">
+          <label class="tf-label">Od</label>
+          <input type="date" id="tf-from" class="filter-select" onchange="renderTrzby()">
+        </div>
+        <div class="tf-group" id="tf-range-to-wrap" style="display:none">
+          <label class="tf-label">Do</label>
+          <input type="date" id="tf-to" class="filter-select" onchange="renderTrzby()">
+        </div>
+        <div class="tf-group" id="tf-seg-wrap">
+          <label class="tf-label" id="tf-seg-label">Středisko</label>
+          <select id="tf-seg" class="filter-select" onchange="renderTrzby()"><option value="">Všechna</option></select>
+        </div>
+      </div>
     </div>
 
     <!-- KPI cards -->
     <div class="stats-row" id="trzby-kpi" style="display:none">
       <div class="stat-card">
-        <div class="stat-label">Měsíc celkem</div>
+        <div class="stat-label" id="kpi-1-label">Celkem za období</div>
         <div class="stat-value" id="kpi-mesic">—</div>
         <div class="stat-sub" id="kpi-mesic-diff"></div>
       </div>
@@ -1096,7 +1156,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div id="trzby-charts" style="display:none">
       <div class="admin-card" style="margin-bottom:18px">
         <div class="admin-card-header" style="margin-bottom:16px">
-          <div class="admin-card-title">Denní výnosy</div>
+          <div class="admin-card-title" id="trzby-daily-title">Denní vývoj</div>
           <div id="trzby-period-label" style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)"></div>
         </div>
         <canvas id="chart-daily" style="width:100%;max-height:280px"></canvas>
@@ -1104,13 +1164,25 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" id="trzby-grid-2">
         <div class="admin-card">
-          <div class="admin-card-title" style="margin-bottom:18px">Segmenty (tento měsíc)</div>
+          <div class="admin-card-title" style="margin-bottom:18px" id="trzby-pie-title">Rozpad za období</div>
           <canvas id="chart-segs" style="max-height:240px"></canvas>
         </div>
         <div class="admin-card">
           <div class="admin-card-title" style="margin-bottom:14px">Měsíční srovnání</div>
           <canvas id="chart-monthly" style="max-height:240px"></canvas>
         </div>
+      </div>
+
+      <!-- Compare two periods -->
+      <div class="admin-card" style="margin-bottom:18px">
+        <div class="admin-card-header" style="margin-bottom:14px">
+          <div class="admin-card-title">Srovnání dvou období</div>
+        </div>
+        <div class="trzby-filters" style="margin-bottom:16px">
+          <div class="tf-group"><label class="tf-label">Období A</label><select id="cmp-a" class="filter-select" onchange="renderCompare()"></select></div>
+          <div class="tf-group"><label class="tf-label">Období B</label><select id="cmp-b" class="filter-select" onchange="renderCompare()"></select></div>
+        </div>
+        <div id="cmp-result"></div>
       </div>
 
       <!-- Daily table -->
@@ -1120,7 +1192,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         </div>
         <div style="overflow-x:auto">
           <table class="data-table" id="trzby-table">
-            <thead><tr><th>Datum</th><th style="text-align:right">Celkem</th><th style="text-align:right">Hotel</th><th style="text-align:right">F&amp;B</th><th style="text-align:right">Wellness</th><th style="text-align:right">Sport</th><th style="text-align:right">C&amp;B</th><th style="text-align:right">Akademie</th></tr></thead>
+            <thead id="trzby-thead"></thead>
             <tbody id="trzby-tbody"></tbody>
           </table>
         </div>
@@ -1130,7 +1202,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div id="trzby-empty" class="empty-state">
       <div class="empty-icon">📊</div>
       <h3>Žádná data</h3>
-      <p>Nahrajte denní report Excel (soubor Výnosy dle středisek) tlačítkem výše.<br>Data se zobrazí okamžitě, nic se neukládá na server.</p>
+      <p>Nahrajte report Excel (Výnosy dle středisek nebo Příjmy) tlačítkem výše.</p>
     </div>
   </div>
 
@@ -1478,7 +1550,7 @@ function switchTab(tab) {
   if (tab === 'invoices') renderInvoices();
   if (tab === 'worklog') renderWorklog();
   if (tab === 'overview') renderOverview();
-  if (tab === 'trzby') { if (trzbyData) renderTrzby(); else renderTrzbyEmpty(); }
+  if (tab === 'trzby') { if (trzbyData || prijmyData) renderTrzby(); else renderTrzbyEmpty(); }
 }
 
 // ===== LOAD DATA =====
@@ -3285,43 +3357,265 @@ function generateInitialNotifs() {
 // ============================================================
 // TRŽBY — Excel upload + SheetJS parsing + Chart.js
 // ============================================================
-let trzbyData = null;
+let trzbyData = null;       // Výnosy dle středisek
+let prijmyData = null;      // Příjmy dle plateb
 let trzbyUploadedAt = '';
+let trzbyView = 'vynosy';   // 'vynosy' | 'prijmy'
 let chartDaily = null, chartSegs = null, chartMonthly = null;
 
-// Načte tržby — ze serveru (vedení) nebo z výchozích Vista dat. Jen majitel/GM/admin.
-async function initTrzbyData() {
-  if (!isOwner && !isAdmin) return;   // zaměstnanci tržby nevidí
-  // 1) zkus načíst uložený report ze serveru
-  if (!DEMO_MODE()) {
-    try {
-      const res = await apiCall('getTrzby', {});
-      if (res && res.json) {
-        const parsed = JSON.parse(res.json);
-        if (parsed.length) {
-          trzbyData = parsed.map(r => ({ ...r, date: new Date(r.date) }));
-          trzbyUploadedAt = res.uploadedAt || '';
-          return;
-        }
-      }
-    } catch(e) { /* fallback na výchozí data */ }
-  }
-  // 2) fallback — výchozí Vista data (duben–červen 2026)
-  if (typeof DEMO_TRZBY !== 'undefined' && DEMO_TRZBY.length) {
-    trzbyData = DEMO_TRZBY.map(r => ({ ...r, date: r.date instanceof Date ? r.date : new Date(r.date) }));
+const SEGS = ['Hotel', 'F&B', 'C&B', 'Wellness', 'Sport', 'Akademie'];
+const SEG_COLS = [2, 3, 4, 5, 6, 7];
+const PAYS = ['Hotovost', 'Kartou', 'Na účet', 'Faktura vystavena'];
+const PAY_COLS = [2, 3, 4, 5];
+const CAT_COLORS = ['#13302e','#586845','#9da38b','#dfc196','#9c7852','#3d301f'];
+const MONTHS_CZ = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+
+// active dataset + its category dimension
+function activeData() { return trzbyView === 'prijmy' ? prijmyData : trzbyData; }
+function activeCats() { return trzbyView === 'prijmy' ? PAYS : SEGS; }
+function catVal(row, cat) { return trzbyView === 'prijmy' ? (row.pays?.[cat]||0) : (row.segs?.[cat]||0); }
+
+function renderTrzbyEmpty() {
+  if (trzbyData || prijmyData) return;
+  document.getElementById('trzby-empty').style.display = 'block';
+  document.getElementById('trzby-controls').style.display = 'none';
+  document.getElementById('trzby-kpi').style.display   = 'none';
+  document.getElementById('trzby-charts').style.display= 'none';
+}
+
+function setTrzbyView(v) {
+  trzbyView = v;
+  document.getElementById('vt-vynosy').classList.toggle('active', v === 'vynosy');
+  document.getElementById('vt-prijmy').classList.toggle('active', v === 'prijmy');
+  buildSegFilter();
+  renderTrzby();
+}
+
+function onPeriodTypeChange() {
+  const t = document.getElementById('tf-period').value;
+  document.getElementById('tf-month-wrap').style.display      = t === 'month' ? '' : 'none';
+  document.getElementById('tf-year-wrap').style.display       = t === 'year'  ? '' : 'none';
+  document.getElementById('tf-range-from-wrap').style.display = t === 'range' ? '' : 'none';
+  document.getElementById('tf-range-to-wrap').style.display   = t === 'range' ? '' : 'none';
+  renderTrzby();
+}
+
+function buildPeriodOptions() {
+  const data = activeData();
+  if (!data || !data.length) return;
+  // months present
+  const monthKeys = [...new Set(data.map(r => r.y + '-' + String(r.m).padStart(2,'0')))].sort().reverse();
+  const monthSel = document.getElementById('tf-month');
+  monthSel.innerHTML = monthKeys.map(k => { const [y,m]=k.split('-'); return `<option value="${k}">${MONTHS_CZ[parseInt(m)]} ${y}</option>`; }).join('');
+  const years = [...new Set(data.map(r => r.y))].sort().reverse();
+  document.getElementById('tf-year').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  // compare selects
+  const cmpOpts = monthKeys.map(k => { const [y,m]=k.split('-'); return `<option value="${k}">${MONTHS_CZ[parseInt(m)]} ${y}</option>`; }).join('');
+  document.getElementById('cmp-a').innerHTML = cmpOpts;
+  document.getElementById('cmp-b').innerHTML = cmpOpts;
+  if (monthKeys[1]) document.getElementById('cmp-b').value = monthKeys[1];
+  // range defaults
+  const allDates = data.map(r => r.date).sort((a,b)=>a-b);
+  if (allDates.length) {
+    document.getElementById('tf-from').value = allDates[0].toISOString().slice(0,10);
+    document.getElementById('tf-to').value = allDates[allDates.length-1].toISOString().slice(0,10);
   }
 }
 
-const SEGS = ['Hotel', 'F&B', 'C&B', 'Wellness', 'Sport', 'Akademie'];
-const SEG_COLORS = ['#13302e','#586845','#9da38b','#dfc196','#9c7852','#3d301f'];
-const SEG_COLS = [2, 3, 4, 5, 6, 7];
-const MONTHS_CZ = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+function buildSegFilter() {
+  const cats = activeCats();
+  document.getElementById('tf-seg-label').textContent = trzbyView === 'prijmy' ? 'Platba' : 'Středisko';
+  document.getElementById('tf-seg').innerHTML = '<option value="">Vše</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
 
-function renderTrzbyEmpty() {
-  if (trzbyData) return;
-  document.getElementById('trzby-empty').style.display = 'block';
-  document.getElementById('trzby-kpi').style.display   = 'none';
-  document.getElementById('trzby-charts').style.display= 'none';
+// returns rows filtered by current period selection
+function getPeriodRows() {
+  const data = activeData();
+  if (!data) return { rows: [], label: '', prevRows: [], prevLabel: '', lyRows: [] };
+  const t = document.getElementById('tf-period').value;
+  let rows = [], label = '', prevRows = [], prevLabel = '', lyRows = [];
+
+  if (t === 'month') {
+    const key = document.getElementById('tf-month').value;
+    if (!key) return { rows: [], label: '' };
+    const [y, m] = key.split('-').map(Number);
+    rows = data.filter(r => r.y === y && r.m === m);
+    label = MONTHS_CZ[m] + ' ' + y;
+    const pm = m === 1 ? 12 : m-1, py = m === 1 ? y-1 : y;
+    prevRows = data.filter(r => r.y === py && r.m === pm); prevLabel = MONTHS_CZ[pm] + ' ' + py;
+    lyRows = data.filter(r => r.y === y-1 && r.m === m);
+  } else if (t === 'year') {
+    const y = parseInt(document.getElementById('tf-year').value);
+    rows = data.filter(r => r.y === y);
+    label = 'Rok ' + y;
+    prevRows = data.filter(r => r.y === y-1); prevLabel = 'Rok ' + (y-1);
+    lyRows = prevRows;
+  } else {
+    const from = new Date(document.getElementById('tf-from').value);
+    const to = new Date(document.getElementById('tf-to').value);
+    rows = data.filter(r => r.date >= from && r.date <= to);
+    label = from.toLocaleDateString('cs-CZ') + ' – ' + to.toLocaleDateString('cs-CZ');
+  }
+  return { rows, label, prevRows, prevLabel, lyRows };
+}
+
+function renderTrzby() {
+  if (!trzbyData && !prijmyData) { renderTrzbyEmpty(); return; }
+  if (typeof Chart === 'undefined') {
+    document.getElementById('trzby-empty').style.display = 'block';
+    document.getElementById('trzby-empty').innerHTML = '<div class="loading"><div class="spinner"></div>Načítám grafy...</div>';
+    let a = 0; const w = setInterval(() => { a++; if (typeof Chart !== 'undefined') { clearInterval(w); renderTrzby(); } else if (a > 30) { clearInterval(w); document.getElementById('trzby-empty').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Grafy se nenačetly</h3><p>Obnov stránku (Cmd+Shift+R).</p></div>'; } }, 300);
+    return;
+  }
+  const data = activeData();
+  if (!data || !data.length) {
+    document.getElementById('trzby-controls').style.display = 'block';
+    document.getElementById('trzby-empty').style.display = 'block';
+    document.getElementById('trzby-empty').innerHTML = '<div class="empty-icon">📊</div><h3>Tento pohled nemá data</h3><p>Nahrajte odpovídající report.</p>';
+    document.getElementById('trzby-kpi').style.display = 'none';
+    document.getElementById('trzby-charts').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('trzby-empty').style.display = 'none';
+  document.getElementById('trzby-controls').style.display = 'block';
+  document.getElementById('trzby-kpi').style.display   = 'grid';
+  document.getElementById('trzby-charts').style.display= 'block';
+
+  const segFilter = document.getElementById('tf-seg').value;  // '' = all
+  const { rows, label, prevRows, prevLabel, lyRows } = getPeriodRows();
+  const cats = activeCats();
+
+  // value of a row respecting segment filter
+  const rowVal = r => segFilter ? catVal(r, segFilter) : r.celkem;
+
+  const sum = arr => arr.reduce((s,r) => s + rowVal(r), 0);
+  const total = sum(rows), prevTotal = sum(prevRows), lyTotal = sum(lyRows);
+  const avg = rows.length ? total / rows.length : 0;
+  const prevAvg = prevRows.length ? prevTotal / prevRows.length : 0;
+  const bestRow = rows.reduce((b,r) => rowVal(r) > (b ? rowVal(b) : 0) ? r : b, null);
+
+  const viewName = trzbyView === 'prijmy' ? 'Příjmy' : 'Výnosy';
+  const segNote = segFilter ? ' · ' + segFilter : '';
+  const upInfo = trzbyUploadedAt ? ' · akt. ' + fmtDate(trzbyUploadedAt) : '';
+  document.getElementById('trzby-subtitle').textContent = viewName + segNote + ' · ' + label + ' · ' + Math.round(total).toLocaleString('cs-CZ') + ' Kč' + upInfo;
+  document.getElementById('trzby-period-label').textContent = label + segNote;
+  document.getElementById('kpi-1-label').textContent = 'Celkem za období';
+  document.getElementById('trzby-daily-title').textContent = 'Denní vývoj — ' + viewName;
+  document.getElementById('trzby-pie-title').textContent = trzbyView === 'prijmy' ? 'Rozpad dle plateb' : 'Rozpad dle středisek';
+
+  const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
+  const setDiff = (id, a, b, lbl) => {
+    const el = document.getElementById(id);
+    if (!b) { el.textContent = ''; return; }
+    const d = ((a-b)/b*100).toFixed(1);
+    el.textContent = (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d) + ' % vs ' + lbl;
+    el.style.color = d >= 0 ? 'var(--ok)' : 'var(--danger)';
+  };
+  document.getElementById('kpi-mesic').textContent = fmt(total);
+  setDiff('kpi-mesic-diff', total, prevTotal, prevLabel || 'minulé');
+  document.getElementById('kpi-avg').textContent = fmt(avg);
+  setDiff('kpi-avg-diff', avg, prevAvg, 'minulé');
+  document.getElementById('kpi-loni').textContent = lyRows.length ? fmt(lyTotal) : '—';
+  if (lyRows.length) setDiff('kpi-yoy', total, lyTotal, 'loni');
+  else { const el = document.getElementById('kpi-yoy'); el.textContent = 'Loni bez dat'; el.style.color = 'var(--ink-faint)'; }
+  document.getElementById('kpi-best').textContent = bestRow ? fmt(rowVal(bestRow)) : '—';
+  document.getElementById('kpi-best-date').textContent = bestRow ? bestRow.date.toLocaleDateString('cs-CZ') : '';
+
+  // Chart 1 — daily bars
+  if (chartDaily) { chartDaily.destroy(); chartDaily = null; }
+  const sorted = rows.slice().sort((a,b)=>a.date-b.date);
+  const showLabels = sorted.length <= 40;
+  const ctx1 = document.getElementById('chart-daily').getContext('2d');
+  chartDaily = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(r => showLabels ? (r.day + '.' + r.m + '.') : ''),
+      datasets: [
+        { label: 'Hodnota', data: sorted.map(r => rowVal(r)), backgroundColor: sorted.map(r => rowVal(r) >= avg ? '#13302e' : '#586845'), borderRadius: 4, borderSkipped: false },
+        { label: 'Průměr', data: sorted.map(()=>avg), type:'line', borderColor:'#dfc196', borderWidth:2.5, borderDash:[6,4], pointRadius:0, fill:false }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title: items => sorted[items[0].dataIndex].date.toLocaleDateString('cs-CZ'), label: ctx => ' ' + Math.round(ctx.raw).toLocaleString('cs-CZ') + ' Kč' }, backgroundColor:'#13302e', padding:12, cornerRadius:8, titleFont:{family:'Fraunces'}, bodyFont:{family:'Outfit'} } }, scales:{ x:{grid:{display:false},ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c',maxRotation:0,autoSkip:true,maxTicksLimit:15}}, y:{ticks:{font:{family:'Outfit',size:11},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:'#e7e0d2'}} }, animation:{duration:450} }
+  });
+  document.getElementById('chart-daily').style.height = '260px';
+
+  // Chart 2 — category breakdown doughnut
+  if (chartSegs) { chartSegs.destroy(); chartSegs = null; }
+  const catTotals = cats.map(c => rows.reduce((s,r)=>s+catVal(r,c),0));
+  const nz = cats.map((c,i)=>({c,v:catTotals[i],col:CAT_COLORS[i]})).filter(x=>x.v>0);
+  const ctx2 = document.getElementById('chart-segs').getContext('2d');
+  chartSegs = new Chart(ctx2, {
+    type:'doughnut',
+    data:{ labels: nz.map(x=>x.c), datasets:[{ data: nz.map(x=>x.v), backgroundColor: nz.map(x=>x.col), borderWidth:3, borderColor:'#fff' }] },
+    options:{ responsive:true, plugins:{ legend:{position:'right',labels:{font:{family:'Outfit'},boxWidth:14,padding:9}}, tooltip:{ callbacks:{ label: ctx => { const tot = nz.reduce((s,x)=>s+x.v,0); return ' ' + Math.round(ctx.raw).toLocaleString('cs-CZ') + ' Kč (' + (ctx.raw/tot*100).toFixed(0) + '%)'; } }, backgroundColor:'#13302e', bodyFont:{family:'Outfit'}, padding:10, cornerRadius:8 } }, cutout:'62%', animation:{duration:550} }
+  });
+
+  // Chart 3 — monthly comparison (last 12)
+  if (chartMonthly) { chartMonthly.destroy(); chartMonthly = null; }
+  const mMap = {};
+  data.forEach(r => { const k = r.y+'-'+String(r.m).padStart(2,'0'); mMap[k] = (mMap[k]||0) + rowVal(r); });
+  const mKeys = Object.keys(mMap).sort().slice(-12);
+  const ctx3 = document.getElementById('chart-monthly').getContext('2d');
+  chartMonthly = new Chart(ctx3, {
+    type:'bar',
+    data:{ labels: mKeys.map(k=>{const[y,m]=k.split('-');return MONTHS_CZ[parseInt(m)].slice(0,3)+" '"+y.slice(2);}), datasets:[{ data: mKeys.map(k=>mMap[k]), backgroundColor:'#58684588', borderRadius:4, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+Math.round(ctx.raw/1000).toLocaleString('cs-CZ')+' tis. Kč'},backgroundColor:'#13302e',padding:10,cornerRadius:8,bodyFont:{family:'Outfit'}}}, scales:{x:{grid:{display:false},ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c'}},y:{ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:'#e7e0d2'}}}, animation:{duration:400} }
+  });
+  document.getElementById('chart-monthly').style.height = '200px';
+
+  // Table
+  const thead = document.getElementById('trzby-thead');
+  thead.innerHTML = '<tr><th>Datum</th><th style="text-align:right">Celkem</th>' + cats.map(c=>`<th style="text-align:right">${esc(c)}</th>`).join('') + '</tr>';
+  const tbody = document.getElementById('trzby-tbody');
+  tbody.innerHTML = sorted.slice().reverse().map(r => `
+    <tr>
+      <td>${r.date.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})}</td>
+      <td style="text-align:right;font-weight:700;color:var(--peacock)">${Math.round(r.celkem).toLocaleString('cs-CZ')}</td>
+      ${cats.map(c=>`<td style="text-align:right;color:var(--ink-soft)">${catVal(r,c)>0?Math.round(catVal(r,c)).toLocaleString('cs-CZ'):'—'}</td>`).join('')}
+    </tr>`).join('');
+
+  renderCompare();
+}
+
+function renderCompare() {
+  const data = activeData();
+  if (!data) return;
+  const ka = document.getElementById('cmp-a').value, kb = document.getElementById('cmp-b').value;
+  if (!ka || !kb) { document.getElementById('cmp-result').innerHTML = ''; return; }
+  const segFilter = document.getElementById('tf-seg').value;
+  const rowVal = r => segFilter ? catVal(r, segFilter) : r.celkem;
+  const periodSum = key => { const [y,m]=key.split('-').map(Number); return data.filter(r=>r.y===y&&r.m===m).reduce((s,r)=>s+rowVal(r),0); };
+  const lbl = key => { const [y,m]=key.split('-'); return MONTHS_CZ[parseInt(m)]+' '+y; };
+  const a = periodSum(ka), b = periodSum(kb);
+  const diff = b > 0 ? ((a-b)/b*100).toFixed(1) : 0;
+  const up = a >= b;
+  document.getElementById('cmp-result').innerHTML = `
+    <div class="cmp-grid">
+      <div class="cmp-box"><div class="cmp-box-label">${lbl(ka)}</div><div class="cmp-box-val">${Math.round(a).toLocaleString('cs-CZ')} Kč</div></div>
+      <div class="cmp-arrow" style="color:${up?'var(--ok)':'var(--danger)'}">${up?'▲':'▼'} ${Math.abs(diff)} %</div>
+      <div class="cmp-box"><div class="cmp-box-label">${lbl(kb)}</div><div class="cmp-box-val">${Math.round(b).toLocaleString('cs-CZ')} Kč</div></div>
+    </div>
+    <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--ink-faint);font-family:var(--sans)">Rozdíl ${Math.round(a-b).toLocaleString('cs-CZ')} Kč${segFilter?' · '+segFilter:''}</div>`;
+}
+
+// ── init: načte uložené reporty ze serveru, jinak výchozí Vista data ──
+async function initTrzbyData() {
+  if (!isOwner && !isAdmin) return;
+  if (!DEMO_MODE()) {
+    try {
+      const res = await apiCall('getTrzby', {});
+      if (res) {
+        if (res.json)  { const p = JSON.parse(res.json);  if (p.length) trzbyData  = p.map(r=>({...r,date:new Date(r.date)})); }
+        if (res.json2) { const p = JSON.parse(res.json2); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
+        trzbyUploadedAt = res.uploadedAt || '';
+      }
+    } catch(e) {}
+  }
+  if (!trzbyData && typeof DEMO_TRZBY !== 'undefined') trzbyData = DEMO_TRZBY.map(r=>({...r,date:r.date instanceof Date?r.date:new Date(r.date)}));
+  if (!prijmyData && typeof DEMO_PRIJMY !== 'undefined') prijmyData = DEMO_PRIJMY.map(r=>({...r,date:r.date instanceof Date?r.date:new Date(r.date)}));
+  buildPeriodOptions();
+  buildSegFilter();
 }
 
 function onTrzbyFile(input) {
@@ -3331,175 +3625,63 @@ function onTrzbyFile(input) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      const XLSX2 = window.XLSX;
-      if (!XLSX2) throw new Error('SheetJS se nenačetl. Zkontroluj připojení k internetu.');
-      const wb = XLSX2.read(e.target.result, { type: 'array', cellDates: true });
+      const X = window.XLSX;
+      if (!X) throw new Error('SheetJS se nenačetl. Zkontroluj internet.');
+      const wb = X.read(e.target.result, { type: 'array', cellDates: true });
+      // detect type: look at header row of first sheet
+      const firstWs = wb.Sheets[wb.SheetNames[0]];
+      const head = X.utils.sheet_to_json(firstWs, { header: 1 })[0] || [];
+      const headStr = head.join(' ').toLowerCase();
+      const isPrijmy = headStr.includes('hotovost') || headStr.includes('kartou') || headStr.includes('na účet');
+      const cols = isPrijmy ? PAY_COLS : SEG_COLS;
+      const cats = isPrijmy ? PAYS : SEGS;
+      const catKey = isPrijmy ? 'pays' : 'segs';
+
       const rows = [];
-      wb.SheetNames.forEach(sname => {
-        const ws = wb.Sheets[sname];
-        const arr = XLSX2.utils.sheet_to_json(ws, { header: 1, defval: null });
+      wb.SheetNames.forEach(sn => {
+        const arr = X.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: null });
         for (let i = 1; i < arr.length; i++) {
           const r = arr[i];
-          if (!r || r[0] === null || r[0] === undefined) continue;
+          if (!r || r[0] == null) continue;
           let d = r[0];
-          if (typeof d === 'number') { const nd = XLSX2.SSF.parse_date_code(d); d = new Date(nd.y, nd.m-1, nd.d); }
+          if (typeof d === 'number') { const nd = X.SSF.parse_date_code(d); d = new Date(nd.y, nd.m-1, nd.d); }
           else if (typeof d === 'string') d = new Date(d);
           if (!(d instanceof Date) || isNaN(d.getTime())) continue;
           const celkem = parseFloat(r[1]) || 0;
           if (celkem <= 0) continue;
-          const segs = {};
-          SEGS.forEach((s,i) => { segs[s] = parseFloat(r[SEG_COLS[i]]) || 0; });
-          rows.push({ date: d, y: d.getFullYear(), m: d.getMonth()+1, day: d.getDate(), celkem, segs });
+          const breakdown = {};
+          cats.forEach((c,j) => { breakdown[c] = parseFloat(r[cols[j]]) || 0; });
+          rows.push({ date: d, y: d.getFullYear(), m: d.getMonth()+1, day: d.getDate(), celkem, [catKey]: breakdown });
         }
       });
-      if (rows.length === 0) throw new Error('Žádná data nenalezena. Zkontroluj formát souboru.');
-      rows.sort((a,b) => a.date - b.date);
-      trzbyData = rows;
+      if (rows.length === 0) throw new Error('Žádná data nenalezena.');
+      rows.sort((a,b)=>a.date-b.date);
+      if (isPrijmy) { prijmyData = rows; trzbyView = 'prijmy'; }
+      else { trzbyData = rows; trzbyView = 'vynosy'; }
+      document.getElementById('vt-vynosy').classList.toggle('active', !isPrijmy);
+      document.getElementById('vt-prijmy').classList.toggle('active', isPrijmy);
+      buildPeriodOptions(); buildSegFilter();
       hideLoading();
       renderTrzby();
-      // ulož na server, ať to vidí majitel i ostatní vedení po reloadu
+      // ulož na server
       if (!DEMO_MODE()) {
-        showLoading('Ukládám report na server...');
+        showLoading('Ukládám na server...');
         try {
-          const json = JSON.stringify(rows.map(r => ({ date: r.date.toISOString().slice(0,10), y: r.y, m: r.m, day: r.day, celkem: r.celkem, segs: r.segs })));
-          await apiCall('saveTrzby', { json, uploadedBy: currentUser?.name || '' });
+          const payload = { uploadedBy: currentUser?.name || '' };
+          if (trzbyData)  payload.json  = JSON.stringify(trzbyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,segs:r.segs})));
+          if (prijmyData) payload.json2 = JSON.stringify(prijmyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,pays:r.pays})));
+          await apiCall('saveTrzby', payload);
           hideLoading();
-          showToast('Report uložen, vidí ho i majitel a vedení', 'success');
-        } catch(err) { hideLoading(); showToast('Data zobrazena, ale uložení na server selhalo: ' + err.message, 'error'); }
+          showToast((isPrijmy?'Příjmy':'Výnosy') + ' uloženy, vidí je i majitel', 'success');
+        } catch(err) { hideLoading(); showToast('Zobrazeno, ale uložení selhalo: ' + err.message, 'error'); }
+      } else {
+        showToast((isPrijmy?'Příjmy':'Výnosy') + ' načteny (' + rows.length + ' dní)', 'success');
       }
-      pushNotif('invoice','📊','Tržby nahrány: <strong>' + esc(file.name) + '</strong>',{tab:'trzby'});
-    } catch(err) {
-      hideLoading();
-      showToast('Chyba: ' + err.message, 'error');
-    }
+      pushNotif('invoice','📊',(isPrijmy?'Příjmy':'Výnosy')+' nahrány: <strong>'+esc(file.name)+'</strong>',{tab:'trzby'});
+    } catch(err) { hideLoading(); showToast('Chyba: ' + err.message, 'error'); }
   };
   reader.readAsArrayBuffer(file);
   input.value = '';
-}
-
-function renderTrzby() {
-  if (!trzbyData || trzbyData.length === 0) { renderTrzbyEmpty(); return; }
-
-  // Chart.js se načítá z CDN — pokud ještě není připraveno, počkáme
-  if (typeof Chart === 'undefined') {
-    document.getElementById('trzby-empty').style.display = 'none';
-    document.getElementById('trzby-kpi').style.display   = 'none';
-    document.getElementById('trzby-charts').style.display= 'none';
-    document.getElementById('trzby-subtitle').textContent = 'Načítám grafy...';
-    const spinner = '<div class="loading"><div class="spinner"></div>Načítám Chart.js...</div>';
-    document.getElementById('trzby-empty').innerHTML = spinner;
-    document.getElementById('trzby-empty').style.display = 'block';
-    let attempts = 0;
-    const wait = setInterval(() => {
-      attempts++;
-      if (typeof Chart !== 'undefined') { clearInterval(wait); renderTrzby(); }
-      else if (attempts > 30) {
-        clearInterval(wait);
-        document.getElementById('trzby-empty').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Grafy se nenačetly</h3><p>Zkontroluj připojení k internetu a obnov stránku (Cmd+Shift+R).</p></div>';
-      }
-    }, 300);
-    return;
-  }
-  document.getElementById('trzby-empty').style.display = 'none';
-  document.getElementById('trzby-kpi').style.display   = 'grid';
-  document.getElementById('trzby-charts').style.display= 'block';
-
-  const last = trzbyData[trzbyData.length - 1];
-  const curY = last.y, curM = last.m;
-  const curRows  = trzbyData.filter(r => r.y === curY && r.m === curM);
-  const pm = curM === 1 ? 12 : curM - 1, py = curM === 1 ? curY - 1 : curY;
-  const prevRows = trzbyData.filter(r => r.y === py && r.m === pm);
-  const lyRows   = trzbyData.filter(r => r.y === curY - 1 && r.m === curM);
-
-  const sum = arr => arr.reduce((s,r) => s + r.celkem, 0);
-  const curTotal = sum(curRows), prevTotal = sum(prevRows), lyTotal = sum(lyRows);
-  const curAvg   = curRows.length ? curTotal / curRows.length : 0;
-  const prevAvg  = prevRows.length ? prevTotal / prevRows.length : 0;
-  const bestRow  = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
-
-  const upInfo = trzbyUploadedAt ? ' · aktualizováno ' + fmtDate(trzbyUploadedAt) : '';
-  document.getElementById('trzby-subtitle').textContent = MONTHS_CZ[curM] + ' ' + curY + ' · ' + curRows.length + ' dní · ' + Math.round(curTotal).toLocaleString('cs-CZ') + ' Kč' + upInfo;
-  document.getElementById('trzby-period-label').textContent = MONTHS_CZ[curM] + ' ' + curY;
-
-  const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
-  const setDiff = (elId, a, b, label) => {
-    const el = document.getElementById(elId);
-    if (!b) { el.textContent = ''; return; }
-    const d = ((a-b)/b*100).toFixed(1);
-    el.textContent = (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d) + ' % vs ' + label;
-    el.style.color = d >= 0 ? 'var(--ok)' : 'var(--danger)';
-  };
-  document.getElementById('kpi-mesic').textContent = fmt(curTotal);
-  setDiff('kpi-mesic-diff', curTotal, prevTotal, 'min. měsíc');
-  document.getElementById('kpi-avg').textContent = fmt(curAvg);
-  setDiff('kpi-avg-diff', curAvg, prevAvg, 'min. měsíc');
-  document.getElementById('kpi-loni').textContent = lyRows.length ? fmt(lyTotal) : '—';
-  if (lyRows.length) setDiff('kpi-yoy', curTotal, lyTotal, 'loni');
-  else { const el = document.getElementById('kpi-yoy'); el.textContent = 'Data loni nejsou k dispozici'; el.style.color = 'var(--ink-faint)'; }
-  document.getElementById('kpi-best').textContent = fmt(bestRow.celkem || 0);
-  document.getElementById('kpi-best-date').textContent = bestRow.date ? bestRow.date.toLocaleDateString('cs-CZ') : '';
-
-  // Chart 1 — daily bars
-  if (chartDaily) { chartDaily.destroy(); chartDaily = null; }
-  const ctx1 = document.getElementById('chart-daily').getContext('2d');
-  chartDaily = new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: curRows.map(r => r.day + '.'),
-      datasets: [
-        { label: 'Výnos', data: curRows.map(r => r.celkem), backgroundColor: curRows.map(r => r.celkem >= curAvg ? '#13302e' : '#586845'), borderRadius: 5, borderSkipped: false },
-        { label: 'Průměr', data: curRows.map(() => curAvg), type: 'line', borderColor: '#dfc196', borderWidth: 2.5, borderDash: [6,4], pointRadius: 0, fill: false }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + Math.round(ctx.raw).toLocaleString('cs-CZ') + ' Kč' }, backgroundColor: '#13302e', padding: 12, cornerRadius: 8, titleFont: {family:'Fraunces'}, bodyFont:{family:'Outfit'} } },
-      scales: { x: { grid: { display:false }, ticks:{font:{family:'Outfit',size:11},color:'#9a9b8c'} }, y: { ticks:{font:{family:'Outfit',size:11},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'}, grid:{color:'#e7e0d2'} } },
-      animation: { duration: 500 }
-    }
-  });
-  document.getElementById('chart-daily').style.height = '260px';
-
-  // Chart 2 — segment doughnut
-  if (chartSegs) { chartSegs.destroy(); chartSegs = null; }
-  const segTotals = SEGS.map(s => curRows.reduce((sum,r) => sum + (r.segs[s]||0), 0)).filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
-  const segLabels = SEGS.filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
-  const segColors = SEG_COLORS.filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
-  const ctx2 = document.getElementById('chart-segs').getContext('2d');
-  chartSegs = new Chart(ctx2, {
-    type: 'doughnut',
-    data: { labels: segLabels, datasets: [{ data: segTotals, backgroundColor: segColors, borderWidth: 3, borderColor: '#fff' }] },
-    options: { responsive:true, plugins:{ legend:{position:'right',labels:{font:{family:'Outfit'},boxWidth:14,padding:10}}, tooltip:{callbacks:{label:ctx=>' '+Math.round(ctx.raw).toLocaleString('cs-CZ')+' Kč'},backgroundColor:'#13302e',bodyFont:{family:'Outfit'},padding:10,cornerRadius:8} }, cutout:'62%', animation:{duration:600} }
-  });
-
-  // Chart 3 — monthly bars last 12 months
-  if (chartMonthly) { chartMonthly.destroy(); chartMonthly = null; }
-  const monthMap = {};
-  trzbyData.forEach(r => { const k = r.y+'-'+String(r.m).padStart(2,'0'); monthMap[k] = (monthMap[k]||0) + r.celkem; });
-  const mKeys   = Object.keys(monthMap).sort().slice(-12);
-  const curKey  = curY + '-' + String(curM).padStart(2,'0');
-  const mLabels = mKeys.map(k => { const [y,m]=k.split('-'); return MONTHS_CZ[parseInt(m)].slice(0,3)+" '"+y.slice(2); });
-  const ctx3 = document.getElementById('chart-monthly').getContext('2d');
-  chartMonthly = new Chart(ctx3, {
-    type: 'bar',
-    data: { labels: mLabels, datasets: [{ label: 'Výnosy', data: mKeys.map(k => monthMap[k]), backgroundColor: mKeys.map(k => k===curKey?'#13302e':'#58684588'), borderRadius: 4, borderSkipped:false }] },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+Math.round(ctx.raw/1000).toLocaleString('cs-CZ')+' tis. Kč'},backgroundColor:'#13302e',padding:10,cornerRadius:8,titleFont:{family:'Fraunces'},bodyFont:{family:'Outfit'}} },
-      scales:{ x:{grid:{display:false},ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c'}}, y:{ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:'#e7e0d2'}} },
-      animation:{duration:400}
-    }
-  });
-  document.getElementById('chart-monthly').style.height = '200px';
-
-  // Table
-  const tbody = document.getElementById('trzby-tbody');
-  tbody.innerHTML = curRows.slice().reverse().map(r => `
-    <tr>
-      <td>${r.date.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})}</td>
-      <td style="text-align:right;font-weight:700;color:var(--peacock)">${Math.round(r.celkem).toLocaleString('cs-CZ')}</td>
-      ${SEGS.map(s=>`<td style="text-align:right;color:var(--ink-soft)">${(r.segs[s]||0)>0?Math.round(r.segs[s]).toLocaleString('cs-CZ'):'—'}</td>`).join('')}
-    </tr>`).join('');
 }
 
 const DEMO_TRZBY = [
@@ -3578,6 +3760,84 @@ const DEMO_TRZBY = [
     {date:new Date('2026-06-12'),y:2026,m:6,day:12,celkem:111377.07,segs:{"Hotel":68202.03,"F&B":22087.9,"C&B":0,"Wellness":14596.43,"Sport":1289.3,"Akademie":5201.41}},
     {date:new Date('2026-06-13'),y:2026,m:6,day:13,celkem:175182.6,segs:{"Hotel":82975.06,"F&B":34048.33,"C&B":11941.48,"Wellness":28500.94,"Sport":2679.52,"Akademie":14037.27}},
     {date:new Date('2026-06-14'),y:2026,m:6,day:14,celkem:37104.12,segs:{"Hotel":22342.97,"F&B":7082.58,"C&B":0,"Wellness":4821.42,"Sport":0.0,"Akademie":2857.15}}
+  ];
+
+const DEMO_PRIJMY = [
+    {date:new Date('2026-04-01'),y:2026,m:4,day:1,celkem:58749.96,pays:{"Hotovost":27608.0,"Kartou":27161.96,"Na účet":3980.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-02'),y:2026,m:4,day:2,celkem:89840.74,pays:{"Hotovost":11851.0,"Kartou":52221.74,"Na účet":25768.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-03'),y:2026,m:4,day:3,celkem:120640.47,pays:{"Hotovost":29959.0,"Kartou":61879.47,"Na účet":28802.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-04'),y:2026,m:4,day:4,celkem:55391.48,pays:{"Hotovost":10864.0,"Kartou":44527.48,"Na účet":0.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-05'),y:2026,m:4,day:5,celkem:58331.5,pays:{"Hotovost":9023.0,"Kartou":39548.5,"Na účet":9760.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-06'),y:2026,m:4,day:6,celkem:78014.08,pays:{"Hotovost":8255.0,"Kartou":68759.08,"Na účet":1000.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-07'),y:2026,m:4,day:7,celkem:87975.75,pays:{"Hotovost":7751.0,"Kartou":49479.25,"Na účet":10745.5,"Faktura vystavena":20000.0}},
+    {date:new Date('2026-04-08'),y:2026,m:4,day:8,celkem:91535.85,pays:{"Hotovost":9890.0,"Kartou":73245.85,"Na účet":0.0,"Faktura vystavena":8400.0}},
+    {date:new Date('2026-04-09'),y:2026,m:4,day:9,celkem:202732.84,pays:{"Hotovost":18026.0,"Kartou":92089.64,"Na účet":18300.0,"Faktura vystavena":74317.2}},
+    {date:new Date('2026-04-10'),y:2026,m:4,day:10,celkem:97493.15,pays:{"Hotovost":16580.0,"Kartou":67855.35,"Na účet":13057.8,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-11'),y:2026,m:4,day:11,celkem:85741.36,pays:{"Hotovost":13449.0,"Kartou":71692.36,"Na účet":600.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-12'),y:2026,m:4,day:12,celkem:43628.59,pays:{"Hotovost":895.0,"Kartou":35833.59,"Na účet":6900.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-13'),y:2026,m:4,day:13,celkem:48730.89,pays:{"Hotovost":12000.0,"Kartou":30930.89,"Na účet":5800.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-14'),y:2026,m:4,day:14,celkem:180454.79,pays:{"Hotovost":3668.0,"Kartou":42019.79,"Na účet":10080.0,"Faktura vystavena":124687.0}},
+    {date:new Date('2026-04-15'),y:2026,m:4,day:15,celkem:247075.4,pays:{"Hotovost":5620.0,"Kartou":68375.4,"Na účet":5680.0,"Faktura vystavena":167400.0}},
+    {date:new Date('2026-04-16'),y:2026,m:4,day:16,celkem:85826.0,pays:{"Hotovost":13150.5,"Kartou":58845.5,"Na účet":9330.0,"Faktura vystavena":4500.0}},
+    {date:new Date('2026-04-17'),y:2026,m:4,day:17,celkem:126292.0,pays:{"Hotovost":7580.0,"Kartou":98522.0,"Na účet":9680.0,"Faktura vystavena":10510.0}},
+    {date:new Date('2026-04-18'),y:2026,m:4,day:18,celkem:58045.49,pays:{"Hotovost":5980.0,"Kartou":48565.49,"Na účet":3500.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-19'),y:2026,m:4,day:19,celkem:144607.82,pays:{"Hotovost":7880.0,"Kartou":109895.32,"Na účet":26832.5,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-20'),y:2026,m:4,day:20,celkem:61914.0,pays:{"Hotovost":9735.0,"Kartou":51429.0,"Na účet":750.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-21'),y:2026,m:4,day:21,celkem:83102.65,pays:{"Hotovost":11655.0,"Kartou":67047.65,"Na účet":4400.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-22'),y:2026,m:4,day:22,celkem:88172.91,pays:{"Hotovost":5220.0,"Kartou":59744.91,"Na účet":23208.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-23'),y:2026,m:4,day:23,celkem:113945.82,pays:{"Hotovost":40453.0,"Kartou":59122.82,"Na účet":750.0,"Faktura vystavena":13620.0}},
+    {date:new Date('2026-04-24'),y:2026,m:4,day:24,celkem:87511.2,pays:{"Hotovost":21545.0,"Kartou":51610.2,"Na účet":14356.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-25'),y:2026,m:4,day:25,celkem:102374.89,pays:{"Hotovost":7518.0,"Kartou":83160.61,"Na účet":11696.28,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-26'),y:2026,m:4,day:26,celkem:143967.71,pays:{"Hotovost":17983.0,"Kartou":120584.71,"Na účet":5400.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-27'),y:2026,m:4,day:27,celkem:148514.59,pays:{"Hotovost":2571.0,"Kartou":113045.09,"Na účet":16542.5,"Faktura vystavena":16356.0}},
+    {date:new Date('2026-04-28'),y:2026,m:4,day:28,celkem:56667.28,pays:{"Hotovost":21814.0,"Kartou":20037.28,"Na účet":14816.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-04-29'),y:2026,m:4,day:29,celkem:212274.86,pays:{"Hotovost":4378.0,"Kartou":63446.86,"Na účet":43409.0,"Faktura vystavena":101041.0}},
+    {date:new Date('2026-04-30'),y:2026,m:4,day:30,celkem:53083.62,pays:{"Hotovost":3290.0,"Kartou":34293.62,"Na účet":500.0,"Faktura vystavena":15000.0}},
+    {date:new Date('2026-05-01'),y:2026,m:5,day:1,celkem:92896.15,pays:{"Hotovost":5595.0,"Kartou":87301.15,"Na účet":0.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-02'),y:2026,m:5,day:2,celkem:79769.99,pays:{"Hotovost":1140.0,"Kartou":64679.99,"Na účet":13950.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-03'),y:2026,m:5,day:3,celkem:242944.84,pays:{"Hotovost":38722.0,"Kartou":162661.22999999998,"Na účet":41561.61,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-04'),y:2026,m:5,day:4,celkem:53269.87,pays:{"Hotovost":2880.0,"Kartou":43300.8,"Na účet":7089.07,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-05'),y:2026,m:5,day:5,celkem:146360.66,pays:{"Hotovost":10310.0,"Kartou":48661.66,"Na účet":0.0,"Faktura vystavena":87389.0}},
+    {date:new Date('2026-05-06'),y:2026,m:5,day:6,celkem:128737.84,pays:{"Hotovost":7645.0,"Kartou":69355.98,"Na účet":39136.86,"Faktura vystavena":12600.0}},
+    {date:new Date('2026-05-07'),y:2026,m:5,day:7,celkem:202644.91,pays:{"Hotovost":38386.0,"Kartou":78999.03,"Na účet":21709.88,"Faktura vystavena":63550.0}},
+    {date:new Date('2026-05-08'),y:2026,m:5,day:8,celkem:94003.79,pays:{"Hotovost":3774.0,"Kartou":89729.79,"Na účet":500.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-09'),y:2026,m:5,day:9,celkem:82477.92,pays:{"Hotovost":15210.0,"Kartou":66367.92,"Na účet":900.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-10'),y:2026,m:5,day:10,celkem:130874.31,pays:{"Hotovost":8645.0,"Kartou":98749.31,"Na účet":23480.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-11'),y:2026,m:5,day:11,celkem:83918.97,pays:{"Hotovost":3005.0,"Kartou":74923.97,"Na účet":5990.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-12'),y:2026,m:5,day:12,celkem:126682.13,pays:{"Hotovost":0.0,"Kartou":121182.13,"Na účet":5500.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-13'),y:2026,m:5,day:13,celkem:244759.68,pays:{"Hotovost":9045.0,"Kartou":125687.68,"Na účet":10627.0,"Faktura vystavena":99400.0}},
+    {date:new Date('2026-05-14'),y:2026,m:5,day:14,celkem:99211.28,pays:{"Hotovost":11809.0,"Kartou":51402.28,"Na účet":1000.0,"Faktura vystavena":35000.0}},
+    {date:new Date('2026-05-15'),y:2026,m:5,day:15,celkem:222888.54,pays:{"Hotovost":8860.0,"Kartou":44232.54,"Na účet":14600.0,"Faktura vystavena":155196.0}},
+    {date:new Date('2026-05-16'),y:2026,m:5,day:16,celkem:83837.1,pays:{"Hotovost":14310.0,"Kartou":63027.1,"Na účet":6500.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-17'),y:2026,m:5,day:17,celkem:156824.17,pays:{"Hotovost":12425.0,"Kartou":128869.17,"Na účet":15530.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-18'),y:2026,m:5,day:18,celkem:244902.35,pays:{"Hotovost":5375.0,"Kartou":57903.35,"Na účet":20730.0,"Faktura vystavena":160894.0}},
+    {date:new Date('2026-05-19'),y:2026,m:5,day:19,celkem:380359.84,pays:{"Hotovost":17590.0,"Kartou":125877.84,"Na účet":35600.0,"Faktura vystavena":201292.0}},
+    {date:new Date('2026-05-20'),y:2026,m:5,day:20,celkem:248367.1,pays:{"Hotovost":16800.0,"Kartou":84164.02,"Na účet":37400.08,"Faktura vystavena":110003.0}},
+    {date:new Date('2026-05-21'),y:2026,m:5,day:21,celkem:294470.62,pays:{"Hotovost":20290.0,"Kartou":74201.34,"Na účet":23979.28,"Faktura vystavena":176000.0}},
+    {date:new Date('2026-05-22'),y:2026,m:5,day:22,celkem:239011.43,pays:{"Hotovost":2466.0,"Kartou":119945.43,"Na účet":15600.0,"Faktura vystavena":101000.0}},
+    {date:new Date('2026-05-23'),y:2026,m:5,day:23,celkem:88473.49,pays:{"Hotovost":14225.0,"Kartou":71548.49,"Na účet":2700.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-24'),y:2026,m:5,day:24,celkem:174338.21,pays:{"Hotovost":12264.0,"Kartou":150084.21000000002,"Na účet":11990.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-25'),y:2026,m:5,day:25,celkem:408077.54,pays:{"Hotovost":1400.0,"Kartou":52515.54,"Na účet":13480.0,"Faktura vystavena":340682.0}},
+    {date:new Date('2026-05-26'),y:2026,m:5,day:26,celkem:110384.7,pays:{"Hotovost":2539.0,"Kartou":61370.7,"Na účet":15350.0,"Faktura vystavena":31125.0}},
+    {date:new Date('2026-05-27'),y:2026,m:5,day:27,celkem:205726.82,pays:{"Hotovost":2840.0,"Kartou":87571.82,"Na účet":6990.0,"Faktura vystavena":108325.0}},
+    {date:new Date('2026-05-28'),y:2026,m:5,day:28,celkem:120760.41,pays:{"Hotovost":8810.0,"Kartou":100106.41,"Na účet":11844.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-05-29'),y:2026,m:5,day:29,celkem:144157.27,pays:{"Hotovost":15853.0,"Kartou":67512.27,"Na účet":16292.0,"Faktura vystavena":44500.0}},
+    {date:new Date('2026-05-30'),y:2026,m:5,day:30,celkem:89634.56,pays:{"Hotovost":10444.0,"Kartou":54294.56,"Na účet":4590.0,"Faktura vystavena":20306.0}},
+    {date:new Date('2026-05-31'),y:2026,m:5,day:31,celkem:185960.96,pays:{"Hotovost":5754.0,"Kartou":137654.96,"Na účet":42552.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-06-01'),y:2026,m:6,day:1,celkem:127776.21,pays:{"Hotovost":34368.04,"Kartou":33406.27,"Na účet":21788.0,"Faktura vystavena":38213.9}},
+    {date:new Date('2026-06-02'),y:2026,m:6,day:2,celkem:239912.72,pays:{"Hotovost":7095.0,"Kartou":53441.72,"Na účet":19376.0,"Faktura vystavena":160000.0}},
+    {date:new Date('2026-06-03'),y:2026,m:6,day:3,celkem:147907.52,pays:{"Hotovost":9575.0,"Kartou":126210.52,"Na účet":3722.0,"Faktura vystavena":8400.0}},
+    {date:new Date('2026-06-04'),y:2026,m:6,day:4,celkem:235562.75,pays:{"Hotovost":15965.0,"Kartou":86568.75,"Na účet":8302.0,"Faktura vystavena":124727.0}},
+    {date:new Date('2026-06-05'),y:2026,m:6,day:5,celkem:169967.82,pays:{"Hotovost":340.0,"Kartou":94315.82,"Na účet":16482.0,"Faktura vystavena":58830.0}},
+    {date:new Date('2026-06-06'),y:2026,m:6,day:6,celkem:78972.75,pays:{"Hotovost":2025.0,"Kartou":76947.75,"Na účet":0.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-06-07'),y:2026,m:6,day:7,celkem:50958.0,pays:{"Hotovost":3120.0,"Kartou":40948.0,"Na účet":6890.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-06-08'),y:2026,m:6,day:8,celkem:141936.25,pays:{"Hotovost":1902.0,"Kartou":46572.25,"Na účet":60462.0,"Faktura vystavena":33000.0}},
+    {date:new Date('2026-06-09'),y:2026,m:6,day:9,celkem:186366.52,pays:{"Hotovost":6518.0,"Kartou":158258.52,"Na účet":6590.0,"Faktura vystavena":15000.0}},
+    {date:new Date('2026-06-10'),y:2026,m:6,day:10,celkem:282387.1,pays:{"Hotovost":12180.0,"Kartou":44923.5,"Na účet":104860.0,"Faktura vystavena":120423.6}},
+    {date:new Date('2026-06-11'),y:2026,m:6,day:11,celkem:251419.03,pays:{"Hotovost":23220.0,"Kartou":44623.03,"Na účet":19026.0,"Faktura vystavena":164550.0}},
+    {date:new Date('2026-06-12'),y:2026,m:6,day:12,celkem:94629.73,pays:{"Hotovost":8645.0,"Kartou":70192.73,"Na účet":15792.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-06-13'),y:2026,m:6,day:13,celkem:162742.27,pays:{"Hotovost":31244.0,"Kartou":118768.27,"Na účet":12730.0,"Faktura vystavena":0.0}},
+    {date:new Date('2026-06-14'),y:2026,m:6,day:14,celkem:75766.19,pays:{"Hotovost":11164.0,"Kartou":51560.19,"Na účet":13042.0,"Faktura vystavena":0.0}}
   ];
 
 // ============================================================
