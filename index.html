@@ -780,7 +780,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="login-panel">
       <div class="form-group" style="margin-bottom:14px">
         <label>Přístupový PIN</label>
-        <input type="password" id="login-pin" placeholder="••••" maxlength="32" inputmode="numeric" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+        <input type="password" id="login-pin" placeholder="••••" maxlength="32" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
       </div>
       <button class="btn-primary" onclick="doLogin()">Vstoupit</button>
       <p class="login-error" id="login-error">Nesprávný PIN kód.</p>
