@@ -1440,16 +1440,17 @@ const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','tr
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  initTrzbyData();   // načte Vista demo data (duben–červen 2026) jako výchozí stav
   if (DEMO_MODE()) {
     document.getElementById('setup-banner').style.display = 'block';
     loadDemoData();
+    await initTrzbyData();
     initNotifications();
     generateInitialNotifs();
     switchTab(TABS[0].key);
     return;
   }
   await loadData();
+  await initTrzbyData();
   initNotifications();
   generateInitialNotifs();
   switchTab(TABS[0].key);
@@ -3285,16 +3286,29 @@ function generateInitialNotifs() {
 // TRŽBY — Excel upload + SheetJS parsing + Chart.js
 // ============================================================
 let trzbyData = null;
+let trzbyUploadedAt = '';
 let chartDaily = null, chartSegs = null, chartMonthly = null;
 
-// Přednahrát reálná Vista data (duben–červen 2026) — jen pro majitele, GM a admina
-function initTrzbyData() {
-  if (!isOwner && !isAdmin) return;   // zaměstnanci data nevidí
+// Načte tržby — ze serveru (vedení) nebo z výchozích Vista dat. Jen majitel/GM/admin.
+async function initTrzbyData() {
+  if (!isOwner && !isAdmin) return;   // zaměstnanci tržby nevidí
+  // 1) zkus načíst uložený report ze serveru
+  if (!DEMO_MODE()) {
+    try {
+      const res = await apiCall('getTrzby', {});
+      if (res && res.json) {
+        const parsed = JSON.parse(res.json);
+        if (parsed.length) {
+          trzbyData = parsed.map(r => ({ ...r, date: new Date(r.date) }));
+          trzbyUploadedAt = res.uploadedAt || '';
+          return;
+        }
+      }
+    } catch(e) { /* fallback na výchozí data */ }
+  }
+  // 2) fallback — výchozí Vista data (duben–červen 2026)
   if (typeof DEMO_TRZBY !== 'undefined' && DEMO_TRZBY.length) {
-    trzbyData = DEMO_TRZBY.map(r => ({
-      ...r,
-      date: r.date instanceof Date ? r.date : new Date(r.date)
-    }));
+    trzbyData = DEMO_TRZBY.map(r => ({ ...r, date: r.date instanceof Date ? r.date : new Date(r.date) }));
   }
 }
 
@@ -3315,7 +3329,7 @@ function onTrzbyFile(input) {
   if (!file) return;
   showLoading('Načítám report...');
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const XLSX2 = window.XLSX;
       if (!XLSX2) throw new Error('SheetJS se nenačetl. Zkontroluj připojení k internetu.');
@@ -3343,6 +3357,16 @@ function onTrzbyFile(input) {
       trzbyData = rows;
       hideLoading();
       renderTrzby();
+      // ulož na server, ať to vidí majitel i ostatní vedení po reloadu
+      if (!DEMO_MODE()) {
+        showLoading('Ukládám report na server...');
+        try {
+          const json = JSON.stringify(rows.map(r => ({ date: r.date.toISOString().slice(0,10), y: r.y, m: r.m, day: r.day, celkem: r.celkem, segs: r.segs })));
+          await apiCall('saveTrzby', { json, uploadedBy: currentUser?.name || '' });
+          hideLoading();
+          showToast('Report uložen, vidí ho i majitel a vedení', 'success');
+        } catch(err) { hideLoading(); showToast('Data zobrazena, ale uložení na server selhalo: ' + err.message, 'error'); }
+      }
       pushNotif('invoice','📊','Tržby nahrány: <strong>' + esc(file.name) + '</strong>',{tab:'trzby'});
     } catch(err) {
       hideLoading();
@@ -3393,7 +3417,8 @@ function renderTrzby() {
   const prevAvg  = prevRows.length ? prevTotal / prevRows.length : 0;
   const bestRow  = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
 
-  document.getElementById('trzby-subtitle').textContent = MONTHS_CZ[curM] + ' ' + curY + ' · ' + curRows.length + ' dní · ' + Math.round(curTotal).toLocaleString('cs-CZ') + ' Kč';
+  const upInfo = trzbyUploadedAt ? ' · aktualizováno ' + fmtDate(trzbyUploadedAt) : '';
+  document.getElementById('trzby-subtitle').textContent = MONTHS_CZ[curM] + ' ' + curY + ' · ' + curRows.length + ' dní · ' + Math.round(curTotal).toLocaleString('cs-CZ') + ' Kč' + upInfo;
   document.getElementById('trzby-period-label').textContent = MONTHS_CZ[curM] + ' ' + curY;
 
   const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
