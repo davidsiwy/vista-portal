@@ -4,465 +4,420 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vista Portál</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --green-dark: #1a3a2a;
-  --green-mid: #2d5a3d;
-  --green-light: #3d7a52;
-  --gold: #c9a84c;
-  --gold-light: #e8c97a;
+  /* Vista brand palette */
+  --peacock: #13302e;      /* primary dark green */
+  --peacock-90: #1c3d3a;
+  --peacock-80: #284e4a;
+  --fern: #586845;         /* mid green */
+  --artichoke: #9da38b;    /* sage */
+  --cedar: #3d301f;        /* dark brown */
+  --warm-tan: #9c7852;     /* mid tan */
+  --tan: #dfc196;          /* light gold */
+  --tan-soft: #ecdcc0;
+  --cream: #f7f4ee;
+  --cream-100: #f5f3ee;
+  --cream-200: #ece8df;
+  --line: #e2ddd2;
+  --line-dark: #cfc8b8;
+  --ink: #2a2419;
+  --ink-soft: #6f6757;
+  --ink-faint: #a39c8a;
   --white: #ffffff;
-  --gray-50: #fafaf8;
-  --gray-100: #f5f5f3;
-  --gray-200: #e8e8e4;
-  --gray-300: #d0d0ca;
-  --gray-400: #a0a09a;
-  --gray-600: #6b6b64;
-  --gray-900: #1a1a18;
-  --red: #c0392b;
-  --red-light: #fdf2f0;
-  --green-ok: #27ae60;
-  --green-ok-light: #eafaf1;
-  --orange: #e67e22;
-  --orange-light: #fef5ec;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
-  --radius: 8px;
-  --radius-lg: 12px;
+  --red: #9c3a2e;
+  --red-soft: #f6ece9;
+  --green-ok: #586845;
+  --green-ok-soft: #eef2e8;
+  --amber: #b07d2e;
+  --amber-soft: #f8f0e0;
+  --shadow-sm: 0 1px 3px rgba(19,48,46,0.07);
+  --shadow-md: 0 6px 20px rgba(19,48,46,0.10);
+  --shadow-lg: 0 16px 48px rgba(19,48,46,0.18);
+  --r: 8px;
+  --r-lg: 14px;
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter', -apple-system, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var(--gray-900); min-height: 100vh; }
+body { font-family: var(--sans); background: var(--cream); color: var(--ink); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+h1,h2,h3,h4 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.2px; }
 
 /* ===== LOGIN ===== */
 #login-screen {
   min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  background: var(--green-dark); padding: 24px;
-  background-image: radial-gradient(ellipse at 30% 60%, rgba(45,90,61,0.6) 0%, transparent 60%);
+  background: var(--peacock); padding: 24px; position: relative; overflow: hidden;
+}
+#login-screen::before {
+  content: ''; position: absolute; width: 700px; height: 700px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(88,104,69,0.35) 0%, transparent 65%);
+  top: -200px; right: -150px;
 }
 .login-card {
-  background: var(--white); border-radius: var(--radius-lg); padding: 48px 40px;
-  width: 100%; max-width: 400px; box-shadow: var(--shadow-lg);
+  background: var(--white); border-radius: var(--r-lg); padding: 52px 44px;
+  width: 100%; max-width: 410px; box-shadow: var(--shadow-lg); position: relative; z-index: 1;
 }
-.login-logo { text-align: center; margin-bottom: 36px; }
-.logo-mark {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 56px; height: 56px; background: var(--green-dark); border-radius: 12px;
-  margin-bottom: 14px; color: var(--gold); font-size: 28px; font-weight: 800; letter-spacing: -2px;
-}
-.login-logo h1 { font-size: 21px; font-weight: 700; color: var(--green-dark); letter-spacing: -0.4px; }
-.login-logo p { font-size: 13px; color: var(--gray-400); margin-top: 4px; }
-.form-group { margin-bottom: 16px; }
-.form-group label {
-  display: block; font-size: 11px; font-weight: 700; color: var(--gray-600);
-  text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 7px;
-}
+.login-logo { text-align: center; margin-bottom: 34px; }
+.login-logo svg { width: 76px; height: auto; margin-bottom: 18px; }
+.login-logo h1 { font-size: 30px; color: var(--peacock); letter-spacing: 0.5px; }
+.login-logo .tagline { font-size: 11px; color: var(--ink-faint); margin-top: 6px; letter-spacing: 3px; text-transform: uppercase; font-family: var(--sans); font-weight: 500; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 11px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
 .form-group input, .form-group select, .form-group textarea {
-  width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200);
-  border-radius: var(--radius); font-family: 'Inter', sans-serif; font-size: 15px;
-  color: var(--gray-900); background: var(--white); transition: border-color 0.15s; appearance: none;
+  width: 100%; padding: 12px 15px; border: 1.5px solid var(--line); border-radius: var(--r);
+  font-family: var(--sans); font-size: 15px; color: var(--ink); background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s; appearance: none;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  outline: none; border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,90,61,0.08);
+  outline: none; border-color: var(--fern); box-shadow: 0 0 0 3px rgba(88,104,69,0.1);
 }
-.form-group textarea { resize: vertical; min-height: 72px; font-size: 14px; }
-.form-group .hint { font-size: 11px; color: var(--gray-400); margin-top: 5px; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group .hint { font-size: 11px; color: var(--ink-faint); margin-top: 6px; line-height: 1.4; }
 .btn-primary {
-  width: 100%; padding: 13px; background: var(--green-dark); color: var(--white);
-  border: none; border-radius: var(--radius); font-family: 'Inter', sans-serif;
-  font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 8px;
+  width: 100%; padding: 14px; background: var(--peacock); color: var(--tan); border: none;
+  border-radius: var(--r); font-family: var(--sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background 0.15s; margin-top: 8px; letter-spacing: 0.3px;
 }
-.btn-primary:hover { background: var(--green-mid); }
-.login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+.btn-primary:hover { background: var(--peacock-80); }
+.login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 14px; display: none; }
 
-/* ===== APP SHELL ===== */
+/* ===== TOPBAR ===== */
 #app { display: none; }
 .topbar {
-  background: var(--green-dark); color: var(--white); height: 60px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 28px; position: sticky; top: 0; z-index: 200;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  background: var(--peacock); color: var(--white); height: 64px; display: flex;
+  align-items: center; justify-content: space-between; padding: 0 28px;
+  position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 12px rgba(19,48,46,0.25);
 }
 .topbar-left { display: flex; align-items: center; gap: 14px; }
-.topbar-logo {
-  width: 34px; height: 34px; background: var(--gold); border-radius: 7px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 17px; color: var(--green-dark);
-}
-.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.topbar-logo svg { width: 34px; height: auto; display: block; }
+.topbar-title { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--white); letter-spacing: 0.5px; }
 .topbar-badge {
-  background: var(--gold); color: var(--green-dark); font-size: 10px; font-weight: 700;
-  padding: 2px 9px; border-radius: 20px; letter-spacing: 0.4px; text-transform: uppercase;
+  background: var(--tan); color: var(--peacock); font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; text-transform: uppercase; font-family: var(--sans);
 }
-.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
 .topbar-user { font-size: 13px; color: rgba(255,255,255,0.7); }
 .btn-logout {
   background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--white);
-  padding: 6px 14px; border-radius: 6px; font-family: 'Inter', sans-serif;
-  font-size: 13px; cursor: pointer; transition: background 0.15s;
+  padding: 7px 15px; border-radius: 6px; font-family: var(--sans); font-size: 13px; cursor: pointer; transition: background 0.15s;
 }
 .btn-logout:hover { background: rgba(255,255,255,0.2); }
 
 /* ===== TABS ===== */
 .tabs {
-  background: var(--white); border-bottom: 1.5px solid var(--gray-200);
-  padding: 0 28px; display: flex; gap: 0; position: sticky; top: 60px; z-index: 100;
+  background: var(--white); border-bottom: 1.5px solid var(--line); padding: 0 28px;
+  display: flex; gap: 4px; position: sticky; top: 64px; z-index: 100;
 }
 .tab-btn {
-  padding: 14px 18px; border: none; background: none; font-family: 'Inter', sans-serif;
-  font-size: 13px; font-weight: 500; color: var(--gray-400); cursor: pointer;
+  padding: 16px 20px; border: none; background: none; font-family: var(--sans);
+  font-size: 14px; font-weight: 500; color: var(--ink-faint); cursor: pointer;
   border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all 0.15s; white-space: nowrap;
 }
-.tab-btn:hover { color: var(--green-mid); }
-.tab-btn.active { color: var(--green-dark); border-bottom-color: var(--green-dark); font-weight: 700; }
+.tab-btn:hover { color: var(--fern); }
+.tab-btn.active { color: var(--peacock); border-bottom-color: var(--tan); font-weight: 600; }
 
 /* ===== MAIN ===== */
-.main { max-width: 1020px; margin: 0 auto; padding: 32px 24px; }
-.section-title { font-size: 19px; font-weight: 700; color: var(--green-dark); letter-spacing: -0.4px; }
-.section-subtitle { font-size: 13px; color: var(--gray-400); margin-top: 3px; }
-.section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.main { max-width: 1080px; margin: 0 auto; padding: 36px 24px; }
+.section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 26px; flex-wrap: wrap; gap: 14px; }
+.section-title { font-size: 28px; color: var(--peacock); }
+.section-subtitle { font-size: 13px; color: var(--ink-faint); margin-top: 4px; font-family: var(--sans); }
 
-/* ===== STATS ===== */
-.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
-.stat-card {
-  background: var(--white); border-radius: var(--radius); padding: 20px 22px;
-  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200);
-}
-.stat-value { font-size: 30px; font-weight: 800; color: var(--green-dark); letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
-.stat-label { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.stat-sub { font-size: 12px; color: var(--green-ok); font-weight: 500; margin-top: 2px; }
-
-/* ===== DOC CARDS ===== */
-.docs-grid { display: grid; gap: 12px; }
-.doc-card {
-  background: var(--white); border-radius: var(--radius); padding: 18px 22px;
-  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200);
-  display: flex; align-items: center; gap: 18px; transition: box-shadow 0.15s, border-color 0.15s;
-}
-.doc-card:hover { box-shadow: var(--shadow-md); border-color: var(--gray-300); }
-.doc-icon {
-  width: 44px; height: 44px; border-radius: 9px; background: var(--green-dark);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px;
-}
-.doc-info { flex: 1; min-width: 0; }
-.doc-name { font-size: 15px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
-.doc-meta { font-size: 12px; color: var(--gray-400); display: flex; gap: 10px; flex-wrap: wrap; }
-.doc-cat-pill {
-  display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-  background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200);
-}
-.doc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
-.btn-download {
-  padding: 7px 14px; background: var(--gray-100); border: 1.5px solid var(--gray-200);
-  border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-  color: var(--gray-900); cursor: pointer; text-decoration: none; display: inline-flex;
-  align-items: center; gap: 5px; transition: all 0.15s;
-}
-.btn-download:hover { background: var(--gray-200); }
-.btn-confirm {
-  padding: 7px 14px; background: var(--green-dark); border: none; border-radius: 6px;
-  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--white);
-  cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
-}
-.btn-confirm:hover { background: var(--green-mid); }
-.confirmed-badge {
-  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
-  background: var(--green-ok-light); border: 1.5px solid #a9dfbf;
-  border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--green-ok);
-}
-
-/* ===== PROGRESS BAR ===== */
-.progress-bar-wrap { margin-top: 6px; }
-.progress-bar-label { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; display: flex; justify-content: space-between; }
-.progress-bar-track { height: 5px; background: var(--gray-200); border-radius: 10px; overflow: hidden; }
-.progress-bar-fill { height: 100%; background: var(--green-ok); border-radius: 10px; transition: width 0.5s ease; }
-
-/* ===== ADMIN CARDS ===== */
-.admin-section { margin-bottom: 36px; }
-.admin-card {
-  background: var(--white); border-radius: var(--radius); padding: 24px;
-  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200); margin-bottom: 14px;
-}
-.admin-card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--gray-200); flex-wrap: wrap; gap: 10px;
-}
-.admin-card-title { font-size: 15px; font-weight: 700; color: var(--green-dark); }
-.admin-card-sub { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
-
-/* ===== UPLOAD ===== */
-.upload-area {
-  border: 2px dashed var(--gray-200); border-radius: 9px; padding: 28px;
-  text-align: center; cursor: pointer; transition: all 0.15s; background: var(--gray-50);
-}
-.upload-area:hover, .upload-area.drag-over { border-color: var(--green-mid); background: #f0f7f3; }
-.upload-icon { font-size: 30px; margin-bottom: 8px; }
-.upload-area p { font-size: 14px; color: var(--gray-600); margin-bottom: 3px; }
-.upload-area span { font-size: 12px; color: var(--gray-400); }
-#upload-file-input { display: none; }
-.upload-form { margin-top: 18px; display: none; }
-.upload-form.visible { display: block; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+/* ===== STAT CARDS ===== */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 34px; }
+.stat-card { background: var(--white); border-radius: var(--r); padding: 22px 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
+.stat-value { font-family: var(--serif); font-size: 36px; font-weight: 600; color: var(--peacock); line-height: 1; margin-bottom: 6px; }
+.stat-label { font-size: 11px; color: var(--ink-faint); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+.stat-sub { font-size: 12px; color: var(--fern); font-weight: 500; margin-top: 4px; }
 
 /* ===== BUTTONS ===== */
 .btn-sm {
-  padding: 8px 16px; border-radius: 6px; font-family: 'Inter', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
-  display: inline-flex; align-items: center; gap: 5px;
+  padding: 9px 17px; border-radius: 6px; font-family: var(--sans); font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
 }
-.btn-sm.primary { background: var(--green-dark); color: var(--white); }
-.btn-sm.primary:hover { background: var(--green-mid); }
-.btn-sm.secondary { background: var(--gray-100); color: var(--gray-900); border: 1.5px solid var(--gray-200); }
-.btn-sm.secondary:hover { background: var(--gray-200); }
-.btn-sm.danger { background: var(--red-light); color: var(--red); border: 1.5px solid #f0c4be; }
+.btn-sm.primary { background: var(--peacock); color: var(--tan); }
+.btn-sm.primary:hover { background: var(--peacock-80); }
+.btn-sm.secondary { background: var(--cream-100); color: var(--ink); border: 1.5px solid var(--line); }
+.btn-sm.secondary:hover { background: var(--cream-200); }
+.btn-sm.danger { background: var(--red-soft); color: var(--red); border: 1.5px solid #e3c4bd; }
 .btn-sm.danger:hover { background: var(--red); color: var(--white); }
-.btn-sm.gold { background: var(--gold); color: var(--green-dark); }
-.btn-sm.gold:hover { background: var(--gold-light); }
+.btn-sm.gold { background: var(--tan); color: var(--peacock); }
+.btn-sm.gold:hover { background: var(--tan-soft); }
 .btn-icon {
-  width: 30px; height: 30px; border-radius: 5px; border: 1.5px solid var(--gray-200);
-  background: var(--gray-100); cursor: pointer; display: inline-flex; align-items: center;
-  justify-content: center; font-size: 13px; transition: all 0.15s; font-family: 'Inter', sans-serif;
+  width: 32px; height: 32px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--cream-100);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px;
+  transition: all 0.15s; font-family: var(--sans); text-decoration: none; color: var(--ink);
 }
-.btn-icon:hover { background: var(--gray-200); }
-.btn-icon.danger:hover { background: var(--red); border-color: var(--red); filter: brightness(10); }
+.btn-icon:hover { background: var(--cream-200); }
+.btn-icon.danger { color: var(--red); }
+.btn-icon.danger:hover { background: var(--red); border-color: var(--red); color: var(--white); }
 
-/* ===== EMPLOYEE TABLE ===== */
-.emp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.emp-table th {
-  text-align: left; padding: 9px 12px; background: var(--gray-100); color: var(--gray-600);
-  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-  border-bottom: 1.5px solid var(--gray-200);
-}
-.emp-table td { padding: 12px 12px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
-.emp-table tr:last-child td { border-bottom: none; }
-.emp-table tr:hover td { background: var(--gray-50); }
-.pin-display {
-  font-family: monospace; font-size: 15px; font-weight: 700; letter-spacing: 3px;
-  background: var(--gray-100); padding: 3px 10px; border-radius: 5px; border: 1px solid var(--gray-200);
-  cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;
-}
-.pin-display .pin-dots { color: var(--gray-900); }
-.pin-display .pin-toggle { font-size: 11px; color: var(--gray-400); font-family: 'Inter', sans-serif; letter-spacing: 0; }
-.emp-dept {
-  display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.dept-hotel    { background: #e8f4fd; color: #1a6fa8; }
-.dept-wellness { background: #f0f7f0; color: #2d6a3a; }
-.dept-gastro   { background: #fef5e7; color: #9a6213; }
-.dept-sport    { background: #fde8ff; color: #7b2fa8; }
-.dept-sprava   { background: var(--gray-100); color: var(--gray-600); }
-.dept-it       { background: #e8eeff; color: #2d4ea8; }
+/* ===== ADMIN CARDS ===== */
+.admin-section { margin-bottom: 38px; }
+.admin-card { background: var(--white); border-radius: var(--r); padding: 26px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 14px; }
+.admin-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 10px; }
+.admin-card-title { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--peacock); }
+.admin-card-sub { font-size: 12px; color: var(--ink-faint); margin-top: 2px; font-family: var(--sans); }
 
-/* ===== PIN GENERATOR ===== */
-.pin-gen-wrap { display: flex; gap: 8px; align-items: center; }
-.pin-gen-wrap input { flex: 1; }
-.pin-generated { font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--green-dark); }
+/* ===== FORMS ===== */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 
-/* ===== ADD EMPLOYEE PANEL ===== */
-.add-emp-panel {
-  border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 20px;
-  background: var(--gray-50); margin-top: 16px;
-}
-.add-emp-panel h4 { font-size: 13px; font-weight: 700; color: var(--green-dark); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+/* ===== UPLOAD ===== */
+.upload-area { border: 2px dashed var(--line-dark); border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.15s; background: var(--cream-100); }
+.upload-area:hover, .upload-area.drag-over { border-color: var(--fern); background: var(--green-ok-soft); }
+.upload-icon { font-size: 30px; margin-bottom: 10px; }
+.upload-area p { font-size: 14px; color: var(--ink-soft); margin-bottom: 4px; }
+.upload-area span { font-size: 12px; color: var(--ink-faint); }
+.file-hidden { display: none; }
+.upload-form { margin-top: 18px; display: none; }
+.upload-form.visible { display: block; }
 
-/* ===== CONFIRMATIONS TABLE ===== */
-.conf-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.conf-table th {
-  text-align: left; padding: 9px 12px; background: var(--gray-100); color: var(--gray-600);
-  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-  border-bottom: 1.5px solid var(--gray-200);
-}
-.conf-table td { padding: 11px 12px; border-bottom: 1px solid var(--gray-200); }
-.conf-table tr:last-child td { border-bottom: none; }
-.conf-table tr:hover td { background: var(--gray-50); }
-.status-pill {
-  display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
-  border-radius: 20px; font-size: 11px; font-weight: 700;
-}
-.status-pill.confirmed { background: var(--green-ok-light); color: var(--green-ok); }
-.status-pill.pending { background: var(--orange-light); color: var(--orange); }
+/* ===== DOC CARDS ===== */
+.docs-grid { display: grid; gap: 12px; }
+.doc-card { background: var(--white); border-radius: var(--r); padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); display: flex; align-items: center; gap: 18px; transition: box-shadow 0.15s, border-color 0.15s; }
+.doc-card:hover { box-shadow: var(--shadow-md); border-color: var(--line-dark); }
+.doc-icon { width: 46px; height: 46px; border-radius: 9px; background: var(--peacock); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px; }
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 5px; font-family: var(--sans); }
+.doc-meta { font-size: 12px; color: var(--ink-faint); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.doc-cat-pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--cream-100); color: var(--ink-soft); border: 1px solid var(--line); }
+.doc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+.btn-download { padding: 8px 15px; background: var(--cream-100); border: 1.5px solid var(--line); border-radius: 6px; font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.btn-download:hover { background: var(--cream-200); }
+.btn-confirm { padding: 8px 15px; background: var(--peacock); border: none; border-radius: 6px; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--tan); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.btn-confirm:hover { background: var(--peacock-80); }
+.confirmed-badge { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; background: var(--green-ok-soft); border: 1.5px solid #c2d1b3; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--green-ok); }
+
+/* ===== PROGRESS ===== */
+.progress-bar-wrap { margin-top: 8px; }
+.progress-bar-label { font-size: 11px; color: var(--ink-faint); margin-bottom: 5px; display: flex; justify-content: space-between; }
+.progress-bar-track { height: 6px; background: var(--cream-200); border-radius: 10px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--fern); border-radius: 10px; transition: width 0.5s ease; }
 
 /* ===== DOC ADMIN ROW ===== */
-.doc-admin-row {
-  display: flex; align-items: center; gap: 14px; padding: 14px 0;
-  border-bottom: 1px solid var(--gray-200);
-}
+.doc-admin-row { display: flex; align-items: flex-start; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .doc-admin-row:last-child { border-bottom: none; }
 .doc-admin-info { flex: 1; min-width: 0; }
-.doc-admin-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
-.doc-admin-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
-.doc-admin-progress { margin-top: 6px; }
+.doc-admin-name { font-size: 15px; font-weight: 600; color: var(--ink); font-family: var(--sans); }
+.doc-admin-meta { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
 
-/* ===== FILTERS ===== */
-.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
-.filter-select {
-  padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 6px;
-  font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-900);
-  background: var(--white); cursor: pointer; appearance: none;
-}
-.filter-select:focus { outline: none; border-color: var(--green-mid); }
-.search-input {
-  padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 6px;
-  font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-900);
-  background: var(--white); flex: 1; min-width: 160px;
-}
-.search-input:focus { outline: none; border-color: var(--green-mid); }
+/* ===== PILLS ===== */
+.deadline-pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.deadline-pill.ok { background: var(--green-ok-soft); color: var(--green-ok); }
+.deadline-pill.soon { background: var(--amber-soft); color: var(--amber); }
+.deadline-pill.over { background: var(--red-soft); color: var(--red); }
+
+/* dept pills */
+.emp-dept { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.dept-hotel { background: #e7eff5; color: #2b5f86; }
+.dept-wellness { background: var(--green-ok-soft); color: var(--green-ok); }
+.dept-gastro { background: #f6efe0; color: #8a6313; }
+.dept-sport { background: #f3e8f7; color: #6f3a86; }
+.dept-sprava { background: var(--cream-200); color: var(--ink-soft); }
+.dept-it { background: #e8ecf7; color: #344e9c; }
+.dept-marketing { background: #f7e9ec; color: #9c3a5e; }
+
+/* ===== TABLES ===== */
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th { text-align: left; padding: 10px 12px; background: var(--cream-100); color: var(--ink-soft); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid var(--line); }
+.data-table td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--cream-100); }
+
+.status-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.status-pill.confirmed { background: var(--green-ok-soft); color: var(--green-ok); }
+.status-pill.pending { background: var(--amber-soft); color: var(--amber); }
+
+/* PIN display */
+.pin-display { font-family: monospace; font-size: 15px; font-weight: 700; letter-spacing: 3px; background: var(--cream-100); padding: 4px 11px; border-radius: 5px; border: 1px solid var(--line); cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px; }
+.pin-toggle { font-size: 11px; color: var(--ink-faint); font-family: var(--sans); letter-spacing: 0; }
+.pin-gen-wrap { display: flex; gap: 8px; align-items: center; }
+.pin-gen-wrap input { flex: 1; }
+
+.add-panel { border: 1.5px solid var(--line); border-radius: var(--r); padding: 22px; background: var(--cream-100); margin-top: 16px; }
+.add-panel h4 { font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--peacock); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ===== AUDIENCE / ASSIGNEE SELECTORS ===== */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 8px 16px; border: 1.5px solid var(--line); border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: var(--white); color: var(--ink-soft); user-select: none; }
+.chip:hover { border-color: var(--fern); }
+.chip.selected { background: var(--peacock); color: var(--tan); border-color: var(--peacock); }
+.checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 240px; overflow-y: auto; border: 1.5px solid var(--line); border-radius: var(--r); padding: 12px; }
+.check-item { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 6px; cursor: pointer; transition: background 0.15s; font-size: 13px; }
+.check-item:hover { background: var(--white); }
+.check-item input { width: 16px; height: 16px; accent-color: var(--peacock); cursor: pointer; }
+.check-item .ci-name { font-weight: 600; color: var(--ink); }
+.check-item .ci-dept { font-size: 11px; color: var(--ink-faint); }
+
+/* ===== EXPANDABLE DETAIL ===== */
+.conf-detail { margin-top: 12px; padding: 16px 18px; background: var(--cream-100); border-radius: 8px; border: 1px solid var(--line); display: none; }
+.conf-detail.open { display: block; }
+.conf-detail-section { margin-bottom: 16px; }
+.conf-detail-section:last-child { margin-bottom: 0; }
+.conf-detail-title { font-family: var(--sans); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 9px; }
+.conf-detail-title.done { color: var(--green-ok); }
+.conf-detail-title.pending { color: var(--amber); }
+.conf-person { display: flex; align-items: center; justify-content: space-between; padding: 8px 13px; background: var(--white); border-radius: 6px; border: 1px solid var(--line); margin-bottom: 6px; font-size: 13px; }
+.conf-person:last-child { margin-bottom: 0; }
+.conf-person-name { font-weight: 600; color: var(--ink); }
+.conf-person-meta { font-size: 11px; color: var(--ink-faint); }
+.btn-toggle-detail { background: none; border: none; color: var(--fern); font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--sans); padding: 6px 0; display: inline-flex; align-items: center; gap: 5px; }
+.btn-toggle-detail:hover { text-decoration: underline; }
+
+/* ===== KANBAN (TASKS) ===== */
+.kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
+.kanban-col { background: var(--cream-100); border-radius: var(--r-lg); padding: 14px; min-height: 200px; border: 1px solid var(--line); }
+.kanban-col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 0 4px; }
+.kanban-col-title { font-family: var(--sans); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px; }
+.kanban-col-count { background: var(--white); color: var(--ink-soft); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid var(--line); }
+.kanban-dot { width: 9px; height: 9px; border-radius: 50%; }
+.dot-todo { background: var(--ink-faint); }
+.dot-inprogress { background: var(--amber); }
+.dot-review { background: #2b5f86; }
+.dot-done { background: var(--green-ok); }
+.kanban-col-title.col-todo { color: var(--ink-soft); }
+.kanban-col-title.col-inprogress { color: var(--amber); }
+.kanban-col-title.col-review { color: #2b5f86; }
+.kanban-col-title.col-done { color: var(--green-ok); }
+
+.task-card { background: var(--white); border-radius: 10px; padding: 14px 15px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.15s, transform 0.1s; }
+.task-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.task-card:last-child { margin-bottom: 0; }
+.task-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.task-card-title { font-family: var(--sans); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.35; }
+.task-prio { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; }
+.prio-high { background: var(--red); }
+.prio-medium { background: var(--amber); }
+.prio-low { background: var(--artichoke); }
+.task-card-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
+.task-seg { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.task-assignees { display: flex; margin-left: auto; }
+.task-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--fern); color: var(--white); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid var(--white); margin-left: -7px; font-family: var(--sans); }
+.task-avatar:first-child { margin-left: 0; }
+.task-card-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 11px; color: var(--ink-faint); }
+.task-foot-item { display: inline-flex; align-items: center; gap: 4px; }
 
 /* ===== MODAL ===== */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
-  display: none; align-items: center; justify-content: center; z-index: 300; padding: 24px;
-}
+.modal-overlay { position: fixed; inset: 0; background: rgba(19,48,46,0.45); display: none; align-items: center; justify-content: center; z-index: 300; padding: 24px; overflow-y: auto; }
 .modal-overlay.open { display: flex; }
-.modal {
-  background: var(--white); border-radius: var(--radius-lg); padding: 32px;
-  width: 100%; max-width: 460px; box-shadow: var(--shadow-lg);
-}
-.modal h2 { font-size: 18px; font-weight: 700; color: var(--green-dark); margin-bottom: 10px; }
-.modal p { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.modal { background: var(--white); border-radius: var(--r-lg); padding: 32px; width: 100%; max-width: 480px; box-shadow: var(--shadow-lg); margin: auto; }
+.modal.wide { max-width: 640px; }
+.modal h2 { font-size: 24px; color: var(--peacock); margin-bottom: 10px; }
+.modal p { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.6; font-family: var(--sans); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap; }
+
+/* task detail modal */
+.task-detail-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+.task-detail-title { font-family: var(--serif); font-size: 24px; color: var(--peacock); flex: 1; }
+.task-detail-row { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tdr-item { font-size: 13px; }
+.tdr-label { font-size: 10px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px; }
+.tdr-value { font-weight: 600; color: var(--ink); font-family: var(--sans); }
+.status-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+.status-opt { padding: 7px 13px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--white); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--sans); transition: all 0.15s; color: var(--ink-soft); }
+.status-opt:hover { border-color: var(--fern); }
+.status-opt.active { background: var(--peacock); color: var(--tan); border-color: var(--peacock); }
+
+.comments-section { margin-top: 22px; }
+.comments-title { font-family: var(--sans); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-soft); margin-bottom: 14px; }
+.comment { display: flex; gap: 10px; margin-bottom: 14px; }
+.comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--fern); color: var(--white); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: var(--sans); }
+.comment-body { flex: 1; }
+.comment-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 3px; }
+.comment-author { font-size: 13px; font-weight: 600; color: var(--ink); font-family: var(--sans); }
+.comment-time { font-size: 11px; color: var(--ink-faint); }
+.comment-text { font-size: 14px; color: var(--ink-soft); line-height: 1.5; font-family: var(--sans); }
+.comment-input-row { display: flex; gap: 10px; margin-top: 16px; }
+.comment-input-row input { flex: 1; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: var(--r); font-family: var(--sans); font-size: 14px; }
+.comment-input-row input:focus { outline: none; border-color: var(--fern); }
+
+.attachments-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.attachment-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--cream-100); border-radius: 6px; border: 1px solid var(--line); font-size: 13px; }
+.attachment-item a { color: var(--fern); text-decoration: none; font-weight: 600; }
+.attachment-item a:hover { text-decoration: underline; }
+
+/* ===== FILTERS ===== */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+.filter-select { padding: 8px 13px; border: 1.5px solid var(--line); border-radius: 6px; font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--white); cursor: pointer; appearance: none; }
+.filter-select:focus { outline: none; border-color: var(--fern); }
+.search-input { padding: 8px 13px; border: 1.5px solid var(--line); border-radius: 6px; font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--white); flex: 1; min-width: 180px; }
+.search-input:focus { outline: none; border-color: var(--fern); }
 
 /* ===== MISC ===== */
-.loading { text-align: center; padding: 48px; color: var(--gray-400); font-size: 14px; }
-.spinner {
-  width: 26px; height: 26px; border: 3px solid var(--gray-200); border-top-color: var(--green-mid);
-  border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px;
-}
+.loading { text-align: center; padding: 48px; color: var(--ink-faint); font-size: 14px; }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--cream-200); border-top-color: var(--fern); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); }
-.empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
-.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; }
-.empty-state p { font-size: 13px; }
-.toast {
-  position: fixed; bottom: 24px; right: 24px; background: var(--green-dark); color: var(--white);
-  padding: 13px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
-  box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0;
-  transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); z-index: 1000; max-width: 340px;
-}
+.empty-state { text-align: center; padding: 52px 24px; color: var(--ink-faint); }
+.empty-state .empty-icon { font-size: 38px; margin-bottom: 12px; }
+.empty-state h3 { font-family: var(--serif); font-size: 19px; color: var(--ink-soft); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; font-family: var(--sans); }
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--peacock); color: var(--tan); padding: 14px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0; transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); z-index: 1000; max-width: 360px; font-family: var(--sans); }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast.error { background: var(--red); }
-.toast.success { background: var(--green-ok); }
-.setup-banner {
-  background: #fef3cd; border: 1.5px solid #fde68a; border-radius: var(--radius);
-  padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #78590a; line-height: 1.6;
-}
-.setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: monospace; }
-
-/* LOADING OVERLAY */
-.loading-overlay {
-  position: fixed; inset: 0; background: rgba(26,58,42,0.55);
-  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
-  display: none; align-items: center; justify-content: center; z-index: 2000;
-}
+.toast.error { background: var(--red); color: var(--white); }
+.toast.success { background: var(--fern); color: var(--white); }
+.loading-overlay { position: fixed; inset: 0; background: rgba(19,48,46,0.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 2000; }
 .loading-overlay.show { display: flex; }
-.loading-box {
-  background: var(--white); border-radius: var(--radius-lg); padding: 36px 44px;
-  text-align: center; box-shadow: var(--shadow-lg); max-width: 340px;
-}
-.loading-spinner {
-  width: 40px; height: 40px; border: 4px solid var(--gray-200);
-  border-top-color: var(--green-mid); border-radius: 50%;
-  animation: spin 0.7s linear infinite; margin: 0 auto 18px;
-}
-.loading-text { font-size: 16px; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
-.loading-sub { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
+.loading-box { background: var(--white); border-radius: var(--r-lg); padding: 38px 46px; text-align: center; box-shadow: var(--shadow-lg); max-width: 340px; }
+.loading-spinner { width: 42px; height: 42px; border: 4px solid var(--cream-200); border-top-color: var(--fern); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 18px; }
+.loading-text { font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--peacock); margin-bottom: 6px; }
+.loading-sub { font-size: 13px; color: var(--ink-faint); line-height: 1.5; font-family: var(--sans); }
+.setup-banner { background: var(--amber-soft); border: 1.5px solid #e8cd9a; border-radius: var(--r); padding: 16px 20px; margin-bottom: 24px; font-size: 13px; color: #7a5a18; line-height: 1.6; font-family: var(--sans); }
+.setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: monospace; }
+.divider { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
 
-/* AUDIENCE SELECTORS */
-.audience-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.audience-chip {
-  padding: 8px 16px; border: 1.5px solid var(--gray-200); border-radius: 20px;
-  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
-  background: var(--white); color: var(--gray-600); user-select: none;
+@media (max-width: 920px) {
+  .kanban { grid-template-columns: 1fr 1fr; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
 }
-.audience-chip:hover { border-color: var(--green-mid); }
-.audience-chip.selected { background: var(--green-dark); color: var(--white); border-color: var(--green-dark); }
-.audience-checklist {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 220px;
-  overflow-y: auto; border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 12px;
-}
-.audience-check-item {
-  display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px;
-  cursor: pointer; transition: background 0.15s; font-size: 13px;
-}
-.audience-check-item:hover { background: var(--gray-100); }
-.audience-check-item input { width: 16px; height: 16px; accent-color: var(--green-dark); cursor: pointer; }
-.audience-check-item .ac-name { font-weight: 600; color: var(--gray-900); }
-.audience-check-item .ac-dept { font-size: 11px; color: var(--gray-400); }
-
-/* CONFIRMATION DETAIL (expandable) */
-.conf-detail {
-  margin-top: 10px; padding: 14px 16px; background: var(--gray-50);
-  border-radius: 8px; border: 1px solid var(--gray-200); display: none;
-}
-.conf-detail.open { display: block; }
-.conf-detail-section { margin-bottom: 14px; }
-.conf-detail-section:last-child { margin-bottom: 0; }
-.conf-detail-title {
-  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
-  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
-}
-.conf-detail-title.done { color: var(--green-ok); }
-.conf-detail-title.pending { color: var(--orange); }
-.conf-person {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 12px; background: var(--white); border-radius: 6px;
-  border: 1px solid var(--gray-200); margin-bottom: 6px; font-size: 13px;
-}
-.conf-person:last-child { margin-bottom: 0; }
-.conf-person-name { font-weight: 600; color: var(--gray-900); }
-.conf-person-meta { font-size: 11px; color: var(--gray-400); }
-.btn-toggle-detail {
-  background: none; border: none; color: var(--green-mid); font-size: 13px;
-  font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; padding: 4px 0;
-  display: inline-flex; align-items: center; gap: 4px;
-}
-.btn-toggle-detail:hover { text-decoration: underline; }
-.deadline-pill {
-  display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.deadline-pill.ok { background: #eef7f0; color: #2d6a3a; }
-.deadline-pill.soon { background: var(--orange-light); color: var(--orange); }
-.deadline-pill.over { background: var(--red-light); color: var(--red); }
-.divider { border: none; border-top: 1px solid var(--gray-200); margin: 20px 0; }
-.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.tag.new { background: #e8f7ee; color: #1d7a40; border: 1px solid #b3e0c0; }
-
 @media (max-width: 640px) {
-  .doc-card { flex-direction: column; align-items: flex-start; }
-  .doc-actions { width: 100%; }
+  .kanban { grid-template-columns: 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
   .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .checklist { grid-template-columns: 1fr; }
+  .doc-card { flex-direction: column; align-items: flex-start; }
+  .doc-actions { width: 100%; }
   .topbar { padding: 0 16px; }
-  .main { padding: 20px 14px; }
+  .main { padding: 22px 14px; }
   .tabs { padding: 0 14px; overflow-x: auto; }
-  .emp-table { font-size: 12px; }
-  .emp-table th, .emp-table td { padding: 8px; }
 }
 </style>
 </head>
 <body>
-
 <script>
+// ===== CONFIG =====
 const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxL-O0Y0T1HRbCaH-CTXv4X52zTGR1VX_HHQO2tlAMoxxDytGingkaBrD5FxF6ShpWx/exec',
-  ADMIN_PIN: 'VistaResort2050',
-  VERSION: '3.0'
+  // Role PINs (admin/gm/owner). Employees have their own PINs in the system.
+  PINS: {
+    owner: 'VistaMajitel2050',
+    gm:    'VistaGM2050',
+    admin: 'VistaResort2050'
+  },
+  VERSION: '4.0'
 };
+const SEGMENTS = ['Hotel', 'Wellness', 'Gastro', 'Sport', 'Správa', 'IT', 'Marketing'];
+const CATEGORIES = ['HR', 'Bezpečnost', 'Provoz', 'IT', 'Finance', 'Marketing', 'Ostatní'];
+const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
-const DEPARTMENTS = ['Hotel', 'Wellness', 'Gastro', 'Sport', 'Správa', 'IT', 'Ostatní'];
-const CATEGORIES  = ['HR', 'Bezpečnost', 'Provoz', 'IT', 'Finance', 'Ostatní'];
-const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+// Vista V symbol SVG (double-V mark from brand manual)
+const VISTA_V = `<svg viewBox="0 0 100 88" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <path d="M20 8 L50 64 L80 8" stroke="#dfc196" stroke-width="5" stroke-linecap="square"/>
+  <path d="M38 8 L62 8 L50 30 Z" fill="#dfc196"/>
+  <path d="M50 30 L50 64" stroke="#dfc196" stroke-width="5"/>
+</svg>`;
+const VISTA_V_DARK = VISTA_V.replace(/#dfc196/g, '#13302e');
 </script>
 
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
-      <div class="logo-mark">V</div>
-      <h1>Vista Portál</h1>
-      <p>Interní dokumentový systém</p>
+      <div id="login-logo-mark"></div>
+      <h1>Vista Resort</h1>
+      <div class="tagline">Interní portál</div>
     </div>
     <div class="form-group">
       <label>PIN kód</label>
@@ -477,7 +432,7 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
 <div id="app">
   <div class="topbar">
     <div class="topbar-left">
-      <div class="topbar-logo">V</div>
+      <div class="topbar-logo" id="topbar-logo-mark"></div>
       <span class="topbar-title">Vista Portál</span>
       <span class="topbar-badge" id="role-badge">Zaměstnanec</span>
     </div>
@@ -488,12 +443,41 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
   </div>
 
   <div class="tabs" id="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('docs')" data-tab="docs">📄 Dokumenty</button>
-    <button class="tab-btn" onclick="switchTab('admin')" data-tab="admin" id="admin-tab" style="display:none">⚙️ Admin</button>
+    <button class="tab-btn active" onclick="switchTab('tasks')" data-tab="tasks">Úkoly</button>
+    <button class="tab-btn" onclick="switchTab('docs')" data-tab="docs">Dokumenty</button>
+    <button class="tab-btn" onclick="switchTab('admin')" data-tab="admin" id="admin-tab" style="display:none">Správa</button>
   </div>
 
-  <!-- DOCS TAB -->
-  <div id="tab-docs" class="main">
+  <!-- ============ TASKS TAB ============ -->
+  <div id="tab-tasks" class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Úkoly</div>
+        <div class="section-subtitle" id="tasks-subtitle">Přehled úkolů napříč resortem</div>
+      </div>
+      <button class="btn-sm primary" onclick="openNewTask()">+ Nový úkol</button>
+    </div>
+    <div class="filters" id="tasks-filters">
+      <input type="text" class="search-input" id="tasks-search" placeholder="Hledat úkol..." oninput="renderTasks()">
+      <select class="filter-select" id="tasks-segment-filter" onchange="renderTasks()">
+        <option value="">Všechny segmenty</option>
+      </select>
+      <select class="filter-select" id="tasks-assignee-filter" onchange="renderTasks()">
+        <option value="">Všichni řešitelé</option>
+        <option value="__me__">Jen moje úkoly</option>
+      </select>
+      <select class="filter-select" id="tasks-priority-filter" onchange="renderTasks()">
+        <option value="">Všechny priority</option>
+        <option value="high">Vysoká</option>
+        <option value="medium">Střední</option>
+        <option value="low">Nízká</option>
+      </select>
+    </div>
+    <div id="tasks-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
+  </div>
+
+  <!-- ============ DOCS TAB ============ -->
+  <div id="tab-docs" class="main" style="display:none">
     <div class="section-header">
       <div>
         <div class="section-title">Dokumenty</div>
@@ -509,32 +493,17 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
     <div id="docs-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
   </div>
 
-  <!-- ADMIN TAB -->
+  <!-- ============ ADMIN TAB ============ -->
   <div id="tab-admin" class="main" style="display:none">
-
     <div class="setup-banner" id="setup-banner" style="display:none">
-      <strong>⚠️ Demo mód</strong> — nastav Google Apps Script URL v souboru <code>index.html</code> (viz SETUP.md). Data se zatím neukládají permanentně.
+      <strong>Demo mód</strong> — data se neukládají. Nastavte Google Apps Script URL.
     </div>
 
-    <!-- STATS -->
     <div class="stats-row" id="stats-row">
-      <div class="stat-card">
-        <div class="stat-value" id="stat-docs">0</div>
-        <div class="stat-label">Dokumenty</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-employees">0</div>
-        <div class="stat-label">Zaměstnanci</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-confirms">0</div>
-        <div class="stat-label">Potvrzení celkem</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="stat-pct">0%</div>
-        <div class="stat-label">Průměrná shoda</div>
-        <div class="stat-sub" id="stat-pending"></div>
-      </div>
+      <div class="stat-card"><div class="stat-value" id="stat-tasks">0</div><div class="stat-label">Aktivní úkoly</div><div class="stat-sub" id="stat-tasks-done"></div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-docs-count">0</div><div class="stat-label">Dokumenty</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-employees">0</div><div class="stat-label">Zaměstnanci</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-pct">0%</div><div class="stat-label">Potvrzeno dokumentů</div><div class="stat-sub" id="stat-pending"></div></div>
     </div>
 
     <!-- DOCUMENTS MANAGEMENT -->
@@ -542,72 +511,40 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
       <div class="admin-card">
         <div class="admin-card-header">
           <div>
-            <div class="admin-card-title">📂 Správa dokumentů</div>
-            <div class="admin-card-sub">Nahrávej a mazej dokumenty, sleduj míru potvrzení</div>
+            <div class="admin-card-title">Správa dokumentů</div>
+            <div class="admin-card-sub">Nahrávejte dokumenty s termínem a cílením, sledujte potvrzení</div>
           </div>
           <button class="btn-sm primary" onclick="toggleUploadForm()">+ Přidat dokument</button>
         </div>
-
-        <!-- UPLOAD FORM -->
         <div id="upload-section" style="display:none">
           <div class="upload-area" id="upload-area" onclick="document.getElementById('upload-file-input').click()">
-            <div class="upload-icon">📎</div>
-            <p>Klikni pro výběr souboru nebo přetáhni sem</p>
+            <div class="upload-icon">⬆</div>
+            <p>Klikněte pro výběr souboru nebo přetáhněte sem</p>
             <span>PDF, Word, Excel, obrázky — max 20 MB</span>
           </div>
-          <input type="file" id="upload-file-input" onchange="onFileSelected(this)">
+          <input type="file" id="upload-file-input" class="file-hidden" onchange="onFileSelected(this)">
           <div class="upload-form" id="upload-form">
             <div class="form-row" style="margin-top:14px;">
-              <div class="form-group" style="margin:0">
-                <label>Název dokumentu</label>
-                <input type="text" id="doc-title" placeholder="např. Pracovní řád 2025">
-              </div>
-              <div class="form-group" style="margin:0">
-                <label>Kategorie</label>
-                <select id="doc-category">
-                  <option value="">Vyberte...</option>
-                  <option>HR</option><option>Bezpečnost</option><option>Provoz</option>
-                  <option>IT</option><option>Finance</option><option>Ostatní</option>
-                </select>
-              </div>
+              <div class="form-group" style="margin:0"><label>Název dokumentu</label><input type="text" id="doc-title" placeholder="např. Pracovní řád 2025"></div>
+              <div class="form-group" style="margin:0"><label>Kategorie</label><select id="doc-category"><option value="">Vyberte...</option></select></div>
             </div>
-            <div class="form-group">
-              <label>Popis (volitelné)</label>
-              <input type="text" id="doc-desc" placeholder="Krátký popis obsahu dokumentu">
-            </div>
-            <div class="form-group">
-              <label>Termín potvrzení (volitelné)</label>
-              <input type="date" id="doc-deadline">
-              <div class="hint">Pokud někdo nepotvrdí do termínu, dostane připomínku a vám přijde upozornění.</div>
-            </div>
+            <div class="form-group"><label>Popis (volitelné)</label><input type="text" id="doc-desc" placeholder="Krátký popis obsahu"></div>
+            <div class="form-group"><label>Termín potvrzení (volitelné)</label><input type="date" id="doc-deadline"><div class="hint">Při nesplnění do termínu chodí připomínky.</div></div>
             <div class="form-group">
               <label>Komu poslat</label>
               <select id="doc-audience-type" onchange="onAudienceTypeChange()">
                 <option value="all">Všem zaměstnancům</option>
-                <option value="depts">Vybraným oddělením</option>
+                <option value="depts">Vybraným segmentům</option>
                 <option value="specific">Konkrétním lidem</option>
               </select>
             </div>
-            <div class="form-group" id="audience-depts-wrap" style="display:none">
-              <label>Oddělení</label>
-              <div id="audience-depts-list" class="audience-chips"></div>
-            </div>
-            <div class="form-group" id="audience-specific-wrap" style="display:none">
-              <label>Vyberte zaměstnance</label>
-              <div id="audience-specific-list" class="audience-checklist"></div>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button class="btn-sm primary" onclick="uploadDocument()">⬆ Nahrát a odeslat</button>
-              <button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button>
-            </div>
+            <div class="form-group" id="audience-depts-wrap" style="display:none"><label>Segmenty</label><div id="audience-depts-list" class="chips"></div></div>
+            <div class="form-group" id="audience-specific-wrap" style="display:none"><label>Vyberte zaměstnance</label><div id="audience-specific-list" class="checklist"></div></div>
+            <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="uploadDocument()">Nahrát a odeslat</button><button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button></div>
           </div>
           <hr class="divider">
         </div>
-
-        <!-- DOCS LIST FOR ADMIN -->
-        <div id="admin-docs-list">
-          <div class="loading"><div class="spinner"></div>Načítám...</div>
-        </div>
+        <div id="admin-docs-list"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
       </div>
     </div>
 
@@ -615,24 +552,13 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
     <div class="admin-section">
       <div class="admin-card">
         <div class="admin-card-header">
-          <div>
-            <div class="admin-card-title">✅ Přehled potvrzení</div>
-            <div class="admin-card-sub">Kdo a kdy potvrdil přečtení dokumentů</div>
-          </div>
-          <button class="btn-sm secondary" onclick="exportConfirmations()">⬇ Export CSV</button>
+          <div><div class="admin-card-title">Přehled potvrzení</div><div class="admin-card-sub">Kdo a kdy potvrdil dokumenty</div></div>
+          <button class="btn-sm secondary" onclick="exportConfirmations()">Export CSV</button>
         </div>
         <div class="filters">
-          <select class="filter-select" id="conf-doc-filter" onchange="renderConfirmations()">
-            <option value="">Všechny dokumenty</option>
-          </select>
-          <select class="filter-select" id="conf-dept-filter" onchange="renderConfirmations()">
-            <option value="">Všechna oddělení</option>
-          </select>
-          <select class="filter-select" id="conf-status-filter" onchange="renderConfirmations()">
-            <option value="">Vše</option>
-            <option value="confirmed">Jen potvrzené</option>
-            <option value="pending">Jen čekající</option>
-          </select>
+          <select class="filter-select" id="conf-doc-filter" onchange="renderConfirmations()"><option value="">Všechny dokumenty</option></select>
+          <select class="filter-select" id="conf-dept-filter" onchange="renderConfirmations()"><option value="">Všechny segmenty</option></select>
+          <select class="filter-select" id="conf-status-filter" onchange="renderConfirmations()"><option value="">Vše</option><option value="confirmed">Potvrzené</option><option value="pending">Čekající</option></select>
         </div>
         <div id="confirmations-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
       </div>
@@ -642,73 +568,37 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
     <div class="admin-section">
       <div class="admin-card">
         <div class="admin-card-header">
-          <div>
-            <div class="admin-card-title">👤 Zaměstnanci</div>
-            <div class="admin-card-sub">Správa přístupů a PIN kódů</div>
-          </div>
+          <div><div class="admin-card-title">Zaměstnanci</div><div class="admin-card-sub">Správa přístupů a PIN kódů</div></div>
           <button class="btn-sm primary" onclick="toggleAddEmpForm()">+ Přidat zaměstnance</button>
         </div>
-
-        <!-- ADD EMPLOYEE FORM -->
-        <div class="add-emp-panel" id="add-emp-panel" style="display:none">
+        <div class="add-panel" id="add-emp-panel" style="display:none">
           <h4>Nový zaměstnanec</h4>
           <div class="form-row">
-            <div class="form-group" style="margin:0">
-              <label>Jméno a příjmení</label>
-              <input type="text" id="new-emp-name" placeholder="Jana Nováková">
-            </div>
-            <div class="form-group" style="margin:0">
-              <label>Pracovní pozice</label>
-              <input type="text" id="new-emp-role" placeholder="Recepční">
-            </div>
+            <div class="form-group" style="margin:0"><label>Jméno a příjmení</label><input type="text" id="new-emp-name" placeholder="Jana Nováková"></div>
+            <div class="form-group" style="margin:0"><label>Pracovní pozice</label><input type="text" id="new-emp-role" placeholder="Recepční"></div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="margin:0">
-              <label>Oddělení</label>
-              <select id="new-emp-dept">
-                <option value="">Vyberte oddělení...</option>
-                <option>Hotel</option><option>Wellness</option><option>Gastro</option>
-                <option>Sport</option><option>Správa</option><option>IT</option><option>Ostatní</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin:0">
-              <label>PIN kód</label>
-              <div class="pin-gen-wrap">
-                <input type="text" id="new-emp-pin" placeholder="min. 3 znaky" maxlength="8">
-                <button class="btn-sm gold" onclick="generatePin()" title="Vygenerovat náhodný PIN">🎲 PIN</button>
-              </div>
-              <div class="hint">Klikni 🎲 pro náhodný 3-místný PIN. PIN bude viditelný při uložení.</div>
-            </div>
+            <div class="form-group" style="margin:0"><label>Segment</label><select id="new-emp-dept"><option value="">Vyberte...</option></select></div>
+            <div class="form-group" style="margin:0"><label>PIN kód</label><div class="pin-gen-wrap"><input type="text" id="new-emp-pin" placeholder="min. 3 znaky" maxlength="8"><button class="btn-sm gold" onclick="generatePin('new-emp-pin')">PIN</button></div><div class="hint">PIN bude po uložení krátce viditelný.</div></div>
           </div>
-          <div class="form-group">
-            <label>Email (pro notifikace)</label>
-            <input type="email" id="new-emp-email" placeholder="jana.novakova@vistaresort.cz">
-            <div class="hint">Zaměstnanec dostane email při nahrání nového dokumentu.</div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-sm primary" onclick="addEmployee()">Uložit zaměstnance</button>
-            <button class="btn-sm secondary" onclick="toggleAddEmpForm()">Zrušit</button>
-          </div>
+          <div class="form-group"><label>Email (pro notifikace)</label><input type="email" id="new-emp-email" placeholder="jmeno@vistaresort.cz"><div class="hint">Na tento email chodí úkoly, dokumenty a připomínky.</div></div>
+          <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="addEmployee()">Uložit zaměstnance</button><button class="btn-sm secondary" onclick="toggleAddEmpForm()">Zrušit</button></div>
         </div>
-
-        <div id="employees-container" style="margin-top:16px;">
-          <div class="loading"><div class="spinner"></div>Načítám...</div>
-        </div>
+        <div id="employees-container" style="margin-top:16px;"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
       </div>
     </div>
-
-  </div><!-- /tab-admin -->
+  </div><!-- /admin -->
 </div><!-- /app -->
 
-<!-- CONFIRM MODAL -->
+<!-- CONFIRM DOCUMENT MODAL -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal">
     <h2>Potvrdit přečtení</h2>
-    <p id="modal-doc-name" style="font-weight:700;color:var(--green-dark);font-size:15px;margin-bottom:6px;"></p>
-    <p>Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí. Toto potvrzení je zaznamenáno.</p>
+    <p id="modal-doc-name" style="font-family:var(--sans);font-weight:700;color:var(--peacock);font-size:15px;margin-bottom:6px;"></p>
+    <p>Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí.</p>
     <div class="modal-actions">
-      <button class="btn-sm secondary" onclick="closeModal()">Zrušit</button>
-      <button class="btn-sm primary" onclick="confirmDocument()">✓ Potvrzuji přečtení</button>
+      <button class="btn-sm secondary" onclick="closeConfirmModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="confirmDocument()">Potvrzuji přečtení</button>
     </div>
   </div>
 </div>
@@ -719,32 +609,14 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
     <h2>Upravit zaměstnance</h2>
     <input type="hidden" id="edit-emp-id">
     <div class="form-row">
-      <div class="form-group" style="margin:0">
-        <label>Jméno</label>
-        <input type="text" id="edit-emp-name">
-      </div>
-      <div class="form-group" style="margin:0">
-        <label>Pozice</label>
-        <input type="text" id="edit-emp-role">
-      </div>
+      <div class="form-group" style="margin:0"><label>Jméno</label><input type="text" id="edit-emp-name"></div>
+      <div class="form-group" style="margin:0"><label>Pozice</label><input type="text" id="edit-emp-role"></div>
     </div>
     <div class="form-row">
-      <div class="form-group" style="margin:0">
-        <label>Oddělení</label>
-        <select id="edit-emp-dept">
-          <option value="">Vyberte...</option>
-          <option>Hotel</option><option>Wellness</option><option>Gastro</option>
-          <option>Sport</option><option>Správa</option><option>IT</option><option>Ostatní</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin:0">
-        <label>PIN kód</label>
-        <div class="pin-gen-wrap">
-          <input type="text" id="edit-emp-pin" maxlength="8">
-          <button class="btn-sm gold" onclick="generatePinEdit()">🎲</button>
-        </div>
-      </div>
+      <div class="form-group" style="margin:0"><label>Segment</label><select id="edit-emp-dept"><option value="">Vyberte...</option></select></div>
+      <div class="form-group" style="margin:0"><label>PIN</label><div class="pin-gen-wrap"><input type="text" id="edit-emp-pin" maxlength="8"><button class="btn-sm gold" onclick="generatePin('edit-emp-pin')">PIN</button></div></div>
     </div>
+    <div class="form-group"><label>Email</label><input type="email" id="edit-emp-email" placeholder="email@vistaresort.cz"></div>
     <div class="modal-actions">
       <button class="btn-sm secondary" onclick="closeEditModal()">Zrušit</button>
       <button class="btn-sm primary" onclick="saveEditEmployee()">Uložit změny</button>
@@ -752,9 +624,33 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- NEW/EDIT TASK MODAL -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal wide">
+    <h2 id="task-modal-title">Nový úkol</h2>
+    <input type="hidden" id="task-edit-id">
+    <div class="form-group"><label>Název úkolu</label><input type="text" id="task-title" placeholder="např. Připravit menu na víkend"></div>
+    <div class="form-group"><label>Popis</label><textarea id="task-desc" placeholder="Co je třeba udělat..."></textarea></div>
+    <div class="form-row-3">
+      <div class="form-group" style="margin:0"><label>Segment</label><select id="task-segment"><option value="">Vyberte...</option></select></div>
+      <div class="form-group" style="margin:0"><label>Priorita</label><select id="task-priority"><option value="low">Nízká</option><option value="medium" selected>Střední</option><option value="high">Vysoká</option></select></div>
+      <div class="form-group" style="margin:0"><label>Termín</label><input type="date" id="task-deadline"></div>
+    </div>
+    <div class="form-group"><label>Řešitelé (kdo úkol plní)</label><div id="task-assignees-list" class="checklist"></div></div>
+    <div class="form-group"><label>Od koho potřebuji (závislost — volitelné)</label><div id="task-depends-list" class="checklist"></div></div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeTaskModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="saveTask()">Uložit úkol</button>
+    </div>
+  </div>
+</div>
 
-<!-- LOADING OVERLAY -->
+<!-- TASK DETAIL MODAL -->
+<div class="modal-overlay" id="task-detail-modal">
+  <div class="modal wide" id="task-detail-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading-overlay">
   <div class="loading-box">
     <div class="loading-spinner"></div>
@@ -762,183 +658,547 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
     <div class="loading-sub">Vyčkejte prosím, neodcházejte ze stránky.</div>
   </div>
 </div>
-
 <script>
-// ===== STATE =====
-let currentUser = null, isAdmin = false;
-let employees = [], documents = [], confirmations = [];
-let pendingConfirmDocId = null, selectedFile = null;
-let addEmpFormVisible = false, uploadFormVisible = false;
-let pinVisible = {}; // track which PINs are visible
+// ============================================================
+// VISTA PORTÁL v4 — Frontend logic
+// ============================================================
 
-// ===== DEMO DATA =====
-function loadDemoData() {
-  employees = [
-    { id: 'emp1', name: 'Jana Nováková',   role: 'Recepční',        dept: 'Hotel',    pin: '1234' },
-    { id: 'emp2', name: 'Tomáš Kovář',     role: 'Technický správce', dept: 'Správa', pin: '5678' },
-    { id: 'emp3', name: 'Petra Horáková',  role: 'Wellness terapeut', dept: 'Wellness', pin: '9012' },
-  ];
-  documents = [
-    { id: 'doc1', title: 'Pracovní řád Vista Resort', category: 'HR',         desc: 'Vnitřní pracovní předpisy a pravidla', url: '#', uploadedAt: '2025-06-01T10:00:00Z' },
-    { id: 'doc2', title: 'BOZP Instrukce 2025',       category: 'Bezpečnost', desc: 'Bezpečnost a ochrana zdraví při práci', url: '#', uploadedAt: '2025-06-05T10:00:00Z' },
-  ];
-  confirmations = [
-    { docId: 'doc1', employeeId: 'emp1', employeeName: 'Jana Nováková', confirmedAt: '2025-06-10T09:00:00Z' },
-  ];
-}
+// ===== STATE =====
+let employees = [], documents = [], confirmations = [], tasks = [], comments = [];
+let currentUser = null;       // { id, name, role, dept } or role-user
+let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
+let isAdmin = false;          // gm or admin (full rights)
+let isOwner = false;          // owner (overview + create tasks)
+let canManage = false;        // can manage employees/docs (gm, admin)
+let activeTab = 'tasks';
+let pinVisible = {};
+let selectedFile = null;
+let uploadFormVisible = false;
+let pendingConfirmDocId = null;
+let currentTaskId = null;     // open task detail
+let taskAttachFile = null;
 
 // ===== INIT =====
-window.onload = async () => {
-  if (DEMO_MODE()) loadDemoData();
-  // Restore session after refresh
-  const saved = sessionStorage.getItem('vista_session');
-  if (saved) {
-    try {
-      const s = JSON.parse(saved);
-      // Reload data so we have fresh employees/docs
-      if (!DEMO_MODE()) {
-        const d = await apiCall('getAll');
-        if (d.employees)     employees     = d.employees;
-        if (d.documents)     documents     = d.documents;
-        if (d.confirmations) confirmations = d.confirmations;
-      }
-      if (s.isAdmin) {
-        isAdmin = true;
-        currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
-        enterApp(); return;
-      } else {
-        const emp = employees.find(e => e.id === s.userId);
-        if (emp) { isAdmin = false; currentUser = emp; enterApp(); return; }
-      }
-    } catch(e) { sessionStorage.removeItem('vista_session'); }
-  }
-};
+document.getElementById('login-logo-mark').innerHTML = VISTA_V_DARK;
+document.getElementById('topbar-logo-mark').innerHTML = VISTA_V;
+populateDropdowns();
+restoreSession();
 
-// ===== LOGIN (PIN only) =====
-async function doLogin() {
-  const pinEl = document.getElementById('login-pin');
-  const errEl = document.getElementById('login-error');
-  const pin   = pinEl.value.trim();
-  errEl.style.display = 'none';
-
-  if (!pin) { errEl.textContent = 'Zadejte PIN.'; errEl.style.display = 'block'; return; }
-
-  // Admin PIN check
-  if (pin === CONFIG.ADMIN_PIN) {
-    isAdmin = true;
-    currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
-    sessionStorage.setItem('vista_session', JSON.stringify({ isAdmin: true }));
-    enterApp(); return;
-  }
-
-  // Employee PIN lookup
-  if (!DEMO_MODE()) {
-    try { const d = await apiCall('getAll');
-      if (d.employees)     employees     = d.employees;
-      if (d.documents)     documents     = d.documents;
-      if (d.confirmations) confirmations = d.confirmations;
-    } catch(e) {}
-  }
-  const emp = employees.find(e => String(e.pin) === pin);
-  if (emp) {
-    isAdmin = false; currentUser = emp;
-    sessionStorage.setItem('vista_session', JSON.stringify({ isAdmin: false, userId: emp.id }));
-    enterApp(); return;
-  }
-
-  errEl.textContent = 'Nesprávný PIN kód.'; errEl.style.display = 'block'; pinEl.value = '';
+function populateDropdowns() {
+  // segments
+  ['task-segment','new-emp-dept','edit-emp-dept','tasks-segment-filter','conf-dept-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    SEGMENTS.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; el.appendChild(o); });
+  });
+  // categories
+  ['doc-category','docs-cat-filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    CATEGORIES.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; el.appendChild(o); });
+  });
 }
 
-function enterApp() {
+// ===== SESSION =====
+function saveSession() {
+  try { sessionStorage.setItem('vista_session', JSON.stringify({ currentUser, currentRole })); } catch(e) {}
+}
+function restoreSession() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('vista_session') || 'null');
+    if (s && s.currentRole) {
+      currentUser = s.currentUser; currentRole = s.currentRole;
+      applyRole();
+      enterApp();
+    }
+  } catch(e) {}
+}
+function clearSession() { try { sessionStorage.removeItem('vista_session'); } catch(e) {} }
+
+// ===== LOGIN =====
+async function doLogin() {
+  const pin = document.getElementById('login-pin').value.trim();
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  if (!pin) { err.textContent = 'Zadejte PIN kód.'; err.style.display = 'block'; return; }
+
+  // Role PINs first
+  if (pin === CONFIG.PINS.owner) { currentRole = 'owner'; currentUser = { id: '__owner__', name: 'Majitel', role: 'Majitel', dept: '' }; }
+  else if (pin === CONFIG.PINS.gm) { currentRole = 'gm'; currentUser = { id: '__gm__', name: 'General Manager', role: 'GM', dept: '' }; }
+  else if (pin === CONFIG.PINS.admin) { currentRole = 'admin'; currentUser = { id: '__admin__', name: 'Administrátor', role: 'Admin', dept: '' }; }
+  else {
+    // Employee PIN — need to load employees first if not loaded
+    if (employees.length === 0 && !DEMO_MODE()) {
+      showLoading('Ověřuji přístup...');
+      try { await loadData(); } catch(e) {}
+      hideLoading();
+    }
+    const emp = employees.find(e => String(e.pin) === pin);
+    if (emp) { currentRole = 'employee'; currentUser = { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }; }
+    else { err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return; }
+  }
+
+  applyRole();
+  saveSession();
+  enterApp();
+}
+
+function applyRole() {
+  isOwner   = currentRole === 'owner';
+  isAdmin   = currentRole === 'gm' || currentRole === 'admin';
+  canManage = currentRole === 'gm' || currentRole === 'admin';
+  const badge = document.getElementById('role-badge');
+  const labels = { owner: 'Majitel', gm: 'General Manager', admin: 'Administrátor', employee: 'Zaměstnanec' };
+  badge.textContent = labels[currentRole] || 'Zaměstnanec';
+  document.getElementById('topbar-username').textContent = currentUser ? currentUser.name : '';
+
+  // Admin tab: gm + admin only. Owner gets a read overview via stats inside admin tab too? 
+  // Owner can see overview (stats + who does what) but not manage employees.
+  const adminTab = document.getElementById('admin-tab');
+  if (isAdmin || isOwner) { adminTab.style.display = 'block'; adminTab.textContent = isOwner ? 'Přehled' : 'Správa'; }
+  else { adminTab.style.display = 'none'; }
+}
+
+async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  document.getElementById('topbar-username').textContent = currentUser.name + (currentUser.dept ? ' · ' + currentUser.dept : '');
-  document.getElementById('role-badge').textContent = isAdmin ? 'Admin' : currentUser.dept || 'Zaměstnanec';
-  if (isAdmin) {
-    document.getElementById('admin-tab').style.display = 'block';
-    if (DEMO_MODE()) document.getElementById('setup-banner').style.display = 'block';
-    loadAdminData();
-  }
-  loadDocuments();
+  if (DEMO_MODE()) { document.getElementById('setup-banner').style.display = 'block'; loadDemoData(); return; }
+  await loadData();
+  switchTab('tasks');
 }
 
 function logout() {
-  sessionStorage.removeItem('vista_session');
-  currentUser = null; isAdmin = false;
+  clearSession();
+  currentUser = null; currentRole = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-pin').value = '';
-  document.getElementById('login-error').style.display = 'none';
-  if (!DEMO_MODE()) { employees = []; documents = []; confirmations = []; }
 }
 
 // ===== TABS =====
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
-  document.getElementById('tab-docs').style.display  = tab === 'docs'  ? 'block' : 'none';
-  document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
-}
-
-// ===== LOAD DOCS (employee view) =====
-async function loadDocuments() {
-  const c = document.getElementById('docs-container');
-  if (!DEMO_MODE()) {
-    c.innerHTML = '<div class="loading"><div class="spinner"></div>Načítám...</div>';
-    try {
-      const d = await apiCall('getAll');
-      if (d.employees)     employees     = d.employees;
-      if (d.documents)     documents     = d.documents;
-      if (d.confirmations) confirmations = d.confirmations;
-    } catch(e) { showToast('Chyba při načítání', 'error'); }
-  }
-  renderDocuments();
-  buildCatFilter();
-}
-
-function buildCatFilter() {
-  const cats = [...new Set(documents.map(d => d.category).filter(Boolean))];
-  const sel = document.getElementById('docs-cat-filter');
-  sel.innerHTML = '<option value="">Všechny kategorie</option>';
-  cats.forEach(c => sel.innerHTML += `<option>${c}</option>`);
-  document.getElementById('docs-filters').style.display = documents.length > 3 ? 'flex' : 'none';
-}
-
-function renderDocuments() {
-  const c      = document.getElementById('docs-container');
-  const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
-  const cat    = document.getElementById('docs-cat-filter')?.value || '';
-
-  // Employees see only docs targeted to them; admin sees all
-  const visibleDocs = isAdmin ? documents : documents.filter(d => {
-    const ids = docTargets(d).map(e => e.id);
-    return ids.indexOf(currentUser?.id) >= 0;
+  // Owner uses admin tab as overview; block manage actions there via render logic
+  activeTab = tab;
+  ['tasks','docs','admin'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = (t === tab) ? 'block' : 'none';
   });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'tasks') renderTasks();
+  if (tab === 'docs') renderDocuments();
+  if (tab === 'admin') renderAdmin();
+}
 
+// ===== LOAD DATA =====
+async function loadData() {
+  try {
+    const res = await apiCall('getAll', {});
+    employees     = res.employees || [];
+    documents     = res.documents || [];
+    confirmations = res.confirmations || [];
+    tasks         = res.tasks || [];
+    comments      = res.comments || [];
+    refreshAll();
+  } catch(e) {
+    showToast('Chyba při načítání dat: ' + e.message, 'error');
+  }
+}
+
+function refreshAll() {
+  buildFilterOptions();
+  if (activeTab === 'tasks') renderTasks();
+  if (activeTab === 'docs') renderDocuments();
+  if (activeTab === 'admin') renderAdmin();
+}
+
+function buildFilterOptions() {
+  // assignee filter (tasks)
+  const af = document.getElementById('tasks-assignee-filter');
+  if (af) {
+    const cur = af.value;
+    af.innerHTML = '<option value="">Všichni řešitelé</option><option value="__me__">Jen moje úkoly</option>';
+    employees.forEach(e => { const o = document.createElement('option'); o.value = e.id; o.textContent = e.name; af.appendChild(o); });
+    af.value = cur;
+  }
+  // conf doc filter
+  const cdf = document.getElementById('conf-doc-filter');
+  if (cdf) {
+    const cur = cdf.value;
+    cdf.innerHTML = '<option value="">Všechny dokumenty</option>';
+    documents.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.title; cdf.appendChild(o); });
+    cdf.value = cur;
+  }
+}
+
+// ============================================================
+// TASKS — KANBAN
+// ============================================================
+const TASK_STATUSES = [
+  { key: 'todo',       label: 'Zadáno' },
+  { key: 'inprogress', label: 'Probíhá' },
+  { key: 'review',     label: 'Ke kontrole' },
+  { key: 'done',       label: 'Hotovo' }
+];
+
+function visibleTasks() {
+  // Everyone sees all tasks (owner/gm/admin/employee all see everything per requirements)
+  const search = (document.getElementById('tasks-search')?.value || '').toLowerCase();
+  const seg = document.getElementById('tasks-segment-filter')?.value || '';
+  const assignee = document.getElementById('tasks-assignee-filter')?.value || '';
+  const prio = document.getElementById('tasks-priority-filter')?.value || '';
+  return tasks.filter(t => {
+    if (search && !(t.title.toLowerCase().includes(search) || (t.desc||'').toLowerCase().includes(search))) return false;
+    if (seg && t.segment !== seg) return false;
+    if (prio && t.priority !== prio) return false;
+    if (assignee === '__me__') { if (!(t.assignees||[]).includes(currentUser?.id)) return false; }
+    else if (assignee) { if (!(t.assignees||[]).includes(assignee)) return false; }
+    return true;
+  });
+}
+
+function renderTasks() {
+  const c = document.getElementById('tasks-container');
+  const list = visibleTasks();
+  const sub = document.getElementById('tasks-subtitle');
+  const activeCount = tasks.filter(t => t.status !== 'done').length;
+  if (sub) sub.textContent = `${tasks.length} úkolů celkem · ${activeCount} aktivních`;
+
+  if (tasks.length === 0) {
+    c.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><h3>Zatím žádné úkoly</h3><p>Klikněte na „Nový úkol" a vytvořte první.</p></div>';
+    return;
+  }
+
+  let html = '<div class="kanban">';
+  TASK_STATUSES.forEach(st => {
+    const colTasks = list.filter(t => (t.status || 'todo') === st.key);
+    html += `<div class="kanban-col">
+      <div class="kanban-col-header">
+        <div class="kanban-col-title col-${st.key}"><span class="kanban-dot dot-${st.key}"></span>${st.label}</div>
+        <span class="kanban-col-count">${colTasks.length}</span>
+      </div>
+      <div class="kanban-col-body">`;
+    colTasks.forEach(t => html += taskCardHtml(t));
+    html += '</div></div>';
+  });
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+function taskCardHtml(t) {
+  const assignees = (t.assignees || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
+  const avatarsHtml = assignees.slice(0, 4).map(e => `<div class="task-avatar" title="${esc(e.name)}">${initials(e.name)}</div>`).join('');
+  const moreCount = assignees.length > 4 ? `<div class="task-avatar" title="další">+${assignees.length - 4}</div>` : '';
+  const cmtCount = comments.filter(cm => cm.taskId === t.id).length;
+  const attCount = (t.attachments || []).length;
+  const dl = deadlineInfo(t.deadline, t.status);
+  const segClass = t.segment ? 'dept-' + segSlug(t.segment) : '';
+  return `<div class="task-card" onclick="openTaskDetail('${t.id}')">
+    <div class="task-card-top">
+      <div class="task-card-title">${esc(t.title)}</div>
+      <div class="task-prio prio-${t.priority || 'medium'}" title="Priorita: ${priorityCz(t.priority)}"></div>
+    </div>
+    <div class="task-card-meta">
+      ${t.segment ? `<span class="task-seg ${segClass}">${esc(t.segment)}</span>` : ''}
+      <div class="task-assignees">${avatarsHtml}${moreCount}</div>
+    </div>
+    <div class="task-card-foot">
+      ${dl ? `<span class="deadline-pill ${dl.cls}" style="font-size:10px">${dl.txt}</span>` : ''}
+      ${cmtCount ? `<span class="task-foot-item">💬 ${cmtCount}</span>` : ''}
+      ${attCount ? `<span class="task-foot-item">📎 ${attCount}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+// ===== TASK DETAIL =====
+function openTaskDetail(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) return;
+  currentTaskId = taskId;
+  const assignees = (t.assignees || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
+  const deps = (t.dependsOn || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
+  const taskComments = comments.filter(cm => cm.taskId === taskId).sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+  const dl = deadlineInfo(t.deadline, t.status);
+  const canEdit = isAdmin || isOwner || t.createdBy === currentUser?.id || (t.assignees||[]).includes(currentUser?.id);
+  const canDelete = isAdmin || t.createdBy === currentUser?.id;
+
+  let statusOpts = TASK_STATUSES.map(s => `<button class="status-opt ${ (t.status||'todo')===s.key ? 'active':''}" onclick="changeTaskStatus('${t.id}','${s.key}')">${s.label}</button>`).join('');
+
+  let attachHtml = (t.attachments || []).map(a => `<div class="attachment-item">📎 <a href="${esc(a.url)}" target="_blank">${esc(a.name)}</a> <span style="color:var(--ink-faint);font-size:11px;margin-left:auto">${fmtDate(a.uploadedAt)}</span></div>`).join('');
+
+  let commentsHtml = taskComments.length ? taskComments.map(cm => `
+    <div class="comment">
+      <div class="comment-avatar">${initials(cm.authorName)}</div>
+      <div class="comment-body">
+        <div class="comment-head"><span class="comment-author">${esc(cm.authorName)}</span><span class="comment-time">${fmtDateTime(cm.createdAt)}</span></div>
+        <div class="comment-text">${esc(cm.text)}</div>
+      </div>
+    </div>`).join('') : '<p style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)">Zatím žádné komentáře.</p>';
+
+  document.getElementById('task-detail-content').innerHTML = `
+    <div class="task-detail-header">
+      <div class="task-prio prio-${t.priority||'medium'}" style="width:12px;height:12px;margin-top:9px"></div>
+      <div class="task-detail-title">${esc(t.title)}</div>
+      <button class="btn-icon" onclick="closeTaskDetail()" title="Zavřít">✕</button>
+    </div>
+    ${t.desc ? `<p style="font-family:var(--sans);color:var(--ink-soft);font-size:14px;line-height:1.6;margin-bottom:4px">${esc(t.desc)}</p>` : ''}
+
+    <div class="task-detail-row">
+      <div class="tdr-item"><div class="tdr-label">Segment</div><div class="tdr-value">${t.segment ? esc(t.segment) : '—'}</div></div>
+      <div class="tdr-item"><div class="tdr-label">Priorita</div><div class="tdr-value">${priorityCz(t.priority)}</div></div>
+      <div class="tdr-item"><div class="tdr-label">Termín</div><div class="tdr-value">${t.deadline ? fmtDate(t.deadline) : '—'} ${dl ? `<span class="deadline-pill ${dl.cls}" style="margin-left:4px">${dl.txt}</span>`:''}</div></div>
+      <div class="tdr-item"><div class="tdr-label">Zadal</div><div class="tdr-value">${esc(t.createdByName || '—')}</div></div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div class="tdr-label" style="margin-bottom:8px">Stav úkolu</div>
+      <div class="status-selector">${statusOpts}</div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div class="tdr-label" style="margin-bottom:8px">Řešitelé</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${assignees.length ? assignees.map(e => `<span class="chip selected" style="cursor:default">${initials(e.name)} ${esc(e.name)}</span>`).join('') : '<span style="color:var(--ink-faint);font-size:13px;font-family:var(--sans)">Nikdo přiřazen</span>'}
+      </div>
+    </div>
+
+    ${deps.length ? `<div style="margin-bottom:18px">
+      <div class="tdr-label" style="margin-bottom:8px">Potřebuji od</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${deps.map(e => `<span class="chip" style="cursor:default;border-color:var(--warm-tan);color:var(--warm-tan)">${esc(e.name)}</span>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <div style="margin-bottom:6px">
+      <div class="tdr-label" style="margin-bottom:8px">Přílohy</div>
+      <div class="attachments-list">${attachHtml || '<span style="color:var(--ink-faint);font-size:13px;font-family:var(--sans)">Žádné přílohy</span>'}</div>
+      <div style="margin-top:10px">
+        <input type="file" id="task-attach-input" class="file-hidden" onchange="onTaskAttachSelected(this)">
+        <button class="btn-sm secondary" onclick="document.getElementById('task-attach-input').click()">📎 Přidat přílohu</button>
+        <span id="task-attach-name" style="font-size:12px;color:var(--ink-faint);margin-left:8px"></span>
+      </div>
+    </div>
+
+    <div class="comments-section">
+      <div class="comments-title">Komentáře (${taskComments.length})</div>
+      <div id="task-comments-list">${commentsHtml}</div>
+      <div class="comment-input-row">
+        <input type="text" id="task-comment-input" placeholder="Napsat komentář..." onkeydown="if(event.key==='Enter')postComment()">
+        <button class="btn-sm primary" onclick="postComment()">Odeslat</button>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="border-top:1px solid var(--line);padding-top:18px;margin-top:22px">
+      ${canEdit ? `<button class="btn-sm secondary" onclick="openEditTask('${t.id}')">Upravit úkol</button>` : ''}
+      ${canDelete ? `<button class="btn-sm danger" onclick="deleteTask('${t.id}')">Smazat</button>` : ''}
+      <button class="btn-sm secondary" onclick="closeTaskDetail()">Zavřít</button>
+    </div>`;
+
+  document.getElementById('task-detail-modal').classList.add('open');
+}
+
+function closeTaskDetail() { document.getElementById('task-detail-modal').classList.remove('open'); currentTaskId = null; taskAttachFile = null; }
+
+async function changeTaskStatus(taskId, status) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t || t.status === status) return;
+  t.status = status;
+  if (!DEMO_MODE()) {
+    showLoading('Měním stav...');
+    try { await apiCall('updateTaskStatus', { id: taskId, status, changedByName: currentUser?.name || '' }); }
+    catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
+    hideLoading();
+  }
+  openTaskDetail(taskId); // refresh detail
+  renderTasks();
+  showToast('Stav změněn na „' + statusCz(status) + '"', 'success');
+}
+
+async function postComment() {
+  const input = document.getElementById('task-comment-input');
+  const text = input.value.trim();
+  if (!text || !currentTaskId) return;
+  const taskId = currentTaskId;
+  const comment = { id: 'cmt_'+Date.now(), taskId, authorId: currentUser?.id || '', authorName: currentUser?.name || '', text, createdAt: new Date().toISOString() };
+  comments.push(comment);
+  input.value = '';
+  if (!DEMO_MODE()) {
+    try { await apiCall('addComment', { taskId, authorId: comment.authorId, authorName: comment.authorName, text }); }
+    catch(e) { showToast('Chyba při ukládání komentáře', 'error'); }
+  }
+  openTaskDetail(taskId);
+}
+
+function onTaskAttachSelected(input) {
+  if (!input.files[0]) return;
+  taskAttachFile = input.files[0];
+  document.getElementById('task-attach-name').textContent = taskAttachFile.name + ' — nahrávám...';
+  uploadTaskAttachment();
+}
+
+async function uploadTaskAttachment() {
+  if (!taskAttachFile || !currentTaskId) return;
+  const taskId = currentTaskId;
+  if (DEMO_MODE()) {
+    const t = tasks.find(x => x.id === taskId);
+    t.attachments = t.attachments || [];
+    t.attachments.push({ name: taskAttachFile.name, url: '#', uploadedAt: new Date().toISOString() });
+    taskAttachFile = null; openTaskDetail(taskId); showToast('Příloha přidána (demo)', 'success'); return;
+  }
+  showLoading('Nahrávám přílohu...');
+  try {
+    const b64 = await fileToB64(taskAttachFile);
+    const res = await apiCall('addTaskAttachment', { taskId, fileName: taskAttachFile.name, fileType: taskAttachFile.type, fileData: b64 });
+    const t = tasks.find(x => x.id === taskId);
+    if (t) t.attachments = res.attachments || t.attachments;
+    hideLoading();
+    taskAttachFile = null;
+    openTaskDetail(taskId);
+    showToast('Příloha nahrána', 'success');
+  } catch(e) { hideLoading(); showToast('Chyba při nahrávání přílohy', 'error'); }
+}
+
+// ===== NEW / EDIT TASK =====
+function openNewTask() {
+  document.getElementById('task-modal-title').textContent = 'Nový úkol';
+  document.getElementById('task-edit-id').value = '';
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-desc').value = '';
+  document.getElementById('task-segment').value = '';
+  document.getElementById('task-priority').value = 'medium';
+  document.getElementById('task-deadline').value = '';
+  buildPeopleChecklists([], []);
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function openEditTask(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) return;
+  closeTaskDetail();
+  document.getElementById('task-modal-title').textContent = 'Upravit úkol';
+  document.getElementById('task-edit-id').value = t.id;
+  document.getElementById('task-title').value = t.title;
+  document.getElementById('task-desc').value = t.desc || '';
+  document.getElementById('task-segment').value = t.segment || '';
+  document.getElementById('task-priority').value = t.priority || 'medium';
+  document.getElementById('task-deadline').value = t.deadline ? t.deadline.slice(0,10) : '';
+  buildPeopleChecklists(t.assignees || [], t.dependsOn || []);
+  document.getElementById('task-modal').classList.add('open');
+}
+
+function buildPeopleChecklists(selectedAssignees, selectedDeps) {
+  const aWrap = document.getElementById('task-assignees-list');
+  const dWrap = document.getElementById('task-depends-list');
+  aWrap.innerHTML = ''; dWrap.innerHTML = '';
+  if (employees.length === 0) {
+    aWrap.innerHTML = '<span style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)">Nejprve přidejte zaměstnance ve Správě.</span>';
+    dWrap.innerHTML = '<span style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)">—</span>';
+    return;
+  }
+  employees.forEach(e => {
+    const checkedA = selectedAssignees.includes(e.id) ? 'checked' : '';
+    const a = document.createElement('label');
+    a.className = 'check-item';
+    a.innerHTML = `<input type="checkbox" value="${e.id}" ${checkedA}><span><span class="ci-name">${esc(e.name)}</span>${e.dept?` <span class="ci-dept">· ${esc(e.dept)}</span>`:''}</span>`;
+    aWrap.appendChild(a);
+
+    const checkedD = selectedDeps.includes(e.id) ? 'checked' : '';
+    const d = document.createElement('label');
+    d.className = 'check-item';
+    d.innerHTML = `<input type="checkbox" value="${e.id}" ${checkedD}><span><span class="ci-name">${esc(e.name)}</span>${e.dept?` <span class="ci-dept">· ${esc(e.dept)}</span>`:''}</span>`;
+    dWrap.appendChild(d);
+  });
+}
+
+function closeTaskModal() { document.getElementById('task-modal').classList.remove('open'); }
+
+async function saveTask() {
+  const editId = document.getElementById('task-edit-id').value;
+  const title = document.getElementById('task-title').value.trim();
+  const desc = document.getElementById('task-desc').value.trim();
+  const segment = document.getElementById('task-segment').value;
+  const priority = document.getElementById('task-priority').value;
+  const deadlineRaw = document.getElementById('task-deadline').value;
+  const assignees = [...document.querySelectorAll('#task-assignees-list input:checked')].map(c => c.value);
+  const dependsOn = [...document.querySelectorAll('#task-depends-list input:checked')].map(c => c.value);
+  if (!title) { showToast('Zadejte název úkolu', 'error'); return; }
+  const deadline = deadlineRaw ? new Date(deadlineRaw + 'T23:59:59').toISOString() : '';
+
+  if (editId) {
+    // update
+    const t = tasks.find(x => x.id === editId);
+    if (t) { Object.assign(t, { title, desc, segment, priority, deadline, assignees, dependsOn }); }
+    if (!DEMO_MODE()) {
+      showLoading('Ukládám úkol...');
+      try { await apiCall('updateTask', { id: editId, title, desc, segment, priority, deadline, assignees, dependsOn }); }
+      catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
+      hideLoading();
+    }
+    closeTaskModal(); renderTasks();
+    showToast('Úkol upraven', 'success');
+  } else {
+    // create
+    const newTask = { id: 'task_'+Date.now(), title, desc, segment, priority, status: 'todo', assignees, dependsOn, deadline, createdBy: currentUser?.id || '', createdByName: currentUser?.name || '', createdAt: new Date().toISOString(), attachments: [] };
+    if (DEMO_MODE()) {
+      tasks.push(newTask); closeTaskModal(); renderTasks();
+      showToast('Úkol vytvořen (demo)', 'success'); return;
+    }
+    showLoading('Vytvářím úkol a odesílám notifikace...');
+    try {
+      const res = await apiCall('addTask', { title, desc, segment, priority, status: 'todo', assignees, dependsOn, deadline, createdBy: currentUser?.id || '', createdByName: currentUser?.name || '' });
+      newTask.id = res.id;
+      tasks.push(newTask);
+      hideLoading();
+      closeTaskModal(); renderTasks();
+      showToast('Úkol vytvořen', 'success');
+    } catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); }
+  }
+}
+
+async function deleteTask(taskId) {
+  const t = tasks.find(x => x.id === taskId);
+  if (!t || !confirm(`Opravdu smazat úkol „${t.title}"?`)) return;
+  if (!DEMO_MODE()) {
+    showLoading('Mažu úkol...');
+    try { await apiCall('deleteTask', { id: taskId }); }
+    catch(e) { hideLoading(); showToast('Chyba při mazání', 'error'); return; }
+    hideLoading();
+  }
+  tasks = tasks.filter(x => x.id !== taskId);
+  comments = comments.filter(c => c.taskId !== taskId);
+  closeTaskDetail(); renderTasks();
+  showToast('Úkol smazán');
+}
+
+// ============================================================
+// DOCUMENTS (employee view)
+// ============================================================
+function renderDocuments() {
+  const c = document.getElementById('docs-container');
+  document.getElementById('docs-filters').style.display = documents.length ? 'flex' : 'none';
+  const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
+  const cat = document.getElementById('docs-cat-filter')?.value || '';
+
+  const visibleDocs = (isAdmin || isOwner) ? documents : documents.filter(d => {
+    const ids = docTargets(d).map(e => e.id);
+    return ids.includes(currentUser?.id);
+  });
   let filtered = visibleDocs.filter(d =>
     (!search || d.title.toLowerCase().includes(search) || (d.desc||'').toLowerCase().includes(search)) &&
     (!cat || d.category === cat)
   );
-
   const total = visibleDocs.length;
-  const sub   = document.getElementById('docs-subtitle');
-  sub.textContent = total === 0 ? 'Žádné dokumenty' : total + ' dokument' + (total > 4 ? 'ů' : total > 1 ? 'y' : '');
+  document.getElementById('docs-subtitle').textContent = total === 0 ? 'Žádné dokumenty' : total + ' ' + plural(total, 'dokument','dokumenty','dokumentů');
 
   if (filtered.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Zatím pro vás nejsou žádné dokumenty.':'Zkuste jiný hledaný výraz.'}</p></div>`;
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Zatím pro vás nejsou žádné dokumenty.':'Zkuste jiný výraz.'}</p></div>`;
     return;
   }
-
   const myConf = confirmations.filter(cf => cf.employeeId === (currentUser?.id || ''));
   c.innerHTML = '';
-  const grid = document.createElement('div');
-  grid.className = 'docs-grid';
-
+  const grid = document.createElement('div'); grid.className = 'docs-grid';
   filtered.forEach(doc => {
     const conf = myConf.find(cf => cf.docId === doc.id);
-    const dl   = deadlineInfo(doc);
-    const card = document.createElement('div');
-    card.className = 'doc-card';
+    const dl = deadlineInfo(doc.deadline, conf ? 'done' : '');
+    const card = document.createElement('div'); card.className = 'doc-card';
     card.innerHTML = `
       <div class="doc-icon">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-info">
@@ -947,15 +1207,12 @@ function renderDocuments() {
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
           ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
           <span>Přidáno ${fmtDate(doc.uploadedAt)}</span>
-          ${dl && !conf ? `<span class="deadline-pill ${dl.cls}">⏰ ${dl.txt}</span>` : ''}
+          ${dl && !conf ? `<span class="deadline-pill ${dl.cls}">${dl.txt}</span>` : ''}
         </div>
       </div>
       <div class="doc-actions">
-        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-download">⬇ Stáhnout</a>` : ''}
-        ${conf
-          ? `<div class="confirmed-badge">✓ Potvrzeno ${fmtDate(conf.confirmedAt)}</div>`
-          : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${esc(doc.title)}')">Potvrdit přečtení</button>`
-        }
+        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-download">Stáhnout</a>` : ''}
+        ${conf ? `<div class="confirmed-badge">✓ Potvrzeno ${fmtDate(conf.confirmedAt)}</div>` : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${escAttr(doc.title)}')">Potvrdit přečtení</button>`}
       </div>`;
     grid.appendChild(card);
   });
@@ -968,45 +1225,44 @@ function openConfirmModal(docId, docTitle) {
   document.getElementById('modal-doc-name').textContent = docTitle;
   document.getElementById('confirm-modal').classList.add('open');
 }
-function closeModal() {
-  document.getElementById('confirm-modal').classList.remove('open');
-  pendingConfirmDocId = null;
-}
+function closeConfirmModal() { document.getElementById('confirm-modal').classList.remove('open'); pendingConfirmDocId = null; }
+
 async function confirmDocument() {
-  if (!pendingConfirmDocId || !currentUser) return;
-  const docId = pendingConfirmDocId;  // capture before closeModal nulls it
-  closeModal();
-  const cf = { docId: docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
+  const docId = pendingConfirmDocId;     // capture BEFORE closing (closeConfirmModal nulls it)
+  if (!docId) return;
+  closeConfirmModal();
+  const conf = { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
+  confirmations.push(conf);
+  renderDocuments();
   if (!DEMO_MODE()) {
     showLoading('Ukládám potvrzení...');
-    try { await apiCall('addConfirmation', cf); }
+    try { await apiCall('addConfirmation', { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: conf.confirmedAt }); }
     catch(e) { hideLoading(); showToast('Chyba při ukládání potvrzení', 'error'); return; }
     hideLoading();
   }
-  confirmations.push(cf);
-  renderDocuments();
-  if (isAdmin) { renderConfirmations(); updateStats(); }
-  showToast('Potvrzení uloženo. Děkujeme!', 'success');
+  showToast('Potvrzení zaznamenáno. Děkujeme.', 'success');
 }
 
-// ===== ADMIN DATA =====
-async function loadAdminData() {
-  if (!DEMO_MODE()) {
-    try {
-      const d = await apiCall('getAll');
-      if (d.employees)     employees     = d.employees;
-      if (d.documents)     documents     = d.documents;
-      if (d.confirmations) confirmations = d.confirmations;
-    } catch(e) { showToast('Chyba při načítání dat', 'error'); }
-  }
+// ============================================================
+// ADMIN
+// ============================================================
+function renderAdmin() {
   updateStats();
   renderAdminDocsList();
   renderConfirmations();
   renderEmployees();
+  // Owner: hide management buttons (can view but not manage employees/docs)
+  applyOwnerRestrictions();
+}
+
+function applyOwnerRestrictions() {
+  // Owner can view overview + confirmations, but not add/edit employees or upload docs
+  const hide = isOwner; // owner restricted
+  document.querySelectorAll('[data-manage]').forEach(el => el.style.display = hide ? 'none' : '');
 }
 
 function updateStats() {
-  // Count expected confirmations based on each doc's audience
+  // expected confirmations by audience
   let expected = 0, done = 0;
   documents.forEach(doc => {
     const targets = docTargets(doc);
@@ -1014,112 +1270,82 @@ function updateStats() {
     const confIds = new Set(confirmations.filter(cf => cf.docId === doc.id).map(cf => cf.employeeId));
     done += targets.filter(e => confIds.has(e.id)).length;
   });
-  const confPct = expected > 0 ? Math.round(done / expected * 100) : 0;
-  const pending = expected - done;
-  document.getElementById('stat-docs').textContent      = documents.length;
+  const pct = expected > 0 ? Math.round(done / expected * 100) : 0;
+  const activeTasks = tasks.filter(t => t.status !== 'done').length;
+  const doneTasks = tasks.filter(t => t.status === 'done').length;
+  document.getElementById('stat-tasks').textContent = activeTasks;
+  document.getElementById('stat-tasks-done').textContent = doneTasks ? doneTasks + ' hotových' : '';
+  document.getElementById('stat-docs-count').textContent = documents.length;
   document.getElementById('stat-employees').textContent = employees.length;
-  document.getElementById('stat-confirms').textContent  = done;
-  document.getElementById('stat-pct').textContent       = confPct + '%';
-  document.getElementById('stat-pending').textContent   = pending > 0 ? pending + ' čeká na potvrzení' : (expected > 0 ? 'Vše potvrzeno ✓' : '');
-  buildConfFilters();
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('stat-pending').textContent = (expected - done) > 0 ? (expected - done) + ' čeká' : (expected ? 'Vše potvrzeno' : '');
 }
 
-// ===== ADMIN DOCS LIST =====
+// audience helpers
+function docTargets(doc) {
+  if (!doc.audienceType || doc.audienceType === 'all') return employees;
+  if (doc.audienceType === 'depts') return employees.filter(e => (doc.audienceList||[]).includes(e.dept));
+  if (doc.audienceType === 'specific') return employees.filter(e => (doc.audienceList||[]).includes(e.id));
+  return employees;
+}
 function audienceLabel(doc) {
   if (!doc.audienceType || doc.audienceType === 'all') return 'Všichni zaměstnanci';
-  if (doc.audienceType === 'depts') return 'Oddělení: ' + (doc.audienceList || []).join(', ');
-  if (doc.audienceType === 'specific') {
-    const names = (doc.audienceList || []).map(id => { const e = employees.find(x => x.id === id); return e ? e.name : id; });
-    return 'Vybraní: ' + names.join(', ');
-  }
+  if (doc.audienceType === 'depts') return 'Segmenty: ' + (doc.audienceList||[]).join(', ');
+  if (doc.audienceType === 'specific') return 'Vybraní: ' + (doc.audienceList||[]).map(id => { const e = employees.find(x => x.id===id); return e?e.name:id; }).join(', ');
   return 'Všichni';
 }
 
-function docTargets(doc) {
-  if (!doc.audienceType || doc.audienceType === 'all') return employees;
-  if (doc.audienceType === 'depts') return employees.filter(e => (doc.audienceList || []).indexOf(e.dept) >= 0);
-  if (doc.audienceType === 'specific') return employees.filter(e => (doc.audienceList || []).indexOf(e.id) >= 0);
-  return employees;
-}
-
-function deadlineInfo(doc) {
-  if (!doc.deadline) return null;
-  const dl = new Date(doc.deadline);
-  const now = new Date();
-  const days = Math.ceil((dl - now) / (1000*60*60*24));
-  let cls = 'ok', txt = 'do ' + fmtDate(doc.deadline);
-  if (days < 0) { cls = 'over'; txt = 'Po termínu (' + fmtDate(doc.deadline) + ')'; }
-  else if (days <= 3) { cls = 'soon'; txt = 'do ' + fmtDate(doc.deadline) + ' (' + days + ' dní)'; }
-  return { cls, txt };
-}
-
+// ===== ADMIN DOCS LIST =====
 function renderAdminDocsList() {
   const c = document.getElementById('admin-docs-list');
   if (documents.length === 0) {
-    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">📂</div><h3>Žádné dokumenty</h3><p>Klikni "Přidat dokument" výše.</p></div>';
+    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">📂</div><h3>Žádné dokumenty</h3><p>Klikněte „Přidat dokument" výše.</p></div>';
     return;
   }
   c.innerHTML = '';
   documents.forEach(doc => {
-    const targets   = docTargets(doc);
-    const docConfs  = confirmations.filter(cf => cf.docId === doc.id);
+    const targets = docTargets(doc);
+    const docConfs = confirmations.filter(cf => cf.docId === doc.id);
     const confirmedIds = new Set(docConfs.map(cf => cf.employeeId));
     const confirmed = targets.filter(e => confirmedIds.has(e.id));
-    const pending   = targets.filter(e => !confirmedIds.has(e.id));
+    const pending = targets.filter(e => !confirmedIds.has(e.id));
     const pct = targets.length > 0 ? Math.round(confirmed.length / targets.length * 100) : 0;
-    const dl  = deadlineInfo(doc);
-
-    const row = document.createElement('div');
-    row.className = 'doc-admin-row';
-    row.style.flexWrap = 'wrap';
+    const dl = deadlineInfo(doc.deadline, '');
+    const row = document.createElement('div'); row.className = 'doc-admin-row';
     row.innerHTML = `
       <div style="font-size:22px">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-admin-info">
         <div class="doc-admin-name">${esc(doc.title)}</div>
         <div class="doc-admin-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span> ` : ''}
-          ${doc.desc ? esc(doc.desc) + ' · ' : ''}
-          Nahráno ${fmtDate(doc.uploadedAt)}
-          ${dl ? ` · <span class="deadline-pill ${dl.cls}">⏰ ${dl.txt}</span>` : ''}
-          ${doc.url && doc.url !== '#' ? ` · <a href="${esc(doc.url)}" target="_blank" style="color:var(--green-mid)">Otevřít soubor</a>` : ''}
+          ${doc.desc ? esc(doc.desc) + ' · ' : ''}Nahráno ${fmtDate(doc.uploadedAt)}
+          ${dl ? ` · <span class="deadline-pill ${dl.cls}">${dl.txt}</span>` : ''}
+          ${doc.url && doc.url !== '#' ? ` · <a href="${esc(doc.url)}" target="_blank" style="color:var(--fern)">Otevřít soubor</a>` : ''}
         </div>
-        <div class="doc-admin-meta" style="margin-top:3px;">👥 ${esc(audienceLabel(doc))}</div>
-        <div class="doc-admin-progress">
-          <div class="progress-bar-label">
-            <span>${confirmed.length} z ${targets.length} potvrdilo</span>
-            <span style="font-weight:700;color:${pct===100?'var(--green-ok)':'var(--orange)'}">${pct}%</span>
-          </div>
+        <div class="doc-admin-meta" style="margin-top:3px">Příjemci: ${esc(audienceLabel(doc))}</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-label"><span>${confirmed.length} z ${targets.length} potvrdilo</span><span style="font-weight:700;color:${pct===100?'var(--green-ok)':'var(--amber)'}">${pct}%</span></div>
           <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
         </div>
-        <button class="btn-toggle-detail" onclick="toggleDocDetail('${doc.id}')">
-          <span id="detail-arrow-${doc.id}">▸</span> Zobrazit kdo potvrdil
-        </button>
+        <button class="btn-toggle-detail" onclick="toggleDocDetail('${doc.id}')"><span id="detail-arrow-${doc.id}">▸</span> Zobrazit kdo potvrdil</button>
         <div class="conf-detail" id="detail-${doc.id}">
           <div class="conf-detail-section">
-            <div class="conf-detail-title done">✓ Potvrdili (${confirmed.length})</div>
-            ${confirmed.length ? confirmed.map(e => {
-              const cf = docConfs.find(c => c.employeeId === e.id);
-              return `<div class="conf-person">
-                <span class="conf-person-name">${esc(e.name)}${e.dept ? ` <span class="conf-person-meta">· ${esc(e.dept)}</span>` : ''}</span>
-                <span class="conf-person-meta">${cf ? fmtDateTime(cf.confirmedAt) : ''}</span>
-              </div>`;
-            }).join('') : '<div style="font-size:13px;color:var(--gray-400)">Zatím nikdo</div>'}
+            <div class="conf-detail-title done">Potvrdili (${confirmed.length})</div>
+            ${confirmed.length ? confirmed.map(e => { const cf = docConfs.find(c => c.employeeId===e.id); return `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${cf?fmtDateTime(cf.confirmedAt):''}</span></div>`; }).join('') : '<div style="font-size:13px;color:var(--ink-faint)">Zatím nikdo</div>'}
           </div>
           <div class="conf-detail-section">
-            <div class="conf-detail-title pending">⏳ Čekají (${pending.length})</div>
-            ${pending.length ? pending.map(e => `<div class="conf-person">
-                <span class="conf-person-name">${esc(e.name)}${e.dept ? ` <span class="conf-person-meta">· ${esc(e.dept)}</span>` : ''}</span>
-                <span class="conf-person-meta">${e.email || 'bez emailu'}</span>
-              </div>`).join('') : '<div style="font-size:13px;color:var(--green-ok)">Všichni potvrdili ✓</div>'}
+            <div class="conf-detail-title pending">Čekají (${pending.length})</div>
+            ${pending.length ? pending.map(e => `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${e.email||'bez emailu'}</span></div>`).join('') : '<div style="font-size:13px;color:var(--green-ok)">Všichni potvrdili</div>'}
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-shrink:0" data-manage>
         ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-icon" title="Stáhnout">⬇</a>` : ''}
-        <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${esc(doc.title)}')" title="Smazat dokument">🗑</button>
+        <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${escAttr(doc.title)}')" title="Smazat">🗑</button>
       </div>`;
     c.appendChild(row);
   });
+  applyOwnerRestrictions();
 }
 
 function toggleDocDetail(docId) {
@@ -1129,81 +1355,34 @@ function toggleDocDetail(docId) {
   if (a) a.textContent = open ? '▾' : '▸';
 }
 
-async function deleteDocument(id, title) {
-  if (!confirm(`Opravdu smazat dokument "${title}"?\nSmaže se i z Google Drive a všechna potvrzení k němu.`)) return;
-  if (!DEMO_MODE()) {
-    showLoading('Mažu dokument...');
-    try { await apiCall('deleteDocument', { id }); }
-    catch(e) { hideLoading(); showToast('Chyba při mazání dokumentu', 'error'); return; }
-    hideLoading();
-  }
-  documents     = documents.filter(d => d.id !== id);
-  confirmations = confirmations.filter(cf => cf.docId !== id);
-  renderAdminDocsList();
-  renderDocuments();
-  renderConfirmations();
-  updateStats();
-  showToast(`Dokument "${title}" smazán`);
-}
-
 // ===== CONFIRMATIONS TABLE =====
-function buildConfFilters() {
-  const docSel  = document.getElementById('conf-doc-filter');
-  const deptSel = document.getElementById('conf-dept-filter');
-  const curDoc  = docSel.value;
-  const curDept = deptSel.value;
-  docSel.innerHTML  = '<option value="">Všechny dokumenty</option>';
-  deptSel.innerHTML = '<option value="">Všechna oddělení</option>';
-  documents.forEach(d => docSel.innerHTML += `<option value="${d.id}">${esc(d.title)}</option>`);
-  [...new Set(employees.map(e => e.dept).filter(Boolean))].forEach(dept =>
-    deptSel.innerHTML += `<option>${dept}</option>`
-  );
-  if (curDoc)  docSel.value  = curDoc;
-  if (curDept) deptSel.value = curDept;
-}
-
 function renderConfirmations() {
-  const c          = document.getElementById('confirmations-container');
-  const docFilter  = document.getElementById('conf-doc-filter')?.value  || '';
+  const c = document.getElementById('confirmations-container');
+  const docFilter = document.getElementById('conf-doc-filter')?.value || '';
   const deptFilter = document.getElementById('conf-dept-filter')?.value || '';
   const statFilter = document.getElementById('conf-status-filter')?.value || '';
-
   let rows = [];
-  documents
-    .filter(d => !docFilter || d.id === docFilter)
-    .forEach(doc => {
-      // Only employees this doc was sent to
-      docTargets(doc)
-        .filter(e => !deptFilter || e.dept === deptFilter)
-        .forEach(emp => {
-          const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
-          if (statFilter === 'confirmed' && !cf) return;
-          if (statFilter === 'pending'   &&  cf) return;
-          rows.push({ doc, emp, cf });
-        });
+  documents.filter(d => !docFilter || d.id === docFilter).forEach(doc => {
+    docTargets(doc).filter(e => !deptFilter || e.dept === deptFilter).forEach(emp => {
+      const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
+      if (statFilter === 'confirmed' && !cf) return;
+      if (statFilter === 'pending' && cf) return;
+      rows.push({ doc, emp, cf });
     });
-
-  rows.sort((a, b) => (a.cf ? 1 : 0) - (b.cf ? 1 : 0));
-
+  });
+  rows.sort((a,b) => (a.cf?1:0) - (b.cf?1:0));
   if (rows.length === 0) {
     c.innerHTML = '<div class="empty-state" style="padding:28px"><div class="empty-icon">📊</div><h3>Žádné záznamy</h3><p>Zkuste změnit filtry.</p></div>';
     return;
   }
-
-  let html = `<table class="conf-table"><thead><tr>
-    <th>Zaměstnanec</th><th>Oddělení</th><th>Dokument</th><th>Datum potvrzení</th><th>Status</th>
-  </tr></thead><tbody>`;
-
-  rows.forEach(({ doc, emp, cf }) => {
+  let html = '<table class="data-table"><thead><tr><th>Zaměstnanec</th><th>Segment</th><th>Dokument</th><th>Datum potvrzení</th><th>Status</th></tr></thead><tbody>';
+  rows.forEach(({doc,emp,cf}) => {
     html += `<tr>
-      <td><strong>${esc(emp.name)}</strong><br><span style="font-size:11px;color:var(--gray-400)">${esc(emp.role||'')}</span></td>
-      <td>${emp.dept ? `<span class="emp-dept dept-${emp.dept.toLowerCase().replace(/[^a-z]/g,'')}">${esc(emp.dept)}</span>` : ''}</td>
+      <td><strong>${esc(emp.name)}</strong><br><span style="font-size:11px;color:var(--ink-faint)">${esc(emp.role||'')}</span></td>
+      <td>${emp.dept ? `<span class="emp-dept dept-${segSlug(emp.dept)}">${esc(emp.dept)}</span>` : ''}</td>
       <td>${esc(doc.title)}</td>
-      <td>${cf ? fmtDate(cf.confirmedAt) : '<span style="color:var(--gray-400)">—</span>'}</td>
-      <td>${cf
-        ? '<span class="status-pill confirmed">✓ Potvrzeno</span>'
-        : '<span class="status-pill pending">⏳ Čeká</span>'
-      }</td>
+      <td>${cf ? fmtDate(cf.confirmedAt) : '<span style="color:var(--ink-faint)">—</span>'}</td>
+      <td>${cf ? '<span class="status-pill confirmed">✓ Potvrzeno</span>' : '<span class="status-pill pending">⏳ Čeká</span>'}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -1211,7 +1390,7 @@ function renderConfirmations() {
 }
 
 function exportConfirmations() {
-  const rows = [['Zaměstnanec','Pozice','Oddělení','Dokument','Potvrzeno','Datum']];
+  const rows = [['Zaměstnanec','Pozice','Segment','Dokument','Potvrzeno','Datum']];
   documents.forEach(doc => {
     docTargets(doc).forEach(emp => {
       const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
@@ -1223,160 +1402,141 @@ function exportConfirmations() {
   a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = 'vista-portal-potvrzeni-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
+  showToast('CSV exportováno');
 }
 
-// ===== EMPLOYEES =====
+// ============================================================
+// EMPLOYEES
+// ============================================================
 function renderEmployees() {
   const c = document.getElementById('employees-container');
   if (employees.length === 0) {
-    c.innerHTML = '<p style="font-size:13px;color:var(--gray-400);padding:8px 0">Zatím žádní zaměstnanci. Přidej prvního výše.</p>';
+    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">👤</div><h3>Žádní zaměstnanci</h3><p>Přidejte prvního zaměstnance výše.</p></div>';
     return;
   }
-  const byDept = {};
-  employees.forEach(e => { const d = e.dept || 'Ostatní'; if (!byDept[d]) byDept[d] = []; byDept[d].push(e); });
-
-  let html = `<table class="emp-table"><thead><tr>
-    <th>Jméno</th><th>Pozice</th><th>Oddělení</th><th>PIN</th>
-    <th style="text-align:center">Potvrzení</th><th>Email</th><th></th>
-  </tr></thead><tbody>`;
-
+  let html = '<table class="data-table"><thead><tr><th>Jméno</th><th>Pozice</th><th>Segment</th><th>Email</th><th>PIN</th><th></th></tr></thead><tbody>';
   employees.forEach(emp => {
-    const empConfs = confirmations.filter(cf => cf.employeeId === emp.id);
-    const pct      = documents.length > 0 ? Math.round(empConfs.length / documents.length * 100) : 0;
-    const shown    = pinVisible[emp.id];
-    const deptCls  = 'dept-' + (emp.dept||'').toLowerCase().replace(/[^a-z]/g,'');
+    const show = pinVisible[emp.id];
     html += `<tr>
       <td><strong>${esc(emp.name)}</strong></td>
-      <td style="color:var(--gray-600)">${esc(emp.role||'')}</td>
-      <td>${emp.dept ? `<span class="emp-dept ${deptCls}">${esc(emp.dept)}</span>` : ''}</td>
-      <td>
-        <div class="pin-display" onclick="togglePin('${emp.id}')">
-          <span class="pin-dots">${shown ? esc(emp.pin) : '•'.repeat(emp.pin?.length||4)}</span>
-          <span class="pin-toggle">${shown ? '🙈' : '👁'}</span>
-        </div>
-      </td>
-      <td style="text-align:center">
-        <span style="font-weight:700;color:${pct===100?'var(--green-ok)':pct>50?'var(--orange)':'var(--red)'}">${pct}%</span>
-        <div style="font-size:11px;color:var(--gray-400)">${empConfs.length}/${documents.length}</div>
-      </td>
-      <td style="font-size:12px;color:var(--gray-400)">${emp.email ? '<a href="mailto:'+esc(emp.email)+'" style="color:var(--green-mid)">'+esc(emp.email)+'</a>' : '<span style="color:var(--gray-300)">bez emailu</span>'}
-      </td>
-      <td style="text-align:right">
-        <div style="display:flex;gap:6px;justify-content:flex-end">
-          <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">✏️</button>
-          <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">🗑</button>
-        </div>
+      <td>${esc(emp.role||'—')}</td>
+      <td>${emp.dept ? `<span class="emp-dept dept-${segSlug(emp.dept)}">${esc(emp.dept)}</span>` : '—'}</td>
+      <td style="font-size:13px;color:var(--ink-soft)">${esc(emp.email||'—')}</td>
+      <td><span class="pin-display" onclick="togglePin('${emp.id}')">${show ? esc(emp.pin) : '••••'}<span class="pin-toggle">${show?'skrýt':'zobrazit'}</span></span></td>
+      <td style="text-align:right;white-space:nowrap" data-manage>
+        <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">✎</button>
+        <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">🗑</button>
       </td>
     </tr>`;
   });
   html += '</tbody></table>';
   c.innerHTML = html;
+  applyOwnerRestrictions();
 }
 
-function togglePin(id) {
-  pinVisible[id] = !pinVisible[id];
-  renderEmployees();
-}
+function togglePin(id) { pinVisible[id] = !pinVisible[id]; renderEmployees(); }
 
 function toggleAddEmpForm() {
-  addEmpFormVisible = !addEmpFormVisible;
-  document.getElementById('add-emp-panel').style.display = addEmpFormVisible ? 'block' : 'none';
+  const p = document.getElementById('add-emp-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
-function generatePin() {
+function generatePin(targetId) {
   const pin = String(Math.floor(100 + Math.random() * 900));
-  document.getElementById('new-emp-pin').value = pin;
-  document.getElementById('new-emp-pin').type = 'text';
-  showToast('Vygenerován PIN: ' + pin);
-}
-function generatePinEdit() {
-  const pin = String(Math.floor(100 + Math.random() * 900));
-  document.getElementById('edit-emp-pin').value = pin;
-  showToast('Vygenerován PIN: ' + pin);
+  document.getElementById(targetId).value = pin;
 }
 
 async function addEmployee() {
   const name = document.getElementById('new-emp-name').value.trim();
   const role = document.getElementById('new-emp-role').value.trim();
   const dept = document.getElementById('new-emp-dept').value;
-  const pin  = document.getElementById('new-emp-pin').value.trim();
-  if (!name || !pin) { showToast('Vyplňte jméno a PIN', 'error'); return; }
-  if (pin.length < 3) { showToast('PIN musí mít alespoň 3 znaky', 'error'); return; }
-  if (employees.some(e => e.pin === pin)) { showToast('Tento PIN už existuje', 'error'); return; }
+  const pin = document.getElementById('new-emp-pin').value.trim();
   const email = document.getElementById('new-emp-email').value.trim();
-  const emp = { id: 'emp_' + Date.now(), name, role, dept, pin, email };
+  if (!name) { showToast('Zadejte jméno', 'error'); return; }
+  if (pin.length < 3) { showToast('PIN musí mít alespoň 3 znaky', 'error'); return; }
+  if (employees.find(e => String(e.pin) === pin)) { showToast('Tento PIN už někdo má', 'error'); return; }
+  // role PIN collision guard
+  if (Object.values(CONFIG.PINS).includes(pin)) { showToast('Tento PIN je vyhrazen pro vedení', 'error'); return; }
+
+  const emp = { id: 'emp_'+Date.now(), name, role, dept, pin, email };
   if (!DEMO_MODE()) {
     showLoading('Přidávám zaměstnance...');
-    try { await apiCall('addEmployee', emp); }
-    catch(e) { hideLoading(); showToast('Chyba při přidávání', 'error'); return; }
+    try { const res = await apiCall('addEmployee', { name, role, dept, pin, email }); emp.id = res.id; }
+    catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
     hideLoading();
   }
   employees.push(emp);
-  pinVisible[emp.id] = true; // show PIN after creation
+  pinVisible[emp.id] = true;
+  buildFilterOptions();
   renderEmployees(); updateStats();
-  document.getElementById('new-emp-name').value = '';
-  document.getElementById('new-emp-role').value = '';
+  toggleAddEmpForm();
+  ['new-emp-name','new-emp-role','new-emp-pin','new-emp-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('new-emp-dept').value = '';
-  document.getElementById('new-emp-pin').value  = '';
-  document.getElementById('new-emp-email').value = '';
   showToast(`${name} přidán/a · PIN: ${pin}`, 'success');
-  setTimeout(() => { pinVisible[emp.id] = false; renderEmployees(); }, 8000); // hide PIN after 8s
+  setTimeout(() => { pinVisible[emp.id] = false; renderEmployees(); }, 8000);
 }
 
 function openEditEmp(id) {
   const emp = employees.find(e => e.id === id);
   if (!emp) return;
-  document.getElementById('edit-emp-id').value   = emp.id;
+  document.getElementById('edit-emp-id').value = emp.id;
   document.getElementById('edit-emp-name').value = emp.name;
   document.getElementById('edit-emp-role').value = emp.role || '';
   document.getElementById('edit-emp-dept').value = emp.dept || '';
-  document.getElementById('edit-emp-pin').value  = emp.pin;
+  document.getElementById('edit-emp-pin').value = emp.pin;
   document.getElementById('edit-emp-email').value = emp.email || '';
   document.getElementById('edit-emp-modal').classList.add('open');
 }
 function closeEditModal() { document.getElementById('edit-emp-modal').classList.remove('open'); }
 
 async function saveEditEmployee() {
-  const id   = document.getElementById('edit-emp-id').value;
+  const id = document.getElementById('edit-emp-id').value;
   const name = document.getElementById('edit-emp-name').value.trim();
   const role = document.getElementById('edit-emp-role').value.trim();
   const dept = document.getElementById('edit-emp-dept').value;
-  const pin   = document.getElementById('edit-emp-pin').value.trim();
+  const pin = document.getElementById('edit-emp-pin').value.trim();
   const email = document.getElementById('edit-emp-email').value.trim();
   if (!name || !pin) { showToast('Jméno a PIN jsou povinné', 'error'); return; }
-  const dup = employees.find(e => e.pin === pin && e.id !== id);
-  if (dup) { showToast(`PIN ${pin} už má ${dup.name}`, 'error'); return; }
+  if (pin.length < 3) { showToast('PIN musí mít alespoň 3 znaky', 'error'); return; }
+  const dup = employees.find(e => String(e.pin) === pin && e.id !== id);
+  if (dup) { showToast(`PIN má už ${dup.name}`, 'error'); return; }
+  if (Object.values(CONFIG.PINS).includes(pin)) { showToast('Tento PIN je vyhrazen pro vedení', 'error'); return; }
+
   if (!DEMO_MODE()) {
     showLoading('Ukládám změny...');
     try { await apiCall('updateEmployee', { id, name, role, dept, pin, email }); }
-    catch(e) { hideLoading(); showToast('Chyba při ukládání', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
     hideLoading();
   }
   const emp = employees.find(e => e.id === id);
-  if (emp) { emp.name = name; emp.role = role; emp.dept = dept; emp.pin = pin; emp.email = email; }
+  if (emp) Object.assign(emp, { name, role, dept, pin, email });
   closeEditModal();
   pinVisible[id] = true;
+  buildFilterOptions();
   renderEmployees();
   setTimeout(() => { pinVisible[id] = false; renderEmployees(); }, 6000);
-  showToast(`${name} upraven/a · PIN: ${pin}`, 'success');
+  showToast(`${name} upraven/a`, 'success');
 }
 
 async function deleteEmployee(id) {
   const emp = employees.find(e => e.id === id);
-  if (!emp || !confirm(`Opravdu odstranit ${emp.name}?\nSmaže se i přihlášení a jejich potvrzení.`)) return;
+  if (!emp || !confirm(`Opravdu odstranit ${emp.name}? Smaže se i přístup a potvrzení.`)) return;
   if (!DEMO_MODE()) {
     showLoading('Mažu zaměstnance...');
     try { await apiCall('deleteEmployee', { id }); }
     catch(e) { hideLoading(); showToast('Chyba při mazání', 'error'); return; }
     hideLoading();
   }
-  employees     = employees.filter(e => e.id !== id);
+  employees = employees.filter(e => e.id !== id);
   confirmations = confirmations.filter(cf => cf.employeeId !== id);
+  buildFilterOptions();
   renderEmployees(); renderConfirmations(); updateStats();
   showToast(`${emp.name} odstraněn/a`);
 }
 
-// ===== UPLOAD =====
+// ============================================================
+// UPLOAD DOCUMENTS
+// ============================================================
 function toggleUploadForm() {
   uploadFormVisible = !uploadFormVisible;
   document.getElementById('upload-section').style.display = uploadFormVisible ? 'block' : 'none';
@@ -1384,34 +1544,36 @@ function toggleUploadForm() {
 }
 
 function buildAudienceSelectors() {
-  // Departments present among employees
   const depts = [...new Set(employees.map(e => e.dept).filter(Boolean))];
   const dWrap = document.getElementById('audience-depts-list');
   dWrap.innerHTML = '';
-  depts.forEach(d => {
-    const chip = document.createElement('div');
-    chip.className = 'audience-chip';
-    chip.textContent = d;
-    chip.dataset.dept = d;
+  (depts.length ? depts : SEGMENTS).forEach(d => {
+    const chip = document.createElement('div'); chip.className = 'chip'; chip.textContent = d; chip.dataset.dept = d;
     chip.onclick = () => chip.classList.toggle('selected');
     dWrap.appendChild(chip);
   });
-  // Specific employees
   const sWrap = document.getElementById('audience-specific-list');
   sWrap.innerHTML = '';
+  if (employees.length === 0) { sWrap.innerHTML = '<span style="font-size:13px;color:var(--ink-faint)">Nejprve přidejte zaměstnance.</span>'; return; }
   employees.forEach(e => {
-    const item = document.createElement('label');
-    item.className = 'audience-check-item';
-    item.innerHTML = `<input type="checkbox" value="${e.id}">
-      <span><span class="ac-name">${esc(e.name)}</span>${e.dept ? ` <span class="ac-dept">· ${esc(e.dept)}</span>` : ''}</span>`;
+    const item = document.createElement('label'); item.className = 'check-item';
+    item.innerHTML = `<input type="checkbox" value="${e.id}"><span><span class="ci-name">${esc(e.name)}</span>${e.dept?` <span class="ci-dept">· ${esc(e.dept)}</span>`:''}</span>`;
     sWrap.appendChild(item);
   });
 }
 
 function onAudienceTypeChange() {
   const type = document.getElementById('doc-audience-type').value;
-  document.getElementById('audience-depts-wrap').style.display    = type === 'depts'    ? 'block' : 'none';
+  document.getElementById('audience-depts-wrap').style.display = type === 'depts' ? 'block' : 'none';
   document.getElementById('audience-specific-wrap').style.display = type === 'specific' ? 'block' : 'none';
+}
+
+function collectAudience() {
+  const type = document.getElementById('doc-audience-type').value;
+  let list = [];
+  if (type === 'depts') list = [...document.querySelectorAll('#audience-depts-list .chip.selected')].map(c => c.dataset.dept);
+  else if (type === 'specific') list = [...document.querySelectorAll('#audience-specific-list input:checked')].map(c => c.value);
+  return { audienceType: type, audienceList: list };
 }
 
 function onFileSelected(input) {
@@ -1422,54 +1584,41 @@ function onFileSelected(input) {
 }
 
 const uploadArea = document.getElementById('upload-area');
-uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
-uploadArea.addEventListener('drop', e => {
-  e.preventDefault(); uploadArea.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) { document.getElementById('upload-file-input').files = e.dataTransfer.files; onFileSelected(document.getElementById('upload-file-input')); }
-});
-
-function collectAudience() {
-  const type = document.getElementById('doc-audience-type').value;
-  let list = [];
-  if (type === 'depts') {
-    list = [...document.querySelectorAll('#audience-depts-list .audience-chip.selected')].map(c => c.dataset.dept);
-  } else if (type === 'specific') {
-    list = [...document.querySelectorAll('#audience-specific-list input:checked')].map(c => c.value);
-  }
-  return { audienceType: type, audienceList: list };
+if (uploadArea) {
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault(); uploadArea.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) { document.getElementById('upload-file-input').files = e.dataTransfer.files; onFileSelected(document.getElementById('upload-file-input')); }
+  });
 }
 
 async function uploadDocument() {
-  const title    = document.getElementById('doc-title').value.trim();
+  const title = document.getElementById('doc-title').value.trim();
   const category = document.getElementById('doc-category').value;
-  const desc     = document.getElementById('doc-desc').value.trim();
-  const deadline = document.getElementById('doc-deadline').value; // YYYY-MM-DD or ''
-  const aud      = collectAudience();
+  const desc = document.getElementById('doc-desc').value.trim();
+  const deadlineRaw = document.getElementById('doc-deadline').value;
+  const aud = collectAudience();
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
-  if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jedno oddělení', 'error'); return; }
+  if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jeden segment', 'error'); return; }
   if (aud.audienceType === 'specific' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jednoho zaměstnance', 'error'); return; }
-
-  const deadlineISO = deadline ? new Date(deadline + 'T23:59:59').toISOString() : '';
+  const deadline = deadlineRaw ? new Date(deadlineRaw + 'T23:59:59').toISOString() : '';
 
   if (DEMO_MODE()) {
-    const doc = { id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList };
-    documents.push(doc);
-    cancelUpload(); toggleUploadForm();
-    renderAdminDocsList(); renderDocuments(); updateStats();
-    showToast(`Dokument "${title}" přidán (demo mód)`, 'success'); return;
+    documents.push({ id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
+    showToast(`Dokument „${title}" přidán (demo)`, 'success'); return;
   }
   if (!selectedFile) { showToast('Vyberte soubor', 'error'); return; }
   showLoading('Nahrávám dokument a odesílám notifikace...');
   try {
     const b64 = await fileToB64(selectedFile);
-    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList });
-    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList });
-    cancelUpload(); toggleUploadForm();
-    renderAdminDocsList(); renderDocuments(); updateStats();
+    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
     hideLoading();
-    showToast(`Dokument "${title}" nahrán a odeslán`, 'success');
-  } catch(e) { hideLoading(); showToast('Chyba při nahrávání: '+e.message, 'error'); }
+    showToast(`Dokument „${title}" nahrán a odeslán`, 'success');
+  } catch(e) { hideLoading(); showToast('Chyba při nahrávání: ' + e.message, 'error'); }
 }
 
 function cancelUpload() {
@@ -1482,63 +1631,138 @@ function cancelUpload() {
   onAudienceTypeChange();
 }
 
+async function deleteDocument(id, title) {
+  if (!confirm(`Opravdu smazat dokument „${title}"? Smaže se i z Drive a všechna potvrzení.`)) return;
+  if (!DEMO_MODE()) {
+    showLoading('Mažu dokument...');
+    try { await apiCall('deleteDocument', { id }); }
+    catch(e) { hideLoading(); showToast('Chyba při mazání', 'error'); return; }
+    hideLoading();
+  }
+  documents = documents.filter(d => d.id !== id);
+  confirmations = confirmations.filter(cf => cf.docId !== id);
+  renderAdminDocsList(); renderConfirmations(); updateStats(); buildFilterOptions();
+  showToast('Dokument smazán');
+}
+
 function fileToB64(file) {
   return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
 }
 
-// ===== API =====
+// ============================================================
+// API
+// ============================================================
 async function apiCall(action, payload = {}) {
   const res = await fetch(CONFIG.SCRIPT_URL, {
-    method: 'POST', body: JSON.stringify({ action, ...payload }),
-    headers: { 'Content-Type': 'text/plain' }
+    method: 'POST',
+    body: JSON.stringify({ action, ...payload }),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
-// ===== UTILS =====
-function getDocIcon(name, cat) {
-  const n = (name||'').toLowerCase(); const c = (cat||'').toLowerCase();
-  if (c === 'bezpečnost' || n.includes('bozp') || n.includes('bezpečn')) return '⚠️';
-  if (c === 'hr' || n.includes('řád') || n.includes('smlouv') || n.includes('nástup')) return '📋';
-  if (c === 'finance' || n.includes('mzd') || n.includes('platov')) return '💰';
-  if (c === 'it' || n.includes('it ') || n.includes('softwar') || n.includes('heslo')) return '💻';
-  if (n.includes('xlsx') || n.includes('excel') || n.includes('tabulk')) return '📊';
-  if (n.includes('foto') || n.includes('jpg') || n.includes('png')) return '🖼️';
-  if (n.includes('provoz') || c === 'provoz') return '⚙️';
-  return '📄';
-}
-
-function fmtDate(iso) {
-  if (!iso) return '';
-  try { return new Date(iso).toLocaleDateString('cs-CZ', { day:'numeric', month:'short', year:'numeric' }); }
-  catch { return iso; }
-}
-
-function fmtDateTime(iso) {
-  if (!iso) return '';
-  try { return new Date(iso).toLocaleString('cs-CZ', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
-  catch { return iso; }
-}
-
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast ' + type;
-  setTimeout(() => t.classList.add('show'), 10);
-  setTimeout(() => t.classList.remove('show'), 3800);
-}
-
+// ============================================================
+// LOADING / TOAST
+// ============================================================
 function showLoading(text) {
   document.getElementById('loading-text').textContent = text || 'Ukládám...';
   document.getElementById('loading-overlay').classList.add('show');
 }
-function hideLoading() {
-  document.getElementById('loading-overlay').classList.remove('show');
+function hideLoading() { document.getElementById('loading-overlay').classList.remove('show'); }
+
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3400);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) { return esc(s).replace(/'/g, '&#39;'); }
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('cs-CZ', { day:'numeric', month:'short', year:'numeric' }); } catch { return iso; }
+}
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleString('cs-CZ', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); } catch { return iso; }
+}
+function deadlineInfo(deadline, status) {
+  if (!deadline) return null;
+  if (status === 'done') return null;
+  const dl = new Date(deadline), now = new Date();
+  const days = Math.ceil((dl - now) / (1000*60*60*24));
+  if (days < 0) return { cls: 'over', txt: 'Po termínu' };
+  if (days === 0) return { cls: 'soon', txt: 'Dnes' };
+  if (days <= 3) return { cls: 'soon', txt: 'za ' + days + ' ' + plural(days,'den','dny','dní') };
+  return { cls: 'ok', txt: fmtDate(deadline) };
+}
+function priorityCz(p) { return p === 'high' ? 'Vysoká' : p === 'low' ? 'Nízká' : 'Střední'; }
+function statusCz(s) { const m = { todo:'Zadáno', inprogress:'Probíhá', review:'Ke kontrole', done:'Hotovo' }; return m[s] || s; }
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+function segSlug(seg) {
+  return (seg||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
+}
+function plural(n, one, few, many) {
+  if (n === 1) return one;
+  if (n >= 2 && n <= 4) return few;
+  return many;
+}
+function getDocIcon(title, category) {
+  const t = (title||'').toLowerCase(), c = (category||'').toLowerCase();
+  if (c.includes('bezpe') || t.includes('bezpe')) return '🛡';
+  if (c.includes('hr') || t.includes('řád') || t.includes('smlouv')) return '📋';
+  if (c.includes('finance') || t.includes('mzd') || t.includes('faktur')) return '💶';
+  if (c.includes('it')) return '💻';
+  if (c.includes('marketing')) return '📣';
+  if (t.includes('.xls') || t.includes('tabul')) return '📊';
+  return '📄';
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+function loadDemoData() {
+  employees = [
+    { id:'e1', name:'Jana Nováková', role:'Recepční', dept:'Hotel', pin:'111', email:'jana@vistaresort.cz' },
+    { id:'e2', name:'Petr Svoboda', role:'Wellness terapeut', dept:'Wellness', pin:'222', email:'petr@vistaresort.cz' },
+    { id:'e3', name:'Eva Dvořáková', role:'Šéfkuchařka', dept:'Gastro', pin:'333', email:'eva@vistaresort.cz' },
+    { id:'e4', name:'Tomáš Horák', role:'Tenisový trenér', dept:'Sport', pin:'444', email:'tomas@vistaresort.cz' }
+  ];
+  documents = [
+    { id:'d1', title:'Pracovní řád 2025', category:'HR', desc:'Aktualizovaný pracovní řád', url:'#', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), deadline:new Date(Date.now()+86400000*2).toISOString(), audienceType:'all', audienceList:[] },
+    { id:'d2', title:'Bezpečnostní směrnice wellness', category:'Bezpečnost', desc:'Postupy pro wellness provoz', url:'#', uploadedAt:new Date(Date.now()-86400000).toISOString(), deadline:'', audienceType:'depts', audienceList:['Wellness'] }
+  ];
+  confirmations = [ { docId:'d1', docTitle:'Pracovní řád 2025', employeeId:'e1', employeeName:'Jana Nováková', confirmedAt:new Date().toISOString() } ];
+  tasks = [
+    { id:'t1', title:'Připravit víkendové menu', desc:'Sestavit nabídku na sobotu a neděli', segment:'Gastro', priority:'high', status:'inprogress', assignees:['e3'], dependsOn:[], deadline:new Date(Date.now()+86400000*2).toISOString(), createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
+    { id:'t2', title:'Revize tenisových kurtů', desc:'Zkontrolovat stav povrchu', segment:'Sport', priority:'medium', status:'todo', assignees:['e4'], dependsOn:['e1'], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
+    { id:'t3', title:'Úklid wellness po rekonstrukci', desc:'Hloubkový úklid', segment:'Wellness', priority:'low', status:'done', assignees:['e2'], dependsOn:[], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] }
+  ];
+  comments = [ { id:'c1', taskId:'t1', authorId:'e3', authorName:'Eva Dvořáková', text:'Začínám pracovat na návrhu, do zítřka pošlu.', createdAt:new Date().toISOString() } ];
+  buildFilterOptions();
+  switchTab('tasks');
 }
 </script>
 </body>
