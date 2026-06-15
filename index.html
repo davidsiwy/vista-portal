@@ -3323,10 +3323,10 @@ function generateInitialNotifs() {
 let trzbyData = null;
 let chartDaily = null, chartSegs = null, chartMonthly = null;
 
-// Přednahrát reálná Vista data (duben–červen 2026) — uživatel může nahrát novější soubor
+// Přednahrát reálná Vista data (duben–červen 2026) — jen pro majitele, GM a admina
 function initTrzbyData() {
+  if (!isOwner && !isAdmin) return;   // zaměstnanci data nevidí
   if (typeof DEMO_TRZBY !== 'undefined' && DEMO_TRZBY.length) {
-    // Convert date strings back to Date objects if needed
     trzbyData = DEMO_TRZBY.map(r => ({
       ...r,
       date: r.date instanceof Date ? r.date : new Date(r.date)
