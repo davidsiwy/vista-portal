@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista Portál</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green-dark: #1a3a2a;
+  --green-mid: #2d5a3d;
+  --green-light: #3d7a52;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --white: #ffffff;
+  --gray-50: #fafaf8;
+  --gray-100: #f5f5f3;
+  --gray-200: #e8e8e4;
+  --gray-300: #d0d0ca;
+  --gray-400: #a0a09a;
+  --gray-600: #6b6b64;
+  --gray-900: #1a1a18;
+  --red: #c0392b;
+  --red-light: #fdf2f0;
+  --green-ok: #27ae60;
+  --green-ok-light: #eafaf1;
+  --orange: #e67e22;
+  --orange-light: #fef5ec;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.07);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.15);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var(--gray-900); min-height: 100vh; }
+
+/* ===== LOGIN ===== */
+#login-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--green-dark); padding: 24px;
+  background-image: radial-gradient(ellipse at 30% 60%, rgba(45,90,61,0.6) 0%, transparent 60%);
+}
+.login-card {
+  background: var(--white); border-radius: var(--radius-lg); padding: 48px 40px;
+  width: 100%; max-width: 400px; box-shadow: var(--shadow-lg);
+}
+.login-logo { text-align: center; margin-bottom: 36px; }
+.logo-mark {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 56px; background: var(--green-dark); border-radius: 12px;
+  margin-bottom: 14px; color: var(--gold); font-size: 28px; font-weight: 800; letter-spacing: -2px;
+}
+.login-logo h1 { font-size: 21px; font-weight: 700; color: var(--green-dark); letter-spacing: -0.4px; }
+.login-logo p { font-size: 13px; color: var(--gray-400); margin-top: 4px; }
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 11px; font-weight: 700; color: var(--gray-600);
+  text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 7px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 11px 14px; border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius); font-family: 'Inter', sans-serif; font-size: 15px;
+  color: var(--gray-900); background: var(--white); transition: border-color 0.15s; appearance: none;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,90,61,0.08);
+}
+.form-group textarea { resize: vertical; min-height: 72px; font-size: 14px; }
+.form-group .hint { font-size: 11px; color: var(--gray-400); margin-top: 5px; }
+.btn-primary {
+  width: 100%; padding: 13px; background: var(--green-dark); color: var(--white);
+  border: none; border-radius: var(--radius); font-family: 'Inter', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.15s; margin-top: 8px;
+}
+.btn-primary:hover { background: var(--green-mid); }
+.login-error { color: var(--red); font-size: 13px; text-align: center; margin-top: 12px; display: none; }
+
+/* ===== APP SHELL ===== */
+#app { display: none; }
+.topbar {
+  background: var(--green-dark); color: var(--white); height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; position: sticky; top: 0; z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.topbar-logo {
+  width: 34px; height: 34px; background: var(--gold); border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 17px; color: var(--green-dark);
+}
+.topbar-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.topbar-badge {
+  background: var(--gold); color: var(--green-dark); font-size: 10px; font-weight: 700;
+  padding: 2px 9px; border-radius: 20px; letter-spacing: 0.4px; text-transform: uppercase;
+}
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.topbar-user { font-size: 13px; color: rgba(255,255,255,0.7); }
+.btn-logout {
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--white);
+  padding: 6px 14px; border-radius: 6px; font-family: 'Inter', sans-serif;
+  font-size: 13px; cursor: pointer; transition: background 0.15s;
+}
+.btn-logout:hover { background: rgba(255,255,255,0.2); }
+
+/* ===== TABS ===== */
+.tabs {
+  background: var(--white); border-bottom: 1.5px solid var(--gray-200);
+  padding: 0 28px; display: flex; gap: 0; position: sticky; top: 60px; z-index: 100;
+}
+.tab-btn {
+  padding: 14px 18px; border: none; background: none; font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 500; color: var(--gray-400); cursor: pointer;
+  border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; transition: all 0.15s; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--green-mid); }
+.tab-btn.active { color: var(--green-dark); border-bottom-color: var(--green-dark); font-weight: 700; }
+
+/* ===== MAIN ===== */
+.main { max-width: 1020px; margin: 0 auto; padding: 32px 24px; }
+.section-title { font-size: 19px; font-weight: 700; color: var(--green-dark); letter-spacing: -0.4px; }
+.section-subtitle { font-size: 13px; color: var(--gray-400); margin-top: 3px; }
+.section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+
+/* ===== STATS ===== */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 32px; }
+.stat-card {
+  background: var(--white); border-radius: var(--radius); padding: 20px 22px;
+  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200);
+}
+.stat-value { font-size: 30px; font-weight: 800; color: var(--green-dark); letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
+.stat-label { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-sub { font-size: 12px; color: var(--green-ok); font-weight: 500; margin-top: 2px; }
+
+/* ===== DOC CARDS ===== */
+.docs-grid { display: grid; gap: 12px; }
+.doc-card {
+  background: var(--white); border-radius: var(--radius); padding: 18px 22px;
+  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200);
+  display: flex; align-items: center; gap: 18px; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.doc-card:hover { box-shadow: var(--shadow-md); border-color: var(--gray-300); }
+.doc-icon {
+  width: 44px; height: 44px; border-radius: 9px; background: var(--green-dark);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 20px;
+}
+.doc-info { flex: 1; min-width: 0; }
+.doc-name { font-size: 15px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+.doc-meta { font-size: 12px; color: var(--gray-400); display: flex; gap: 10px; flex-wrap: wrap; }
+.doc-cat-pill {
+  display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200);
+}
+.doc-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+.btn-download {
+  padding: 7px 14px; background: var(--gray-100); border: 1.5px solid var(--gray-200);
+  border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--gray-900); cursor: pointer; text-decoration: none; display: inline-flex;
+  align-items: center; gap: 5px; transition: all 0.15s;
+}
+.btn-download:hover { background: var(--gray-200); }
+.btn-confirm {
+  padding: 7px 14px; background: var(--green-dark); border: none; border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--white);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
+}
+.btn-confirm:hover { background: var(--green-mid); }
+.confirmed-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+  background: var(--green-ok-light); border: 1.5px solid #a9dfbf;
+  border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--green-ok);
+}
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar-wrap { margin-top: 6px; }
+.progress-bar-label { font-size: 11px; color: var(--gray-400); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bar-track { height: 5px; background: var(--gray-200); border-radius: 10px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: var(--green-ok); border-radius: 10px; transition: width 0.5s ease; }
+
+/* ===== ADMIN CARDS ===== */
+.admin-section { margin-bottom: 36px; }
+.admin-card {
+  background: var(--white); border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow-sm); border: 1.5px solid var(--gray-200); margin-bottom: 14px;
+}
+.admin-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--gray-200); flex-wrap: wrap; gap: 10px;
+}
+.admin-card-title { font-size: 15px; font-weight: 700; color: var(--green-dark); }
+.admin-card-sub { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+
+/* ===== UPLOAD ===== */
+.upload-area {
+  border: 2px dashed var(--gray-200); border-radius: 9px; padding: 28px;
+  text-align: center; cursor: pointer; transition: all 0.15s; background: var(--gray-50);
+}
+.upload-area:hover, .upload-area.drag-over { border-color: var(--green-mid); background: #f0f7f3; }
+.upload-icon { font-size: 30px; margin-bottom: 8px; }
+.upload-area p { font-size: 14px; color: var(--gray-600); margin-bottom: 3px; }
+.upload-area span { font-size: 12px; color: var(--gray-400); }
+#upload-file-input { display: none; }
+.upload-form { margin-top: 18px; display: none; }
+.upload-form.visible { display: block; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* ===== BUTTONS ===== */
+.btn-sm {
+  padding: 8px 16px; border-radius: 6px; font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-sm.primary { background: var(--green-dark); color: var(--white); }
+.btn-sm.primary:hover { background: var(--green-mid); }
+.btn-sm.secondary { background: var(--gray-100); color: var(--gray-900); border: 1.5px solid var(--gray-200); }
+.btn-sm.secondary:hover { background: var(--gray-200); }
+.btn-sm.danger { background: var(--red-light); color: var(--red); border: 1.5px solid #f0c4be; }
+.btn-sm.danger:hover { background: var(--red); color: var(--white); }
+.btn-sm.gold { background: var(--gold); color: var(--green-dark); }
+.btn-sm.gold:hover { background: var(--gold-light); }
+.btn-icon {
+  width: 30px; height: 30px; border-radius: 5px; border: 1.5px solid var(--gray-200);
+  background: var(--gray-100); cursor: pointer; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 13px; transition: all 0.15s; font-family: 'Inter', sans-serif;
+}
+.btn-icon:hover { background: var(--gray-200); }
+.btn-icon.danger:hover { background: var(--red); border-color: var(--red); filter: brightness(10); }
+
+/* ===== EMPLOYEE TABLE ===== */
+.emp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.emp-table th {
+  text-align: left; padding: 9px 12px; background: var(--gray-100); color: var(--gray-600);
+  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+.emp-table td { padding: 12px 12px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+.emp-table tr:last-child td { border-bottom: none; }
+.emp-table tr:hover td { background: var(--gray-50); }
+.pin-display {
+  font-family: monospace; font-size: 15px; font-weight: 700; letter-spacing: 3px;
+  background: var(--gray-100); padding: 3px 10px; border-radius: 5px; border: 1px solid var(--gray-200);
+  cursor: pointer; user-select: none; display: inline-flex; align-items: center; gap: 6px;
+}
+.pin-display .pin-dots { color: var(--gray-900); }
+.pin-display .pin-toggle { font-size: 11px; color: var(--gray-400); font-family: 'Inter', sans-serif; letter-spacing: 0; }
+.emp-dept {
+  display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.dept-hotel    { background: #e8f4fd; color: #1a6fa8; }
+.dept-wellness { background: #f0f7f0; color: #2d6a3a; }
+.dept-gastro   { background: #fef5e7; color: #9a6213; }
+.dept-sport    { background: #fde8ff; color: #7b2fa8; }
+.dept-sprava   { background: var(--gray-100); color: var(--gray-600); }
+.dept-it       { background: #e8eeff; color: #2d4ea8; }
+
+/* ===== PIN GENERATOR ===== */
+.pin-gen-wrap { display: flex; gap: 8px; align-items: center; }
+.pin-gen-wrap input { flex: 1; }
+.pin-generated { font-family: monospace; font-size: 18px; font-weight: 700; letter-spacing: 4px; color: var(--green-dark); }
+
+/* ===== ADD EMPLOYEE PANEL ===== */
+.add-emp-panel {
+  border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 20px;
+  background: var(--gray-50); margin-top: 16px;
+}
+.add-emp-panel h4 { font-size: 13px; font-weight: 700; color: var(--green-dark); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ===== CONFIRMATIONS TABLE ===== */
+.conf-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.conf-table th {
+  text-align: left; padding: 9px 12px; background: var(--gray-100); color: var(--gray-600);
+  font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1.5px solid var(--gray-200);
+}
+.conf-table td { padding: 11px 12px; border-bottom: 1px solid var(--gray-200); }
+.conf-table tr:last-child td { border-bottom: none; }
+.conf-table tr:hover td { background: var(--gray-50); }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.status-pill.confirmed { background: var(--green-ok-light); color: var(--green-ok); }
+.status-pill.pending { background: var(--orange-light); color: var(--orange); }
+
+/* ===== DOC ADMIN ROW ===== */
+.doc-admin-row {
+  display: flex; align-items: center; gap: 14px; padding: 14px 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+.doc-admin-row:last-child { border-bottom: none; }
+.doc-admin-info { flex: 1; min-width: 0; }
+.doc-admin-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.doc-admin-meta { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+.doc-admin-progress { margin-top: 6px; }
+
+/* ===== FILTERS ===== */
+.filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+.filter-select {
+  padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-900);
+  background: var(--white); cursor: pointer; appearance: none;
+}
+.filter-select:focus { outline: none; border-color: var(--green-mid); }
+.search-input {
+  padding: 7px 12px; border: 1.5px solid var(--gray-200); border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: 13px; color: var(--gray-900);
+  background: var(--white); flex: 1; min-width: 160px;
+}
+.search-input:focus { outline: none; border-color: var(--green-mid); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: none; align-items: center; justify-content: center; z-index: 300; padding: 24px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--radius-lg); padding: 32px;
+  width: 100%; max-width: 460px; box-shadow: var(--shadow-lg);
+}
+.modal h2 { font-size: 18px; font-weight: 700; color: var(--green-dark); margin-bottom: 10px; }
+.modal p { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ===== MISC ===== */
+.loading { text-align: center; padding: 48px; color: var(--gray-400); font-size: 14px; }
+.spinner {
+  width: 26px; height: 26px; border: 3px solid var(--gray-200); border-top-color: var(--green-mid);
+  border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 10px; }
+.empty-state h3 { font-size: 15px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; }
+.empty-state p { font-size: 13px; }
+.toast {
+  position: fixed; bottom: 24px; right: 24px; background: var(--green-dark); color: var(--white);
+  padding: 13px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+  box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275); z-index: 1000; max-width: 340px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { background: var(--red); }
+.toast.success { background: var(--green-ok); }
+.setup-banner {
+  background: #fef3cd; border: 1.5px solid #fde68a; border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #78590a; line-height: 1.6;
+}
+.setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: monospace; }
+.divider { border: none; border-top: 1px solid var(--gray-200); margin: 20px 0; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.tag.new { background: #e8f7ee; color: #1d7a40; border: 1px solid #b3e0c0; }
+
+@media (max-width: 640px) {
+  .doc-card { flex-direction: column; align-items: flex-start; }
+  .doc-actions { width: 100%; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .topbar { padding: 0 16px; }
+  .main { padding: 20px 14px; }
+  .tabs { padding: 0 14px; overflow-x: auto; }
+  .emp-table { font-size: 12px; }
+  .emp-table th, .emp-table td { padding: 8px; }
+}
+</style>
+</head>
+<body>
+
+<script>
+const CONFIG = {
+  SCRIPT_URL: 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE',
+  ADMIN_PIN: 'vista2024admin',
+  VERSION: '2.0'
+};
+
+const DEPARTMENTS = ['Hotel', 'Wellness', 'Gastro', 'Sport', 'Správa', 'IT', 'Ostatní'];
+const CATEGORIES  = ['HR', 'Bezpečnost', 'Provoz', 'IT', 'Finance', 'Ostatní'];
+const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+</script>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark">V</div>
+      <h1>Vista Portál</h1>
+      <p>Interní dokumentový systém</p>
+    </div>
+    <div class="form-group">
+      <label>Vyberte jméno</label>
+      <select id="login-name"><option value="">Načítám...</option></select>
+    </div>
+    <div class="form-group">
+      <label>PIN kód</label>
+      <input type="password" id="login-pin" placeholder="••••" maxlength="8" inputmode="numeric">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Přihlásit se</button>
+    <p class="login-error" id="login-error">Nesprávné jméno nebo PIN.</p>
+    <div style="margin-top:18px;text-align:center;">
+      <button onclick="showAdminLogin()" style="background:none;border:none;font-size:12px;color:var(--gray-400);cursor:pointer;font-family:Inter,sans-serif;text-decoration:underline;">
+        Přihlásit jako admin
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">V</div>
+      <span class="topbar-title">Vista Portál</span>
+      <span class="topbar-badge" id="role-badge">Zaměstnanec</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="topbar-username"></span>
+      <button class="btn-logout" onclick="logout()">Odhlásit</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('docs')" data-tab="docs">📄 Dokumenty</button>
+    <button class="tab-btn" onclick="switchTab('admin')" data-tab="admin" id="admin-tab" style="display:none">⚙️ Admin</button>
+  </div>
+
+  <!-- DOCS TAB -->
+  <div id="tab-docs" class="main">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Dokumenty</div>
+        <div class="section-subtitle" id="docs-subtitle">Načítám...</div>
+      </div>
+    </div>
+    <div class="filters" id="docs-filters" style="display:none">
+      <input type="text" class="search-input" id="docs-search" placeholder="Hledat dokument..." oninput="renderDocuments()">
+      <select class="filter-select" id="docs-cat-filter" onchange="renderDocuments()">
+        <option value="">Všechny kategorie</option>
+      </select>
+    </div>
+    <div id="docs-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div id="tab-admin" class="main" style="display:none">
+
+    <div class="setup-banner" id="setup-banner" style="display:none">
+      <strong>⚠️ Demo mód</strong> — nastav Google Apps Script URL v souboru <code>index.html</code> (viz SETUP.md). Data se zatím neukládají permanentně.
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-docs">0</div>
+        <div class="stat-label">Dokumenty</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-employees">0</div>
+        <div class="stat-label">Zaměstnanci</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-confirms">0</div>
+        <div class="stat-label">Potvrzení celkem</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-pct">0%</div>
+        <div class="stat-label">Průměrná shoda</div>
+        <div class="stat-sub" id="stat-pending"></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS MANAGEMENT -->
+    <div class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">📂 Správa dokumentů</div>
+            <div class="admin-card-sub">Nahrávej a mazej dokumenty, sleduj míru potvrzení</div>
+          </div>
+          <button class="btn-sm primary" onclick="toggleUploadForm()">+ Přidat dokument</button>
+        </div>
+
+        <!-- UPLOAD FORM -->
+        <div id="upload-section" style="display:none">
+          <div class="upload-area" id="upload-area" onclick="document.getElementById('upload-file-input').click()">
+            <div class="upload-icon">📎</div>
+            <p>Klikni pro výběr souboru nebo přetáhni sem</p>
+            <span>PDF, Word, Excel, obrázky — max 20 MB</span>
+          </div>
+          <input type="file" id="upload-file-input" onchange="onFileSelected(this)">
+          <div class="upload-form" id="upload-form">
+            <div class="form-row" style="margin-top:14px;">
+              <div class="form-group" style="margin:0">
+                <label>Název dokumentu</label>
+                <input type="text" id="doc-title" placeholder="např. Pracovní řád 2025">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Kategorie</label>
+                <select id="doc-category">
+                  <option value="">Vyberte...</option>
+                  <option>HR</option><option>Bezpečnost</option><option>Provoz</option>
+                  <option>IT</option><option>Finance</option><option>Ostatní</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Popis (volitelné)</label>
+              <input type="text" id="doc-desc" placeholder="Krátký popis obsahu dokumentu">
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-sm primary" onclick="uploadDocument()">⬆ Nahrát</button>
+              <button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button>
+            </div>
+          </div>
+          <hr class="divider">
+        </div>
+
+        <!-- DOCS LIST FOR ADMIN -->
+        <div id="admin-docs-list">
+          <div class="loading"><div class="spinner"></div>Načítám...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRMATIONS -->
+    <div class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">✅ Přehled potvrzení</div>
+            <div class="admin-card-sub">Kdo a kdy potvrdil přečtení dokumentů</div>
+          </div>
+          <button class="btn-sm secondary" onclick="exportConfirmations()">⬇ Export CSV</button>
+        </div>
+        <div class="filters">
+          <select class="filter-select" id="conf-doc-filter" onchange="renderConfirmations()">
+            <option value="">Všechny dokumenty</option>
+          </select>
+          <select class="filter-select" id="conf-dept-filter" onchange="renderConfirmations()">
+            <option value="">Všechna oddělení</option>
+          </select>
+          <select class="filter-select" id="conf-status-filter" onchange="renderConfirmations()">
+            <option value="">Vše</option>
+            <option value="confirmed">Jen potvrzené</option>
+            <option value="pending">Jen čekající</option>
+          </select>
+        </div>
+        <div id="confirmations-container"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="admin-section">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title">👤 Zaměstnanci</div>
+            <div class="admin-card-sub">Správa přístupů a PIN kódů</div>
+          </div>
+          <button class="btn-sm primary" onclick="toggleAddEmpForm()">+ Přidat zaměstnance</button>
+        </div>
+
+        <!-- ADD EMPLOYEE FORM -->
+        <div class="add-emp-panel" id="add-emp-panel" style="display:none">
+          <h4>Nový zaměstnanec</h4>
+          <div class="form-row">
+            <div class="form-group" style="margin:0">
+              <label>Jméno a příjmení</label>
+              <input type="text" id="new-emp-name" placeholder="Jana Nováková">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Pracovní pozice</label>
+              <input type="text" id="new-emp-role" placeholder="Recepční">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin:0">
+              <label>Oddělení</label>
+              <select id="new-emp-dept">
+                <option value="">Vyberte oddělení...</option>
+                <option>Hotel</option><option>Wellness</option><option>Gastro</option>
+                <option>Sport</option><option>Správa</option><option>IT</option><option>Ostatní</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>PIN kód</label>
+              <div class="pin-gen-wrap">
+                <input type="text" id="new-emp-pin" placeholder="min. 4 znaky" maxlength="8">
+                <button class="btn-sm gold" onclick="generatePin()" title="Vygenerovat náhodný PIN">🎲 PIN</button>
+              </div>
+              <div class="hint">Klikni 🎲 pro náhodný 4-místný PIN. PIN bude viditelný při uložení.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-sm primary" onclick="addEmployee()">Uložit zaměstnance</button>
+            <button class="btn-sm secondary" onclick="toggleAddEmpForm()">Zrušit</button>
+          </div>
+        </div>
+
+        <div id="employees-container" style="margin-top:16px;">
+          <div class="loading"><div class="spinner"></div>Načítám...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /tab-admin -->
+</div><!-- /app -->
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h2>Potvrdit přečtení</h2>
+    <p id="modal-doc-name" style="font-weight:700;color:var(--green-dark);font-size:15px;margin-bottom:6px;"></p>
+    <p>Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí. Toto potvrzení je zaznamenáno.</p>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="confirmDocument()">✓ Potvrzuji přečtení</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT EMPLOYEE MODAL -->
+<div class="modal-overlay" id="edit-emp-modal">
+  <div class="modal">
+    <h2>Upravit zaměstnance</h2>
+    <input type="hidden" id="edit-emp-id">
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Jméno</label>
+        <input type="text" id="edit-emp-name">
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Pozice</label>
+        <input type="text" id="edit-emp-role">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Oddělení</label>
+        <select id="edit-emp-dept">
+          <option value="">Vyberte...</option>
+          <option>Hotel</option><option>Wellness</option><option>Gastro</option>
+          <option>Sport</option><option>Správa</option><option>IT</option><option>Ostatní</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>PIN kód</label>
+        <div class="pin-gen-wrap">
+          <input type="text" id="edit-emp-pin" maxlength="8">
+          <button class="btn-sm gold" onclick="generatePinEdit()">🎲</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeEditModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="saveEditEmployee()">Uložit změny</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let currentUser = null, isAdmin = false;
+let employees = [], documents = [], confirmations = [];
+let pendingConfirmDocId = null, selectedFile = null;
+let addEmpFormVisible = false, uploadFormVisible = false;
+let pinVisible = {}; // track which PINs are visible
+
+// ===== DEMO DATA =====
+function loadDemoData() {
+  employees = [
+    { id: 'emp1', name: 'Jana Nováková',   role: 'Recepční',        dept: 'Hotel',    pin: '1234' },
+    { id: 'emp2', name: 'Tomáš Kovář',     role: 'Technický správce', dept: 'Správa', pin: '5678' },
+    { id: 'emp3', name: 'Petra Horáková',  role: 'Wellness terapeut', dept: 'Wellness', pin: '9012' },
+  ];
+  documents = [
+    { id: 'doc1', title: 'Pracovní řád Vista Resort', category: 'HR',         desc: 'Vnitřní pracovní předpisy a pravidla', url: '#', uploadedAt: '2025-06-01T10:00:00Z' },
+    { id: 'doc2', title: 'BOZP Instrukce 2025',       category: 'Bezpečnost', desc: 'Bezpečnost a ochrana zdraví při práci', url: '#', uploadedAt: '2025-06-05T10:00:00Z' },
+  ];
+  confirmations = [
+    { docId: 'doc1', employeeId: 'emp1', employeeName: 'Jana Nováková', confirmedAt: '2025-06-10T09:00:00Z' },
+  ];
+}
+
+// ===== INIT =====
+window.onload = () => {
+  if (DEMO_MODE()) loadDemoData();
+  populateLoginSelect();
+};
+
+function populateLoginSelect() {
+  const sel = document.getElementById('login-name');
+  sel.innerHTML = '<option value="">Vyberte jméno...</option>';
+  employees.forEach(e => {
+    const opt = document.createElement('option');
+    opt.value = e.id;
+    opt.textContent = e.name + (e.dept ? ' (' + e.dept + ')' : '');
+    sel.appendChild(opt);
+  });
+}
+
+// ===== LOGIN =====
+function showAdminLogin() {
+  const sel = document.getElementById('login-name');
+  sel.innerHTML = '<option value="__admin__">— Admin —</option>';
+  document.getElementById('login-pin').focus();
+}
+
+async function doLogin() {
+  const nameEl = document.getElementById('login-name');
+  const pinEl  = document.getElementById('login-pin');
+  const errEl  = document.getElementById('login-error');
+  const selId  = nameEl.value;
+  const pin    = pinEl.value.trim();
+  errEl.style.display = 'none';
+
+  if (!selId || !pin) { errEl.textContent = 'Vyplňte jméno a PIN.'; errEl.style.display = 'block'; return; }
+
+  if (selId === '__admin__' && pin === CONFIG.ADMIN_PIN) {
+    isAdmin = true; currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
+    enterApp(); return;
+  }
+  if (selId !== '__admin__') {
+    if (!DEMO_MODE()) {
+      try { const d = await apiCall('getEmployees'); if (d.employees) employees = d.employees; } catch(e) {}
+    }
+    const emp = employees.find(e => e.id === selId && e.pin === pin);
+    if (emp) { isAdmin = false; currentUser = emp; enterApp(); return; }
+  }
+  errEl.textContent = 'Nesprávný PIN kód.'; errEl.style.display = 'block'; pinEl.value = '';
+}
+
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topbar-username').textContent = currentUser.name + (currentUser.dept ? ' · ' + currentUser.dept : '');
+  document.getElementById('role-badge').textContent = isAdmin ? 'Admin' : currentUser.dept || 'Zaměstnanec';
+  if (isAdmin) {
+    document.getElementById('admin-tab').style.display = 'block';
+    if (DEMO_MODE()) document.getElementById('setup-banner').style.display = 'block';
+    loadAdminData();
+  }
+  loadDocuments();
+}
+
+function logout() {
+  currentUser = null; isAdmin = false;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pin').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  if (!DEMO_MODE()) { employees = []; documents = []; confirmations = []; }
+  populateLoginSelect();
+}
+
+// ===== TABS =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+  document.getElementById('tab-docs').style.display  = tab === 'docs'  ? 'block' : 'none';
+  document.getElementById('tab-admin').style.display = tab === 'admin' ? 'block' : 'none';
+}
+
+// ===== LOAD DOCS (employee view) =====
+async function loadDocuments() {
+  const c = document.getElementById('docs-container');
+  if (!DEMO_MODE()) {
+    c.innerHTML = '<div class="loading"><div class="spinner"></div>Načítám...</div>';
+    try {
+      const d = await apiCall('getAll');
+      if (d.employees)     employees     = d.employees;
+      if (d.documents)     documents     = d.documents;
+      if (d.confirmations) confirmations = d.confirmations;
+    } catch(e) { showToast('Chyba při načítání', 'error'); }
+  }
+  renderDocuments();
+  buildCatFilter();
+}
+
+function buildCatFilter() {
+  const cats = [...new Set(documents.map(d => d.category).filter(Boolean))];
+  const sel = document.getElementById('docs-cat-filter');
+  sel.innerHTML = '<option value="">Všechny kategorie</option>';
+  cats.forEach(c => sel.innerHTML += `<option>${c}</option>`);
+  document.getElementById('docs-filters').style.display = documents.length > 3 ? 'flex' : 'none';
+}
+
+function renderDocuments() {
+  const c      = document.getElementById('docs-container');
+  const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
+  const cat    = document.getElementById('docs-cat-filter')?.value || '';
+
+  let filtered = documents.filter(d =>
+    (!search || d.title.toLowerCase().includes(search) || (d.desc||'').toLowerCase().includes(search)) &&
+    (!cat || d.category === cat)
+  );
+
+  const total = documents.length;
+  const sub   = document.getElementById('docs-subtitle');
+  sub.textContent = total === 0 ? 'Žádné dokumenty' : total + ' dokument' + (total > 4 ? 'ů' : total > 1 ? 'y' : '');
+
+  if (filtered.length === 0) {
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Administrátor zatím nenahrál žádné dokumenty.':'Zkuste jiný hledaný výraz.'}</p></div>`;
+    return;
+  }
+
+  const myConf = confirmations.filter(cf => cf.employeeId === (currentUser?.id || ''));
+  c.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'docs-grid';
+
+  filtered.forEach(doc => {
+    const conf = myConf.find(cf => cf.docId === doc.id);
+    const card = document.createElement('div');
+    card.className = 'doc-card';
+    card.innerHTML = `
+      <div class="doc-icon">${getDocIcon(doc.title, doc.category)}</div>
+      <div class="doc-info">
+        <div class="doc-name">${esc(doc.title)}</div>
+        <div class="doc-meta">
+          ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
+          ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
+          <span>Přidáno ${fmtDate(doc.uploadedAt)}</span>
+        </div>
+      </div>
+      <div class="doc-actions">
+        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-download">⬇ Stáhnout</a>` : ''}
+        ${conf
+          ? `<div class="confirmed-badge">✓ Potvrzeno ${fmtDate(conf.confirmedAt)}</div>`
+          : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${esc(doc.title)}')">Potvrdit přečtení</button>`
+        }
+      </div>`;
+    grid.appendChild(card);
+  });
+  c.appendChild(grid);
+}
+
+// ===== CONFIRM =====
+function openConfirmModal(docId, docTitle) {
+  pendingConfirmDocId = docId;
+  document.getElementById('modal-doc-name').textContent = docTitle;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  pendingConfirmDocId = null;
+}
+async function confirmDocument() {
+  if (!pendingConfirmDocId || !currentUser) return;
+  closeModal();
+  const cf = { docId: pendingConfirmDocId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
+  if (!DEMO_MODE()) {
+    try { await apiCall('addConfirmation', cf); }
+    catch(e) { showToast('Chyba při ukládání potvrzení', 'error'); return; }
+  }
+  confirmations.push(cf);
+  renderDocuments();
+  if (isAdmin) { renderConfirmations(); updateStats(); }
+  showToast('Potvrzení uloženo. Děkujeme!', 'success');
+}
+
+// ===== ADMIN DATA =====
+async function loadAdminData() {
+  if (!DEMO_MODE()) {
+    try {
+      const d = await apiCall('getAll');
+      if (d.employees)     employees     = d.employees;
+      if (d.documents)     documents     = d.documents;
+      if (d.confirmations) confirmations = d.confirmations;
+    } catch(e) { showToast('Chyba při načítání dat', 'error'); }
+  }
+  updateStats();
+  renderAdminDocsList();
+  renderConfirmations();
+  renderEmployees();
+}
+
+function updateStats() {
+  const total    = documents.length * employees.length;
+  const confPct  = total > 0 ? Math.round(confirmations.length / total * 100) : 0;
+  const pending  = total - confirmations.length;
+  document.getElementById('stat-docs').textContent      = documents.length;
+  document.getElementById('stat-employees').textContent = employees.length;
+  document.getElementById('stat-confirms').textContent  = confirmations.length;
+  document.getElementById('stat-pct').textContent       = confPct + '%';
+  document.getElementById('stat-pending').textContent   = pending > 0 ? pending + ' čeká na potvrzení' : 'Vše potvrzeno ✓';
+  buildConfFilters();
+}
+
+// ===== ADMIN DOCS LIST =====
+function renderAdminDocsList() {
+  const c = document.getElementById('admin-docs-list');
+  if (documents.length === 0) {
+    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">📂</div><h3>Žádné dokumenty</h3><p>Klikni "Přidat dokument" výše.</p></div>';
+    return;
+  }
+  c.innerHTML = '';
+  documents.forEach(doc => {
+    const docConfs = confirmations.filter(cf => cf.docId === doc.id);
+    const pct = employees.length > 0 ? Math.round(docConfs.length / employees.length * 100) : 0;
+    const row = document.createElement('div');
+    row.className = 'doc-admin-row';
+    row.innerHTML = `
+      <div style="font-size:22px">${getDocIcon(doc.title, doc.category)}</div>
+      <div class="doc-admin-info">
+        <div class="doc-admin-name">${esc(doc.title)}</div>
+        <div class="doc-admin-meta">
+          ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span> ` : ''}
+          ${doc.desc ? esc(doc.desc) + ' · ' : ''}
+          Nahráno ${fmtDate(doc.uploadedAt)}
+          ${doc.url && doc.url !== '#' ? ` · <a href="${esc(doc.url)}" target="_blank" style="color:var(--green-mid)">Otevřít soubor</a>` : ''}
+        </div>
+        <div class="doc-admin-progress">
+          <div class="progress-bar-label">
+            <span>${docConfs.length} z ${employees.length} zaměstnanců potvrdilo</span>
+            <span style="font-weight:700;color:${pct===100?'var(--green-ok)':'var(--orange)'}">${pct}%</span>
+          </div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-icon" title="Stáhnout">⬇</a>` : ''}
+        <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${esc(doc.title)}')" title="Smazat dokument">🗑</button>
+      </div>`;
+    c.appendChild(row);
+  });
+}
+
+async function deleteDocument(id, title) {
+  if (!confirm(`Opravdu smazat dokument "${title}"?\nSmaže se i z Google Drive a všechna potvrzení k němu.`)) return;
+  if (!DEMO_MODE()) {
+    try { await apiCall('deleteDocument', { id }); }
+    catch(e) { showToast('Chyba při mazání dokumentu', 'error'); return; }
+  }
+  documents     = documents.filter(d => d.id !== id);
+  confirmations = confirmations.filter(cf => cf.docId !== id);
+  renderAdminDocsList();
+  renderDocuments();
+  renderConfirmations();
+  updateStats();
+  showToast(`Dokument "${title}" smazán`);
+}
+
+// ===== CONFIRMATIONS TABLE =====
+function buildConfFilters() {
+  const docSel  = document.getElementById('conf-doc-filter');
+  const deptSel = document.getElementById('conf-dept-filter');
+  const curDoc  = docSel.value;
+  const curDept = deptSel.value;
+  docSel.innerHTML  = '<option value="">Všechny dokumenty</option>';
+  deptSel.innerHTML = '<option value="">Všechna oddělení</option>';
+  documents.forEach(d => docSel.innerHTML += `<option value="${d.id}">${esc(d.title)}</option>`);
+  [...new Set(employees.map(e => e.dept).filter(Boolean))].forEach(dept =>
+    deptSel.innerHTML += `<option>${dept}</option>`
+  );
+  if (curDoc)  docSel.value  = curDoc;
+  if (curDept) deptSel.value = curDept;
+}
+
+function renderConfirmations() {
+  const c          = document.getElementById('confirmations-container');
+  const docFilter  = document.getElementById('conf-doc-filter')?.value  || '';
+  const deptFilter = document.getElementById('conf-dept-filter')?.value || '';
+  const statFilter = document.getElementById('conf-status-filter')?.value || '';
+
+  let rows = [];
+  documents
+    .filter(d => !docFilter || d.id === docFilter)
+    .forEach(doc => {
+      employees
+        .filter(e => !deptFilter || e.dept === deptFilter)
+        .forEach(emp => {
+          const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
+          if (statFilter === 'confirmed' && !cf) return;
+          if (statFilter === 'pending'   &&  cf) return;
+          rows.push({ doc, emp, cf });
+        });
+    });
+
+  rows.sort((a, b) => (a.cf ? 1 : 0) - (b.cf ? 1 : 0));
+
+  if (rows.length === 0) {
+    c.innerHTML = '<div class="empty-state" style="padding:28px"><div class="empty-icon">📊</div><h3>Žádné záznamy</h3><p>Zkuste změnit filtry.</p></div>';
+    return;
+  }
+
+  let html = `<table class="conf-table"><thead><tr>
+    <th>Zaměstnanec</th><th>Oddělení</th><th>Dokument</th><th>Datum potvrzení</th><th>Status</th>
+  </tr></thead><tbody>`;
+
+  rows.forEach(({ doc, emp, cf }) => {
+    html += `<tr>
+      <td><strong>${esc(emp.name)}</strong><br><span style="font-size:11px;color:var(--gray-400)">${esc(emp.role||'')}</span></td>
+      <td>${emp.dept ? `<span class="emp-dept dept-${emp.dept.toLowerCase().replace(/[^a-z]/g,'')}">${esc(emp.dept)}</span>` : ''}</td>
+      <td>${esc(doc.title)}</td>
+      <td>${cf ? fmtDate(cf.confirmedAt) : '<span style="color:var(--gray-400)">—</span>'}</td>
+      <td>${cf
+        ? '<span class="status-pill confirmed">✓ Potvrzeno</span>'
+        : '<span class="status-pill pending">⏳ Čeká</span>'
+      }</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  c.innerHTML = html;
+}
+
+function exportConfirmations() {
+  const rows = [['Zaměstnanec','Pozice','Oddělení','Dokument','Potvrzeno','Datum']];
+  documents.forEach(doc => {
+    employees.forEach(emp => {
+      const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
+      rows.push([emp.name, emp.role||'', emp.dept||'', doc.title, cf?'Ano':'Ne', cf?fmtDate(cf.confirmedAt):'']);
+    });
+  });
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'vista-portal-potvrzeni-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ===== EMPLOYEES =====
+function renderEmployees() {
+  const c = document.getElementById('employees-container');
+  if (employees.length === 0) {
+    c.innerHTML = '<p style="font-size:13px;color:var(--gray-400);padding:8px 0">Zatím žádní zaměstnanci. Přidej prvního výše.</p>';
+    populateLoginSelect(); return;
+  }
+  const byDept = {};
+  employees.forEach(e => { const d = e.dept || 'Ostatní'; if (!byDept[d]) byDept[d] = []; byDept[d].push(e); });
+
+  let html = `<table class="emp-table"><thead><tr>
+    <th>Jméno</th><th>Pozice</th><th>Oddělení</th><th>PIN</th>
+    <th style="text-align:center">Potvrzení</th><th></th>
+  </tr></thead><tbody>`;
+
+  employees.forEach(emp => {
+    const empConfs = confirmations.filter(cf => cf.employeeId === emp.id);
+    const pct      = documents.length > 0 ? Math.round(empConfs.length / documents.length * 100) : 0;
+    const shown    = pinVisible[emp.id];
+    const deptCls  = 'dept-' + (emp.dept||'').toLowerCase().replace(/[^a-z]/g,'');
+    html += `<tr>
+      <td><strong>${esc(emp.name)}</strong></td>
+      <td style="color:var(--gray-600)">${esc(emp.role||'')}</td>
+      <td>${emp.dept ? `<span class="emp-dept ${deptCls}">${esc(emp.dept)}</span>` : ''}</td>
+      <td>
+        <div class="pin-display" onclick="togglePin('${emp.id}')">
+          <span class="pin-dots">${shown ? esc(emp.pin) : '•'.repeat(emp.pin?.length||4)}</span>
+          <span class="pin-toggle">${shown ? '🙈' : '👁'}</span>
+        </div>
+      </td>
+      <td style="text-align:center">
+        <span style="font-weight:700;color:${pct===100?'var(--green-ok)':pct>50?'var(--orange)':'var(--red)'}">${pct}%</span>
+        <div style="font-size:11px;color:var(--gray-400)">${empConfs.length}/${documents.length}</div>
+      </td>
+      <td style="text-align:right">
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">✏️</button>
+          <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  c.innerHTML = html;
+  populateLoginSelect();
+}
+
+function togglePin(id) {
+  pinVisible[id] = !pinVisible[id];
+  renderEmployees();
+}
+
+function toggleAddEmpForm() {
+  addEmpFormVisible = !addEmpFormVisible;
+  document.getElementById('add-emp-panel').style.display = addEmpFormVisible ? 'block' : 'none';
+}
+
+function generatePin() {
+  const pin = String(Math.floor(1000 + Math.random() * 9000));
+  document.getElementById('new-emp-pin').value = pin;
+  document.getElementById('new-emp-pin').type = 'text';
+  showToast('Vygenerován PIN: ' + pin);
+}
+function generatePinEdit() {
+  const pin = String(Math.floor(1000 + Math.random() * 9000));
+  document.getElementById('edit-emp-pin').value = pin;
+  showToast('Vygenerován PIN: ' + pin);
+}
+
+async function addEmployee() {
+  const name = document.getElementById('new-emp-name').value.trim();
+  const role = document.getElementById('new-emp-role').value.trim();
+  const dept = document.getElementById('new-emp-dept').value;
+  const pin  = document.getElementById('new-emp-pin').value.trim();
+  if (!name || !pin) { showToast('Vyplňte jméno a PIN', 'error'); return; }
+  if (pin.length < 4) { showToast('PIN musí mít alespoň 4 znaky', 'error'); return; }
+  if (employees.some(e => e.pin === pin)) { showToast('Tento PIN už existuje', 'error'); return; }
+  const emp = { id: 'emp_' + Date.now(), name, role, dept, pin };
+  if (!DEMO_MODE()) {
+    try { await apiCall('addEmployee', emp); }
+    catch(e) { showToast('Chyba při přidávání', 'error'); return; }
+  }
+  employees.push(emp);
+  pinVisible[emp.id] = true; // show PIN after creation
+  renderEmployees(); updateStats();
+  document.getElementById('new-emp-name').value = '';
+  document.getElementById('new-emp-role').value = '';
+  document.getElementById('new-emp-dept').value = '';
+  document.getElementById('new-emp-pin').value  = '';
+  showToast(`${name} přidán/a · PIN: ${pin}`, 'success');
+  setTimeout(() => { pinVisible[emp.id] = false; renderEmployees(); }, 8000); // hide PIN after 8s
+}
+
+function openEditEmp(id) {
+  const emp = employees.find(e => e.id === id);
+  if (!emp) return;
+  document.getElementById('edit-emp-id').value   = emp.id;
+  document.getElementById('edit-emp-name').value = emp.name;
+  document.getElementById('edit-emp-role').value = emp.role || '';
+  document.getElementById('edit-emp-dept').value = emp.dept || '';
+  document.getElementById('edit-emp-pin').value  = emp.pin;
+  document.getElementById('edit-emp-modal').classList.add('open');
+}
+function closeEditModal() { document.getElementById('edit-emp-modal').classList.remove('open'); }
+
+async function saveEditEmployee() {
+  const id   = document.getElementById('edit-emp-id').value;
+  const name = document.getElementById('edit-emp-name').value.trim();
+  const role = document.getElementById('edit-emp-role').value.trim();
+  const dept = document.getElementById('edit-emp-dept').value;
+  const pin  = document.getElementById('edit-emp-pin').value.trim();
+  if (!name || !pin) { showToast('Jméno a PIN jsou povinné', 'error'); return; }
+  const dup = employees.find(e => e.pin === pin && e.id !== id);
+  if (dup) { showToast(`PIN ${pin} už má ${dup.name}`, 'error'); return; }
+  if (!DEMO_MODE()) {
+    try { await apiCall('updateEmployee', { id, name, role, dept, pin }); }
+    catch(e) { showToast('Chyba při ukládání', 'error'); return; }
+  }
+  const emp = employees.find(e => e.id === id);
+  if (emp) { emp.name = name; emp.role = role; emp.dept = dept; emp.pin = pin; }
+  closeEditModal();
+  pinVisible[id] = true;
+  renderEmployees();
+  setTimeout(() => { pinVisible[id] = false; renderEmployees(); }, 6000);
+  showToast(`${name} upraven/a · PIN: ${pin}`, 'success');
+}
+
+async function deleteEmployee(id) {
+  const emp = employees.find(e => e.id === id);
+  if (!emp || !confirm(`Opravdu odstranit ${emp.name}?\nSmaže se i přihlášení a jejich potvrzení.`)) return;
+  if (!DEMO_MODE()) {
+    try { await apiCall('deleteEmployee', { id }); }
+    catch(e) { showToast('Chyba při mazání', 'error'); return; }
+  }
+  employees     = employees.filter(e => e.id !== id);
+  confirmations = confirmations.filter(cf => cf.employeeId !== id);
+  renderEmployees(); renderConfirmations(); updateStats();
+  showToast(`${emp.name} odstraněn/a`);
+}
+
+// ===== UPLOAD =====
+function toggleUploadForm() {
+  uploadFormVisible = !uploadFormVisible;
+  document.getElementById('upload-section').style.display = uploadFormVisible ? 'block' : 'none';
+}
+
+function onFileSelected(input) {
+  if (!input.files[0]) return;
+  selectedFile = input.files[0];
+  document.getElementById('doc-title').value = selectedFile.name.replace(/\.[^.]+$/, '');
+  document.getElementById('upload-form').classList.add('visible');
+}
+
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) { document.getElementById('upload-file-input').files = e.dataTransfer.files; onFileSelected(document.getElementById('upload-file-input')); }
+});
+
+async function uploadDocument() {
+  const title    = document.getElementById('doc-title').value.trim();
+  const category = document.getElementById('doc-category').value;
+  const desc     = document.getElementById('doc-desc').value.trim();
+  if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
+
+  if (DEMO_MODE()) {
+    const doc = { id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString() };
+    documents.push(doc);
+    cancelUpload(); toggleUploadForm();
+    renderAdminDocsList(); renderDocuments(); updateStats();
+    showToast(`Dokument "${title}" přidán (demo mód)`, 'success'); return;
+  }
+  if (!selectedFile) { showToast('Vyberte soubor', 'error'); return; }
+  showToast('Nahrávám soubor...');
+  try {
+    const b64 = await fileToB64(selectedFile);
+    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString() });
+    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString() });
+    cancelUpload(); toggleUploadForm();
+    renderAdminDocsList(); renderDocuments(); updateStats();
+    showToast(`Dokument "${title}" nahrán`, 'success');
+  } catch(e) { showToast('Chyba při nahrávání: '+e.message, 'error'); }
+}
+
+function cancelUpload() {
+  selectedFile = null;
+  document.getElementById('upload-form').classList.remove('visible');
+  document.getElementById('upload-file-input').value = '';
+  ['doc-title','doc-desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('doc-category').value = '';
+}
+
+function fileToB64(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
+}
+
+// ===== API =====
+async function apiCall(action, payload = {}) {
+  const res = await fetch(CONFIG.SCRIPT_URL, {
+    method: 'POST', body: JSON.stringify({ action, ...payload }),
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+// ===== UTILS =====
+function getDocIcon(name, cat) {
+  const n = (name||'').toLowerCase(); const c = (cat||'').toLowerCase();
+  if (c === 'bezpečnost' || n.includes('bozp') || n.includes('bezpečn')) return '⚠️';
+  if (c === 'hr' || n.includes('řád') || n.includes('smlouv') || n.includes('nástup')) return '📋';
+  if (c === 'finance' || n.includes('mzd') || n.includes('platov')) return '💰';
+  if (c === 'it' || n.includes('it ') || n.includes('softwar') || n.includes('heslo')) return '💻';
+  if (n.includes('xlsx') || n.includes('excel') || n.includes('tabulk')) return '📊';
+  if (n.includes('foto') || n.includes('jpg') || n.includes('png')) return '🖼️';
+  if (n.includes('provoz') || c === 'provoz') return '⚙️';
+  return '📄';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleDateString('cs-CZ', { day:'numeric', month:'short', year:'numeric' }); }
+  catch { return iso; }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type;
+  setTimeout(() => t.classList.add('show'), 10);
+  setTimeout(() => t.classList.remove('show'), 3800);
+}
+</script>
+</body>
+</html>
