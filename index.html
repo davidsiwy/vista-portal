@@ -319,15 +319,15 @@ a { color: inherit; }
 .pc-dept { font-size: 11px; color: var(--ink-faint, #9a9b8c); margin-left: 2px; }
 .person-pick-empty { font-size: 13px; color: var(--ink-faint, #9a9b8c); font-family: var(--sans); padding: 4px 0; }
 
-.checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-height: 280px; overflow-y: auto; border: 1px solid var(--line, #e7e0d2); border-radius: var(--r); padding: 8px; background: var(--paper, #f6f3ec); }
-.check-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background 0.14s; font-family: var(--sans); font-size: 13.5px; color: var(--ink); user-select: none; border: 1.5px solid transparent; }
+.checklist { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; max-height: 280px; overflow-y: auto; border: 1px solid var(--line, #e7e0d2); border-radius: var(--r); padding: 8px; background: var(--paper, #f6f3ec); }
+.check-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 7px; cursor: pointer; transition: background 0.14s; font-family: var(--sans); font-size: 13px; color: var(--ink); user-select: none; border: 1.5px solid transparent; min-width: 0; }
 .check-item:hover { background: #fff; border-color: var(--line, #e7e0d2); }
-.check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--line-strong, #d6cdb9); border-radius: 5px; background: #fff; cursor: pointer; position: relative; transition: all 0.15s; }
+.check-item input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 17px; height: 17px; flex-shrink: 0; border: 2px solid var(--line-strong, #d6cdb9); border-radius: 4px; background: #fff; cursor: pointer; position: relative; transition: all 0.15s; }
 .check-item input[type="checkbox"]:checked { background: var(--peacock, #13302e); border-color: var(--peacock, #13302e); }
-.check-item input[type="checkbox"]:checked::after { content: ''; position: absolute; left: 5px; top: 2px; width: 6px; height: 10px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg); }
+.check-item input[type="checkbox"]:checked::after { content: ''; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg); }
 .check-item:has(input:checked) { background: var(--ok-soft, #eef2e4); border-color: var(--ok, #5b6f43); }
-.ci-name { font-weight: 600; color: var(--ink, #23271f); }
-.ci-dept { font-size: 11.5px; color: var(--ink-faint, #9a9b8c); }
+.ci-name { font-weight: 600; color: var(--ink, #23271f); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-dept { font-size: 11px; color: var(--ink-faint, #9a9b8c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .check-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; transition: background 0.14s; font-size: 13px; }
 .check-item:hover { background: var(--paper, #f6f3ec); }
 .check-item input { width: 17px; height: 17px; accent-color: var(--peacock, #13302e); cursor: pointer; }
@@ -776,8 +776,8 @@ a { color: inherit; }
   .urge-btn { padding: 8px 12px; font-size: 12px; }
 
   /* ── CHECKLIST ── */
-  .checklist { grid-template-columns: 1fr; }
-  .check-item { padding: 11px 12px; }
+  .checklist { grid-template-columns: 1fr 1fr; }
+  .check-item { padding: 9px 10px; font-size: 12.5px; }
 
   /* ── DOC ADMIN ROWS ── */
   .doc-admin-row { flex-direction: column; gap: 10px; }
@@ -976,6 +976,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
             <div class="form-group" id="audience-depts-wrap" style="display:none"><label>Segmenty</label><div id="audience-depts-list" class="chips"></div></div>
             <div class="form-group" id="audience-specific-wrap" style="display:none"><label>Vyberte zaměstnance</label><div id="audience-specific-list" class="checklist"></div></div>
             <label class="sign-toggle"><input type="checkbox" id="doc-requires-sign"> <span><strong>Vyžaduje podpis</strong> — zaměstnanec nahraje podepsaný dokument zpět (ne jen potvrdí přečtení)</span></label>
+            <label class="sign-toggle" style="background:var(--ok-soft,#eef2e4);border-color:var(--ok-line,#cdd9b8);color:var(--ok,#5b6f43)"><input type="checkbox" id="doc-read-only"> <span><strong>Jen ke čtení</strong> — zaměstnanci mohou dokument zobrazit, ale nemohou ho stáhnout</span></label>
             <div style="display:flex;gap:8px;margin-top:16px"><button class="btn-sm primary" onclick="uploadDocument()">Nahrát a odeslat</button><button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button></div>
           </div>
           <hr class="divider">
@@ -1437,6 +1438,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="form-group" id="upd-audience-depts-wrap" style="display:none"><label>Segmenty</label><div id="upd-audience-depts-list" class="chips"></div></div>
     <div class="form-group" id="upd-audience-specific-wrap" style="display:none"><label>Vyberte zaměstnance</label><div id="upd-audience-specific-list" class="checklist"></div></div>
     <label class="sign-toggle"><input type="checkbox" id="upd-requires-sign"> <span><strong>Vyžaduje podpis</strong> — zaměstnanec nahraje podepsaný dokument zpět</span></label>
+    <label class="sign-toggle" style="background:var(--ok-soft,#eef2e4);border-color:var(--ok-line,#cdd9b8);color:var(--ok,#5b6f43)"><input type="checkbox" id="upd-read-only"> <span><strong>Jen ke čtení</strong> — zaměstnanci mohou dokument zobrazit, ale nemohou ho stáhnout</span></label>
 
     <div class="form-group">
       <label>Nahradit soubor (nepovinné)</label>
@@ -2134,11 +2136,12 @@ function renderDocuments() {
     const dl = deadlineInfo(doc.deadline, conf ? 'done' : '');
     const card = document.createElement('div'); card.className = 'doc-card';
     const needsSign = !!doc.requiresSignature;
+    const isReadOnly = !!doc.readOnly;
     const confLabel = conf ? (conf.signedUrl ? `✓ Podepsáno ${fmtDate(conf.confirmedAt)}` : `✓ Potvrzeno ${fmtDate(conf.confirmedAt)}`) : '';
     card.innerHTML = `
       <div class="doc-icon">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-info">
-        <div class="doc-name">${esc(doc.title)} ${needsSign ? '<span class="sign-badge">✍ Podpis</span>' : ''}</div>
+        <div class="doc-name">${esc(doc.title)} ${needsSign ? '<span class="sign-badge">✍ Podpis</span>' : ''}${isReadOnly ? '<span class="sign-badge" style="background:#e6eef4;color:#2f5d7a;border-color:#b8d0e8">👁 Jen čtení</span>' : ''}</div>
         <div class="doc-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
           ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
@@ -2148,7 +2151,7 @@ function renderDocuments() {
       </div>
       <div class="doc-actions">
         ${doc.fileId ? `<button class="btn-download" onclick="openPreview('${escAttr(doc.title)}','${doc.fileId}','')">Zobrazit</button>` : ''}
-        ${doc.url && doc.url !== '#' ? `<a href="${doc.fileId ? driveDownloadUrl(doc.fileId) : esc(doc.url)}" target="_blank" class="btn-download">Stáhnout</a>` : ''}
+        ${!isReadOnly && doc.url && doc.url !== '#' ? `<a href="${doc.fileId ? driveDownloadUrl(doc.fileId) : esc(doc.url)}" target="_blank" class="btn-download">Stáhnout</a>` : ''}
         ${conf ? `<div class="confirmed-badge">${confLabel}</div>` : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${escAttr(doc.title)}')">${needsSign ? 'Podepsat' : 'Potvrdit přečtení'}</button>`}
       </div>`;
     grid.appendChild(card);
@@ -2617,6 +2620,7 @@ async function uploadDocument() {
   const desc = document.getElementById('doc-desc').value.trim();
   const deadlineRaw = document.getElementById('doc-deadline').value;
   const requiresSignature = document.getElementById('doc-requires-sign').checked;
+  const readOnly = document.getElementById('doc-read-only').checked;
   const aud = collectAudience();
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
   if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jeden segment', 'error'); return; }
@@ -2624,7 +2628,7 @@ async function uploadDocument() {
   const deadline = deadlineRaw ? new Date(deadlineRaw + 'T23:59:59').toISOString() : '';
 
   if (DEMO_MODE()) {
-    documents.push({ id: 'doc_'+Date.now(), title, category, desc, url: '#', fileId:'', uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: 'doc_'+Date.now(), title, category, desc, url: '#', fileId:'', uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, readOnly, audienceType: aud.audienceType, audienceList: aud.audienceList });
     cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
     showToast(`Dokument „${title}" přidán (demo)`, 'success'); return;
   }
@@ -2632,8 +2636,8 @@ async function uploadDocument() {
   showLoading('Nahrávám dokument a odesílám notifikace...');
   try {
     const b64 = await fileToB64(selectedFile);
-    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
-    documents.push({ id: res.docId, title, category, desc, url: res.url, fileId: res.fileId, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline, requiresSignature, readOnly, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: res.docId, title, category, desc, url: res.url, fileId: res.fileId, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, readOnly, audienceType: aud.audienceType, audienceList: aud.audienceList });
     cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
     hideLoading();
     showToast(`Dokument „${title}" nahrán a odeslán`, 'success');
@@ -2648,6 +2652,7 @@ function cancelUpload() {
   document.getElementById('doc-category').value = '';
   document.getElementById('doc-audience-type').value = 'all';
   document.getElementById('doc-requires-sign').checked = false;
+  document.getElementById('doc-read-only').checked = false;
   onAudienceTypeChange();
 }
 
@@ -2670,6 +2675,7 @@ function openUpdateDoc(docId) {
   document.getElementById('upd-deadline').value = doc.deadline ? doc.deadline.slice(0,10) : '';
   document.getElementById('upd-audience-type').value = doc.audienceType || 'all';
   document.getElementById('upd-requires-sign').checked = !!doc.requiresSignature;
+  document.getElementById('upd-read-only').checked = !!doc.readOnly;
   document.getElementById('upd-file-label').textContent = 'Ponechat stávající soubor, nebo klikněte pro nahrání nového';
   document.getElementById('upd-file-input').value = '';
   updBuildAudience(doc);
@@ -2731,6 +2737,7 @@ async function saveUpdateDoc() {
   const deadlineRaw = document.getElementById('upd-deadline').value;
   const aud = updCollectAudience();
   const requiresSignature = document.getElementById('upd-requires-sign').checked;
+  const readOnly = document.getElementById('upd-read-only').checked;
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
   if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jeden segment', 'error'); return; }
   if (aud.audienceType === 'specific' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jednoho zaměstnance', 'error'); return; }
@@ -2738,7 +2745,7 @@ async function saveUpdateDoc() {
 
   // apply locally: bump version, clear this doc's confirmations
   const applyLocal = (url, fileId, fileName) => {
-    Object.assign(doc, { title, category, desc, deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList, version: (parseInt(doc.version)||1)+1, uploadedAt: new Date().toISOString() });
+    Object.assign(doc, { title, category, desc, deadline, requiresSignature, readOnly, audienceType: aud.audienceType, audienceList: aud.audienceList, version: (parseInt(doc.version)||1)+1, uploadedAt: new Date().toISOString() });
     if (url !== undefined) { doc.url = url; doc.fileId = fileId; if (fileName) doc.fileName = fileName; }
     confirmations = confirmations.filter(c => c.docId !== id);
   };
@@ -2750,7 +2757,7 @@ async function saveUpdateDoc() {
   }
   showLoading('Aktualizuji dokument a žádám o nové potvrzení...');
   try {
-    const payload = { id, title, category, desc, deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList };
+    const payload = { id, title, category, desc, deadline, requiresSignature, readOnly, audienceType: aud.audienceType, audienceList: aud.audienceList };
     if (updFile) { payload.fileData = await fileToB64(updFile); payload.fileName = updFile.name; payload.fileType = updFile.type; }
     const res = await apiCall('updateDocument', payload);
     applyLocal(res.url, res.fileId, updFile ? updFile.name : undefined);
@@ -4043,7 +4050,7 @@ function loadDemoData() {
     { id:'e4', name:'Tomáš Horák', role:'Tenisový trenér', dept:'Sport', pin:'444', email:'tomas@vistaresort.cz' }
   ];
   documents = [
-    { id:'d1', title:'Pracovní řád 2025', category:'HR', desc:'Aktualizovaný pracovní řád', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), deadline:new Date(Date.now()+86400000*2).toISOString(), version:1, requiresSignature:false, audienceType:'all', audienceList:[] },
+    { id:'d1', title:'Pracovní řád 2025', category:'HR', desc:'Aktualizovaný pracovní řád', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), deadline:new Date(Date.now()+86400000*2).toISOString(), version:1, requiresSignature:false, readOnly:true, audienceType:'all', audienceList:[] },
     { id:'d2', title:'Bezpečnostní směrnice wellness', category:'Bezpečnost', desc:'Postupy pro wellness provoz', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000).toISOString(), deadline:'', version:1, requiresSignature:false, audienceType:'depts', audienceList:['Wellness'] },
     { id:'d3', title:'Dohoda o mlčenlivosti (NDA)', category:'HR', desc:'Podepište prosím a nahrajte zpět', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000*2).toISOString(), deadline:new Date(Date.now()+86400000*4).toISOString(), version:1, requiresSignature:true, audienceType:'all', audienceList:[] }
   ];
