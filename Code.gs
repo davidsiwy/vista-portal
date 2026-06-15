@@ -473,26 +473,44 @@ function saveTrzby(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEETS.TRZBY);
   if (!sheet) { sheet = ss.insertSheet(SHEETS.TRZBY); sheet.appendRow(['key','json','uploadedBy','uploadedAt']); }
-  // vymaž stará data (kromě hlavičky) a ulož nový JSON rozdělený do chunků po 45000 znacích
-  const last = sheet.getLastRow();
-  if (last > 1) sheet.deleteRows(2, last - 1);
-  const json = data.json || '[]';
-  const chunkSize = 45000;
-  const chunks = [];
-  for (let i = 0; i < json.length; i += chunkSize) chunks.push(json.slice(i, i + chunkSize));
   const now = new Date().toISOString();
-  chunks.forEach((c, i) => sheet.appendRow(['chunk' + i, c, data.uploadedBy || '', now]));
-  return { success: true, chunks: chunks.length, uploadedAt: now };
+  const chunkSize = 45000;
+  // helper: remove existing chunks for a prefix, then write new
+  const writeChunks = (prefix, json) => {
+    if (json === undefined || json === null) return;
+    // read all, filter out this prefix, rewrite
+    const last = sheet.getLastRow();
+    let kept = [];
+    if (last > 1) {
+      const vals = sheet.getRange(2,1,last-1,4).getValues();
+      kept = vals.filter(r => !String(r[0]).startsWith(prefix + ':'));
+    }
+    const chunks = [];
+    for (let i = 0; i < json.length; i += chunkSize) chunks.push(json.slice(i, i+chunkSize));
+    chunks.forEach((c,i) => kept.push([prefix + ':' + i, c, data.uploadedBy||'', now]));
+    if (last > 1) sheet.deleteRows(2, last-1);
+    if (kept.length) sheet.getRange(2,1,kept.length,4).setValues(kept);
+  };
+  if (data.json !== undefined)  writeChunks('vynosy', data.json);
+  if (data.json2 !== undefined) writeChunks('prijmy', data.json2);
+  return { success: true, uploadedAt: now };
 }
 function getTrzby() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEETS.TRZBY);
-  if (!sheet || sheet.getLastRow() < 2) return { json: '', uploadedAt: '', uploadedBy: '' };
-  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues();
-  // seřaď podle chunk indexu a spoj
-  rows.sort((a, b) => parseInt(String(a[0]).replace('chunk','')) - parseInt(String(b[0]).replace('chunk','')));
-  const json = rows.map(r => r[1]).join('');
-  return { json, uploadedAt: rows[0] ? rows[0][3] : '', uploadedBy: rows[0] ? rows[0][2] : '' };
+  if (!sheet || sheet.getLastRow() < 2) return { json: '', json2: '', uploadedAt: '', uploadedBy: '' };
+  const rows = sheet.getRange(2,1,sheet.getLastRow()-1,4).getValues();
+  const collect = prefix => {
+    const part = rows.filter(r => String(r[0]).startsWith(prefix + ':'));
+    part.sort((a,b) => parseInt(String(a[0]).split(':')[1]) - parseInt(String(b[0]).split(':')[1]));
+    return part.map(r => r[1]).join('');
+  };
+  // legacy support: old chunks named 'chunk0' => treat as vynosy
+  const legacy = rows.filter(r => String(r[0]).startsWith('chunk'));
+  let json = collect('vynosy');
+  if (!json && legacy.length) { legacy.sort((a,b)=>parseInt(String(a[0]).replace('chunk',''))-parseInt(String(b[0]).replace('chunk',''))); json = legacy.map(r=>r[1]).join(''); }
+  const uploadedAt = rows[0] ? rows[0][3] : '';
+  return { json, json2: collect('prijmy'), uploadedAt, uploadedBy: rows[0] ? rows[0][2] : '' };
 }
 function deleteWorklog(id) { deleteRowByCol(SHEETS.WORKLOG, 'id', id); return { success: true }; }
 
