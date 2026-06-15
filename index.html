@@ -457,6 +457,7 @@ a { color: inherit; }
 .worklog-compose { background: var(--card); border-radius: var(--r-lg); padding: 26px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); margin-bottom: 26px; }
 .worklog-compose textarea { width: 100%; min-height: 94px; padding: 13px 16px; border: 1.5px solid var(--line); border-radius: var(--r); font-family: var(--sans); font-size: 15px; resize: vertical; line-height: 1.5; }
 .worklog-compose textarea:focus { outline: none; border-color: var(--fern); box-shadow: 0 0 0 3px rgba(88,104,69,0.14); }
+.wl-inline-edit { width: 100%; min-height: 74px; padding: 10px 13px; border: 1.5px solid var(--fern); border-radius: var(--r); font-family: var(--sans); font-size: 14px; resize: vertical; line-height: 1.5; background: var(--paper); box-shadow: 0 0 0 3px rgba(88,104,69,0.12); outline: none; }
 .worklog-day-group { margin-bottom: 26px; }
 .worklog-day-label { font-family: var(--serif); font-size: 19px; color: var(--peacock); margin-bottom: 12px; font-weight: 500; }
 
@@ -1486,7 +1487,7 @@ function switchTab(tab) {
   if (tab === 'invoices') renderInvoices();
   if (tab === 'worklog') renderWorklog();
   if (tab === 'overview') renderOverview();
-  if (tab === 'trzby') renderTrzbyEmpty();
+  if (tab === 'trzby') { if (trzbyData) renderTrzby(); else renderTrzbyEmpty(); }
 }
 
 // ===== LOAD DATA =====
@@ -2967,13 +2968,18 @@ function renderWorklog() {
   dates.forEach(d => {
     html += `<div class="worklog-day-group"><div class="worklog-day-label">${fmtDateLong(d)}</div>`;
     groups[d].forEach(w => {
-      const canDel = isStaff && w.employeeId === currentUser?.id;
-      html += `<div class="worklog-entry">
+      const isOwn = w.employeeId === currentUser?.id;
+      const canEdit = isOwn;
+      const canDel  = isOwn || isAdmin;
+      html += `<div class="worklog-entry" id="wle-${w.id}">
         <div class="worklog-entry-head">
           <div><span class="worklog-author">${esc(w.employeeName)}</span>${w.segment?` <span class="emp-dept dept-${segSlug(w.segment)}" style="margin-left:6px">${esc(w.segment)}</span>`:''}</div>
-          ${canDel ? `<button class="btn-icon danger" onclick="deleteWorklogEntry('${w.id}')" title="Smazat">🗑</button>` : ''}
+          <div style="display:flex;gap:6px">
+            ${canEdit ? `<button class="btn-icon" onclick="openEditWorklog('${w.id}')" title="Upravit">✏️</button>` : ''}
+            ${canDel  ? `<button class="btn-icon danger" onclick="deleteWorklogEntry('${w.id}')" title="Smazat">🗑</button>` : ''}
+          </div>
         </div>
-        <div class="worklog-text">${esc(w.text)}</div>
+        <div class="worklog-text" id="wlt-${w.id}">${esc(w.text)}</div>
       </div>`;
     });
     html += '</div>';
@@ -3007,6 +3013,42 @@ async function deleteWorklogEntry(id) {
   worklog = worklog.filter(w => w.id !== id);
   renderWorklog();
   showToast('Zápis smazán');
+}
+
+function openEditWorklog(id) {
+  const w = worklog.find(x => x.id === id);
+  if (!w) return;
+  const textEl = document.getElementById('wlt-' + id);
+  const entryEl = document.getElementById('wle-' + id);
+  if (!textEl || !entryEl) return;
+  // replace text div with inline textarea + save/cancel
+  textEl.outerHTML = `
+    <textarea id="wl-edit-${id}" class="wl-inline-edit">${esc(w.text)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-sm primary" onclick="saveEditWorklog('${id}')">Uložit</button>
+      <button class="btn-sm secondary" onclick="renderWorklog()">Zrušit</button>
+    </div>`;
+  // focus textarea
+  setTimeout(() => {
+    const ta = document.getElementById('wl-edit-' + id);
+    if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }, 30);
+}
+
+async function saveEditWorklog(id) {
+  const ta = document.getElementById('wl-edit-' + id);
+  if (!ta) return;
+  const text = ta.value.trim();
+  if (!text) { showToast('Zápis nesmí být prázdný', 'error'); return; }
+  const w = worklog.find(x => x.id === id);
+  if (!w) return;
+  w.text = text;
+  if (!DEMO_MODE()) {
+    try { await apiCall('updateWorklog', { id, text }); }
+    catch(e) { showToast('Chyba při ukládání', 'error'); renderWorklog(); return; }
+  }
+  renderWorklog();
+  showToast('Zápis upraven', 'success');
 }
 
 // ============================================================
@@ -3440,6 +3482,84 @@ function renderTrzby() {
     </tr>`).join('');
 }
 
+const DEMO_TRZBY = [
+    {date:new Date('2026-04-01'),y:2026,m:4,day:1,celkem:112889.73,segs:{"Hotel":29597.56,"F&B":40695.21,"C&B":0,"Wellness":24061.9,"Sport":902.39,"Akademie":11982.67}},
+    {date:new Date('2026-04-02'),y:2026,m:4,day:2,celkem:89557.46,segs:{"Hotel":43084.32,"F&B":25941.03,"C&B":0,"Wellness":4285.72,"Sport":1264.43,"Akademie":7406.96}},
+    {date:new Date('2026-04-03'),y:2026,m:4,day:3,celkem:102654.34,segs:{"Hotel":60767.25,"F&B":12668.3,"C&B":0,"Wellness":14530.04,"Sport":1231.88,"Akademie":11656.87}},
+    {date:new Date('2026-04-04'),y:2026,m:4,day:4,celkem:108090.45,segs:{"Hotel":70233.16,"F&B":22790.84,"C&B":0,"Wellness":8928.58,"Sport":1812.86,"Akademie":3125.01}},
+    {date:new Date('2026-04-05'),y:2026,m:4,day:5,celkem:116769.6,segs:{"Hotel":72155.97,"F&B":8846.92,"C&B":0,"Wellness":31012.72,"Sport":3514.39,"Akademie":1239.6}},
+    {date:new Date('2026-04-06'),y:2026,m:4,day:6,celkem:72048.34,segs:{"Hotel":27031.38,"F&B":18436.78,"C&B":0,"Wellness":19343.86,"Sport":2436.32,"Akademie":0.0}},
+    {date:new Date('2026-04-07'),y:2026,m:4,day:7,celkem:85145.35,segs:{"Hotel":41751.96,"F&B":23298.19,"C&B":3718.8,"Wellness":5446.44,"Sport":2206.9,"Akademie":5323.06}},
+    {date:new Date('2026-04-08'),y:2026,m:4,day:8,celkem:98162.52,segs:{"Hotel":42501.67,"F&B":32959.28,"C&B":4958.4,"Wellness":8788.78,"Sport":974.41,"Akademie":2879.98}},
+    {date:new Date('2026-04-09'),y:2026,m:4,day:9,celkem:93750.32,segs:{"Hotel":36007.41,"F&B":24111.24,"C&B":0,"Wellness":14910.73,"Sport":1632.12,"Akademie":10313.82}},
+    {date:new Date('2026-04-10'),y:2026,m:4,day:10,celkem:113608.87,segs:{"Hotel":60950.520000000004,"F&B":26272.2,"C&B":0,"Wellness":9641.67,"Sport":370.90999999999997,"Akademie":15173.57}},
+    {date:new Date('2026-04-11'),y:2026,m:4,day:11,celkem:125446.09,segs:{"Hotel":60648.73,"F&B":24082.280000000002,"C&B":0,"Wellness":28883.36,"Sport":3801.87,"Akademie":5629.85}},
+    {date:new Date('2026-04-12'),y:2026,m:4,day:12,celkem:69953.44,segs:{"Hotel":18103.82,"F&B":11756.240000000002,"C&B":0,"Wellness":28123.79,"Sport":3508.02,"Akademie":5011.57}},
+    {date:new Date('2026-04-13'),y:2026,m:4,day:13,celkem:114377.57,segs:{"Hotel":22169.65,"F&B":51718.37,"C&B":22312.8,"Wellness":6605.93,"Sport":359.47,"Akademie":7211.35}},
+    {date:new Date('2026-04-14'),y:2026,m:4,day:14,celkem:138354.78,segs:{"Hotel":58212.52,"F&B":43304.78,"C&B":12396.0,"Wellness":15590.59,"Sport":1043.75,"Akademie":2232.14}},
+    {date:new Date('2026-04-15'),y:2026,m:4,day:15,celkem:83380.57,segs:{"Hotel":17617.33,"F&B":39740.06,"C&B":12396.0,"Wellness":1561.9,"Sport":370.64,"Akademie":7044.64}},
+    {date:new Date('2026-04-16'),y:2026,m:4,day:16,celkem:90690.71,segs:{"Hotel":36017.28,"F&B":26688.29,"C&B":0,"Wellness":15200.0,"Sport":3047.35,"Akademie":6087.79}},
+    {date:new Date('2026-04-17'),y:2026,m:4,day:17,celkem:121436.2,segs:{"Hotel":60372.87,"F&B":12941.37,"C&B":3718.8,"Wellness":19841.37,"Sport":1578.0,"Akademie":21483.79}},
+    {date:new Date('2026-04-18'),y:2026,m:4,day:18,celkem:96116.4,segs:{"Hotel":48393.4,"F&B":13649.17,"C&B":0,"Wellness":27818.78,"Sport":1875.2,"Akademie":4379.85}},
+    {date:new Date('2026-04-19'),y:2026,m:4,day:19,celkem:68965.21,segs:{"Hotel":17519.51,"F&B":8839.54,"C&B":0,"Wellness":34657.96,"Sport":2294.62,"Akademie":4553.58}},
+    {date:new Date('2026-04-20'),y:2026,m:4,day:20,celkem:93644.98,segs:{"Hotel":28478.58,"F&B":31665.21,"C&B":0,"Wellness":16159.53,"Sport":1130.98,"Akademie":10410.68}},
+    {date:new Date('2026-04-21'),y:2026,m:4,day:21,celkem:90357.59,segs:{"Hotel":37836.5,"F&B":24731.72,"C&B":1239.6,"Wellness":3704.76,"Sport":445.01,"Akademie":15625.0}},
+    {date:new Date('2026-04-22'),y:2026,m:4,day:22,celkem:93188.62,segs:{"Hotel":54739.79,"F&B":20800.88,"C&B":1239.6,"Wellness":1741.07,"Sport":160.3,"Akademie":7406.98}},
+    {date:new Date('2026-04-23'),y:2026,m:4,day:23,celkem:90201.97,segs:{"Hotel":44663.69,"F&B":21138.29,"C&B":0,"Wellness":5625.0,"Sport":496.25,"Akademie":12128.74}},
+    {date:new Date('2026-04-24'),y:2026,m:4,day:24,celkem:129544.51,segs:{"Hotel":75697.68,"F&B":19979.46,"C&B":0,"Wellness":27537.69,"Sport":1079.67,"Akademie":5250.01}},
+    {date:new Date('2026-04-25'),y:2026,m:4,day:25,celkem:184481.71,segs:{"Hotel":74958.01,"F&B":46707.9,"C&B":0,"Wellness":52905.16,"Sport":5323.65,"Akademie":3486.99}},
+    {date:new Date('2026-04-26'),y:2026,m:4,day:26,celkem:87814.41,segs:{"Hotel":25043.92,"F&B":18697.9,"C&B":0,"Wellness":24256.61,"Sport":815.21,"Akademie":10900.77}},
+    {date:new Date('2026-04-27'),y:2026,m:4,day:27,celkem:123081.7,segs:{"Hotel":23435.79,"F&B":48002.77,"C&B":16528.0,"Wellness":17410.73,"Sport":1937.46,"Akademie":9266.95}},
+    {date:new Date('2026-04-28'),y:2026,m:4,day:28,celkem:103392.9,segs:{"Hotel":38998.93,"F&B":32216.37,"C&B":16528.0,"Wellness":3751.86,"Sport":283.45,"Akademie":3839.29}},
+    {date:new Date('2026-04-29'),y:2026,m:4,day:29,celkem:68682.84,segs:{"Hotel":17669.16,"F&B":22549.44,"C&B":10743.2,"Wellness":5110.47,"Sport":291.29,"Akademie":9219.28}},
+    {date:new Date('2026-04-30'),y:2026,m:4,day:30,celkem:87662.46,segs:{"Hotel":48180.51,"F&B":16916.690000000002,"C&B":0.0,"Wellness":12297.2,"Sport":385.91,"Akademie":6232.15}},
+    {date:new Date('2026-05-01'),y:2026,m:5,day:1,celkem:144399.98,segs:{"Hotel":74484.95,"F&B":28029.89,"C&B":0.0,"Wellness":28779.48,"Sport":2462.79,"Akademie":7142.87}},
+    {date:new Date('2026-05-02'),y:2026,m:5,day:2,celkem:145906.48,segs:{"Hotel":105308.56000000001,"F&B":21251.87,"C&B":0.0,"Wellness":14286.85,"Sport":3273.48,"Akademie":1785.72}},
+    {date:new Date('2026-05-03'),y:2026,m:5,day:3,celkem:157127.03,segs:{"Hotel":30815.72,"F&B":28439.11,"C&B":12396.0,"Wellness":34253.799999999996,"Sport":5847.400000000001,"Akademie":45375.0}},
+    {date:new Date('2026-05-04'),y:2026,m:5,day:4,celkem:63672.2,segs:{"Hotel":27828.98,"F&B":13907.56,"C&B":0.0,"Wellness":7967.84,"Sport":2255.66,"Akademie":6212.16}},
+    {date:new Date('2026-05-05'),y:2026,m:5,day:5,celkem:48266.61,segs:{"Hotel":22318.5,"F&B":9932.03,"C&B":0.0,"Wellness":6562.5,"Sport":621.43,"Akademie":2232.15}},
+    {date:new Date('2026-05-06'),y:2026,m:5,day:6,celkem:67311.01,segs:{"Hotel":30706.03,"F&B":17956.85,"C&B":0.0,"Wellness":5155.72,"Sport":1029.9,"Akademie":7812.51}},
+    {date:new Date('2026-05-07'),y:2026,m:5,day:7,celkem:144774.03,segs:{"Hotel":54343.39,"F&B":50508.46,"C&B":0.0,"Wellness":25577.96,"Sport":3194.21,"Akademie":7500.01}},
+    {date:new Date('2026-05-08'),y:2026,m:5,day:8,celkem:136302.36,segs:{"Hotel":76632.04,"F&B":18286.64,"C&B":0.0,"Wellness":37640.25,"Sport":1779.14,"Akademie":1964.29}},
+    {date:new Date('2026-05-09'),y:2026,m:5,day:9,celkem:125230.65,segs:{"Hotel":69090.9,"F&B":24174.31,"C&B":0.0,"Wellness":28492.08,"Sport":1247.86,"Akademie":2225.5}},
+    {date:new Date('2026-05-10'),y:2026,m:5,day:10,celkem:99454.21,segs:{"Hotel":50243.12,"F&B":13379.57,"C&B":0.0,"Wellness":19194.64,"Sport":3937.37,"Akademie":10049.51}},
+    {date:new Date('2026-05-11'),y:2026,m:5,day:11,celkem:106551.77,segs:{"Hotel":62531.57000000001,"F&B":21647.23,"C&B":0.0,"Wellness":6026.79,"Sport":1082.12,"Akademie":9264.06}},
+    {date:new Date('2026-05-12'),y:2026,m:5,day:12,celkem:136629.12,segs:{"Hotel":69766.49,"F&B":50242.64,"C&B":0.0,"Wellness":7589.3,"Sport":741.4,"Akademie":1339.29}},
+    {date:new Date('2026-05-13'),y:2026,m:5,day:13,celkem:186782.29,segs:{"Hotel":70225.86,"F&B":73460.88,"C&B":16528.0,"Wellness":12810.45,"Sport":1728.52,"Akademie":6428.58}},
+    {date:new Date('2026-05-14'),y:2026,m:5,day:14,celkem:249618.35,segs:{"Hotel":107570.66,"F&B":103776.35,"C&B":12396.0,"Wellness":13789.02,"Sport":932.54,"Akademie":6278.78}},
+    {date:new Date('2026-05-15'),y:2026,m:5,day:15,celkem:151329.94,segs:{"Hotel":73389.25,"F&B":27388.05,"C&B":14048.8,"Wellness":22310.21,"Sport":2032.89,"Akademie":11160.74}},
+    {date:new Date('2026-05-16'),y:2026,m:5,day:16,celkem:144244.79,segs:{"Hotel":82147.98,"F&B":22660.16,"C&B":0.0,"Wellness":29317.72,"Sport":1779.64,"Akademie":6339.29}},
+    {date:new Date('2026-05-17'),y:2026,m:5,day:17,celkem:87910.58,segs:{"Hotel":43910.3,"F&B":9669.04,"C&B":0.0,"Wellness":18106.74,"Sport":1798.21,"Akademie":12326.29}},
+    {date:new Date('2026-05-18'),y:2026,m:5,day:18,celkem:143507.62,segs:{"Hotel":50130.58,"F&B":49279.36,"C&B":16528.0,"Wellness":16918.47,"Sport":311.97,"Akademie":5339.24}},
+    {date:new Date('2026-05-19'),y:2026,m:5,day:19,celkem:189913.05,segs:{"Hotel":63535.0,"F&B":60968.13,"C&B":24792.0,"Wellness":18185.83,"Sport":2603.51,"Akademie":12053.58}},
+    {date:new Date('2026-05-20'),y:2026,m:5,day:20,celkem:156362.23,segs:{"Hotel":72969.15,"F&B":49749.09,"C&B":8264.0,"Wellness":13277.57,"Sport":1823.84,"Akademie":5178.58}},
+    {date:new Date('2026-05-21'),y:2026,m:5,day:21,celkem:191867.88,segs:{"Hotel":57397.74,"F&B":78816.64,"C&B":16528.0,"Wellness":21875.02,"Sport":3920.68,"Akademie":8679.8}},
+    {date:new Date('2026-05-22'),y:2026,m:5,day:22,celkem:223158.43,segs:{"Hotel":82632.28,"F&B":86579.16999999998,"C&B":9916.8,"Wellness":15021.19,"Sport":519.38,"Akademie":27489.61}},
+    {date:new Date('2026-05-23'),y:2026,m:5,day:23,celkem:348264.12,segs:{"Hotel":81407.09999999999,"F&B":31146.24,"C&B":0.0,"Wellness":46668.77,"Sport":4691.45,"Akademie":182350.55999999997}},
+    {date:new Date('2026-05-24'),y:2026,m:5,day:24,celkem:76879.44,segs:{"Hotel":20621.04,"F&B":10256.18,"C&B":0.0,"Wellness":35671.51,"Sport":3221.28,"Akademie":6109.43}},
+    {date:new Date('2026-05-25'),y:2026,m:5,day:25,celkem:130790.19,segs:{"Hotel":48001.93,"F&B":55518.28,"C&B":0.0,"Wellness":13833.13,"Sport":247.92,"Akademie":6688.93}},
+    {date:new Date('2026-05-26'),y:2026,m:5,day:26,celkem:144627.1,segs:{"Hotel":35055.12,"F&B":54666.25,"C&B":12396.0,"Wellness":23839.28,"Sport":6124.01,"Akademie":6696.44}},
+    {date:new Date('2026-05-27'),y:2026,m:5,day:27,celkem:100158.92,segs:{"Hotel":46608.11,"F&B":28998.06,"C&B":0.0,"Wellness":14964.86,"Sport":295.02,"Akademie":4642.87}},
+    {date:new Date('2026-05-28'),y:2026,m:5,day:28,celkem:113252.69,segs:{"Hotel":45268.84999999999,"F&B":26796.289999999997,"C&B":0.0,"Wellness":21696.44,"Sport":3123.24,"Akademie":8392.869999999999}},
+    {date:new Date('2026-05-29'),y:2026,m:5,day:29,celkem:171191.84,segs:{"Hotel":77304.72,"F&B":48471.22,"C&B":9916.8,"Wellness":25968.81,"Sport":3266.18,"Akademie":5264.11}},
+    {date:new Date('2026-05-30'),y:2026,m:5,day:30,celkem:240580.88,segs:{"Hotel":76303.65,"F&B":117129.77,"C&B":0.0,"Wellness":39641.49,"Sport":2643.97,"Akademie":2862.0}},
+    {date:new Date('2026-05-31'),y:2026,m:5,day:31,celkem:48717.92,segs:{"Hotel":11919.55,"F&B":7242.89,"C&B":0.0,"Wellness":19463.09,"Sport":2083.47,"Akademie":7008.92}},
+    {date:new Date('2026-06-01'),y:2026,m:6,day:1,celkem:82764.05,segs:{"Hotel":31284.75,"F&B":17316.3,"C&B":0,"Wellness":6428.58,"Sport":2207.75,"Akademie":18026.670000000002}},
+    {date:new Date('2026-06-02'),y:2026,m:6,day:2,celkem:86420.81,segs:{"Hotel":41272.08,"F&B":25116.29,"C&B":0,"Wellness":5699.27,"Sport":942.09,"Akademie":6116.08}},
+    {date:new Date('2026-06-03'),y:2026,m:6,day:3,celkem:202161.65,segs:{"Hotel":57278.88,"F&B":91190.33,"C&B":26444.8,"Wellness":17051.79,"Sport":433.84,"Akademie":4112.01}},
+    {date:new Date('2026-06-04'),y:2026,m:6,day:4,celkem:187710.37,segs:{"Hotel":71793.65,"F&B":65823.87,"C&B":16528.0,"Wellness":20766.86,"Sport":826.55,"Akademie":7321.44}},
+    {date:new Date('2026-06-05'),y:2026,m:6,day:5,celkem:87297.21,segs:{"Hotel":75396.61,"F&B":8852.61,"C&B":0,"Wellness":1561.9,"Sport":39.66,"Akademie":446.43}},
+    {date:new Date('2026-06-06'),y:2026,m:6,day:6,celkem:67690.47,segs:{"Hotel":66160.68,"F&B":643.76,"C&B":0,"Wellness":0.0,"Sport":886.03,"Akademie":0.0}},
+    {date:new Date('2026-06-07'),y:2026,m:6,day:7,celkem:35235.1,segs:{"Hotel":34840.93,"F&B":0.0,"C&B":0,"Wellness":0.0,"Sport":394.17,"Akademie":0.0}},
+    {date:new Date('2026-06-08'),y:2026,m:6,day:8,celkem:82265.76,segs:{"Hotel":33898.83,"F&B":29880.45,"C&B":0,"Wellness":5787.8,"Sport":1026.39,"Akademie":8672.29}},
+    {date:new Date('2026-06-09'),y:2026,m:6,day:9,celkem:167428.55,segs:{"Hotel":75349.48,"F&B":67852.1,"C&B":12396.0,"Wellness":5625.0,"Sport":649.01,"Akademie":1156.96}},
+    {date:new Date('2026-06-10'),y:2026,m:6,day:10,celkem:78309.32,segs:{"Hotel":24583.85,"F&B":32453.54,"C&B":0,"Wellness":11974.5,"Sport":1236.71,"Akademie":2410.72}},
+    {date:new Date('2026-06-11'),y:2026,m:6,day:11,celkem:217638.5,segs:{"Hotel":39490.13,"F&B":93360.83,"C&B":14189.29,"Wellness":54107.31,"Sport":3381.2,"Akademie":6634.74}},
+    {date:new Date('2026-06-12'),y:2026,m:6,day:12,celkem:111377.07,segs:{"Hotel":68202.03,"F&B":22087.9,"C&B":0,"Wellness":14596.43,"Sport":1289.3,"Akademie":5201.41}},
+    {date:new Date('2026-06-13'),y:2026,m:6,day:13,celkem:175182.6,segs:{"Hotel":82975.06,"F&B":34048.33,"C&B":11941.48,"Wellness":28500.94,"Sport":2679.52,"Akademie":14037.27}},
+    {date:new Date('2026-06-14'),y:2026,m:6,day:14,celkem:37104.12,segs:{"Hotel":22342.97,"F&B":7082.58,"C&B":0,"Wellness":4821.42,"Sport":0.0,"Akademie":2857.15}}
+  ];
+
 // ============================================================
 // DEMO DATA
 // ============================================================
@@ -3476,6 +3596,8 @@ function loadDemoData() {
     { id:'wl3', employeeId:'e1', employeeName:'Jana Nováková', segment:'Hotel', date:new Date(Date.now()-86400000).toISOString().slice(0,10), text:'Check-in 12 hostů, vyřízeny 3 rezervace na příští týden.', createdAt:new Date(Date.now()-86400000).toISOString() }
   ];
   buildFilterOptions();
+  // přednahrát reálná tržby data z Vista reportu (duben–červen 2026)
+  trzbyData = DEMO_TRZBY;
 }
 </script>
 </body>
