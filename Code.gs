@@ -27,7 +27,8 @@ const SHEETS = {
   COMMENTS: 'Komentáře',
   INVOICES: 'Faktury',
   WORKLOG: 'Deník',
-  TRZBY: 'Tržby'
+  TRZBY: 'Tržby',
+  REPORTS: 'Reporty'
 };
 
 // ============================================================
@@ -69,6 +70,8 @@ function doPost(e) {
       case 'getWorklog':      result = getWorklog(); break;
       case 'saveTrzby':       result = saveTrzby(data); break;
       case 'getTrzby':        result = getTrzby(); break;
+      case 'uploadReport':    result = uploadReport(data); break;
+      case 'deleteReport':    result = deleteReport(data.id); break;
       case 'addWorklog':      result = addWorklog(data); break;
       case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
@@ -104,6 +107,7 @@ function initSheets() {
   ensureSheet(ss, SHEETS.INVOICES, ['id','title','supplier','amount','currency','url','fileId','fileName','dueDate','uploadedBy','uploadedByName','uploadedAt','status','decidedBy','decidedByName','decidedAt']);
   ensureSheet(ss, SHEETS.WORKLOG, ['id','employeeId','employeeName','segment','date','text','createdAt']);
   ensureSheet(ss, SHEETS.TRZBY, ['key','json','uploadedBy','uploadedAt']);
+  ensureSheet(ss, SHEETS.REPORTS, ['id','title','category','desc','url','fileId','fileName','uploadedBy','uploadedByName','uploadedAt']);
   return { success: true };
 }
 
@@ -515,8 +519,23 @@ function getTrzby() {
 function deleteWorklog(id) { deleteRowByCol(SHEETS.WORKLOG, 'id', id); return { success: true }; }
 
 // ============================================================
-// GET ALL
+// REPORTY
 // ============================================================
+function getReports() {
+  const { items } = readSheet(SHEETS.REPORTS);
+  return { reports: items.map(r => ({ id:r.id, title:r.title, category:r.category||'Ostatní', desc:r.desc||'', url:r.url||'', fileId:r.fileId||'', fileName:r.fileName||'', uploadedBy:r.uploadedBy||'', uploadedByName:r.uploadedByName||'', uploadedAt:r.uploadedAt||'' })).filter(r=>r.id).sort((a,b)=>new Date(b.uploadedAt)-new Date(a.uploadedAt)) };
+}
+function uploadReport(data) {
+  let url = '', fileId = '';
+  const id = 'rep_' + Date.now();
+  if (data.fileData && data.fileName) {
+    const saved = saveFileToDrive(data.fileData, data.fileType, data.fileName);
+    url = saved.url; fileId = saved.id;
+  }
+  appendByHeaders(SHEETS.REPORTS, { id, title:data.title||'', category:data.category||'Ostatní', desc:data.desc||'', url, fileId, fileName:data.fileName||'', uploadedBy:data.uploadedBy||'', uploadedByName:data.uploadedByName||'', uploadedAt:data.uploadedAt||new Date().toISOString() });
+  return { success:true, id, url, fileId };
+}
+function deleteReport(id) { deleteRowByCol(SHEETS.REPORTS, 'id', id); return { success:true }; }
 function getAll() {
   const t = getTasks();
   return {
@@ -526,7 +545,8 @@ function getAll() {
     tasks: t.tasks,
     comments: t.comments,
     invoices: getInvoices().invoices,
-    worklog: getWorklog().worklog
+    worklog: getWorklog().worklog,
+    reports: getReports().reports
   };
 }
 
