@@ -506,6 +506,17 @@ a { color: inherit; }
 .setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 6px; border-radius: 4px; font-size: 12px; font-family: monospace; }
 .divider { border: none; border-top: 1px solid var(--line); margin: 24px 0; }
 
+.sign-toggle { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px; background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: var(--r); margin-top: 14px; cursor: pointer; font-size: 13.5px; color: #7a5a18; line-height: 1.5; font-family: var(--sans); }
+.sign-toggle input { width: 18px; height: 18px; accent-color: var(--warn); cursor: pointer; margin-top: 1px; flex-shrink: 0; }
+.sign-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--r-pill); font-size: 11px; font-weight: 700; background: #efe7f4; color: #6a3a82; border: 1px solid #ddc9ea; }
+.signed-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--fern); font-weight: 600; text-decoration: none; }
+.signed-link:hover { text-decoration: underline; }
+.urge-btn { padding: 7px 14px; background: var(--warn-soft); color: var(--warn); border: 1.5px solid var(--warn-line); border-radius: var(--r-pill); font-family: var(--sans); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.16s var(--ease); display: inline-flex; align-items: center; gap: 6px; }
+.urge-btn:hover { background: var(--warn); color: #fff; border-color: var(--warn); }
+.dash-doc-row { display: flex; align-items: center; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+.dash-doc-row:last-child { border-bottom: none; }
+.dash-doc-prog { flex: 1; min-width: 0; }
+
 @media (max-width: 960px) {
   .kanban { grid-template-columns: 1fr 1fr; }
   .stats-row { grid-template-columns: 1fr 1fr; }
@@ -539,7 +550,7 @@ a { color: inherit; }
 <script>
 // ===== CONFIG =====
 const CONFIG = {
-  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzEhWon8ezmU2VjSYTW1btn9X3QQDk9vSHGCLMVL6WUvb65mYyF3HQvYU7y6GmQoLot/exec',
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyQwTgXJvlVocklxpOXhRYU7DJ6TwbtS40JqUZpQzOgS5R1DsbZqtC6myB1KdagYodS/exec',
   // Role PINs (admin/gm/owner). Employees have their own PINs in the system.
   PINS: {
     owner: 'VistaMajitel2050',
@@ -680,7 +691,8 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
             </div>
             <div class="form-group" id="audience-depts-wrap" style="display:none"><label>Segmenty</label><div id="audience-depts-list" class="chips"></div></div>
             <div class="form-group" id="audience-specific-wrap" style="display:none"><label>Vyberte zaměstnance</label><div id="audience-specific-list" class="checklist"></div></div>
-            <div style="display:flex;gap:8px;"><button class="btn-sm primary" onclick="uploadDocument()">Nahrát a odeslat</button><button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button></div>
+            <label class="sign-toggle"><input type="checkbox" id="doc-requires-sign"> <span><strong>Vyžaduje podpis</strong> — zaměstnanec nahraje podepsaný dokument zpět (ne jen potvrdí přečtení)</span></label>
+            <div style="display:flex;gap:8px;margin-top:16px"><button class="btn-sm primary" onclick="uploadDocument()">Nahrát a odeslat</button><button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button></div>
           </div>
           <hr class="divider">
         </div>
@@ -807,6 +819,15 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 
     <div class="dash-block">
       <div class="dash-block-head">
+        <div class="dash-block-icon gold">📝</div>
+        <div class="dash-block-title">Dokumenty k potvrzení</div>
+        <div class="dash-block-count" id="dash-doc-count">0</div>
+      </div>
+      <div id="dash-docs"></div>
+    </div>
+
+    <div class="dash-block">
+      <div class="dash-block-head">
         <div class="dash-block-icon green">📊</div>
         <div class="dash-block-title">Co se dělo (14 dní)</div>
       </div>
@@ -826,12 +847,34 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 <!-- CONFIRM DOCUMENT MODAL -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal">
-    <h2>Potvrdit přečtení</h2>
+    <h2 id="confirm-modal-title">Potvrdit přečtení</h2>
     <p id="modal-doc-name" style="font-family:var(--sans);font-weight:700;color:var(--peacock);font-size:15px;margin-bottom:6px;"></p>
-    <p>Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí.</p>
+    <p id="confirm-modal-text">Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí.</p>
+    <div id="confirm-sign-area" style="display:none">
+      <div class="upload-area" id="sign-upload-area" onclick="document.getElementById('sign-file-input').click()" style="padding:24px">
+        <div class="upload-icon" style="font-size:24px">✍️</div>
+        <p id="sign-file-label">Klikněte a nahrajte podepsaný dokument</p>
+        <span>PDF nebo foto podpisu (sken / mobil)</span>
+      </div>
+      <input type="file" id="sign-file-input" class="file-hidden" accept="application/pdf,image/*" onchange="onSignFileSelected(this)">
+      <a id="confirm-orig-download" href="#" target="_blank" class="btn-sm secondary" style="margin-top:12px">⬇ Stáhnout dokument k podpisu</a>
+    </div>
     <div class="modal-actions">
       <button class="btn-sm secondary" onclick="closeConfirmModal()">Zrušit</button>
-      <button class="btn-sm primary" onclick="confirmDocument()">Potvrzuji přečtení</button>
+      <button class="btn-sm primary" id="confirm-modal-btn" onclick="confirmDocument()">Potvrzuji přečtení</button>
+    </div>
+  </div>
+</div>
+
+<!-- URGE MODAL -->
+<div class="modal-overlay" id="urge-modal">
+  <div class="modal">
+    <h2>Zaurgovat</h2>
+    <p id="urge-modal-sub" style="font-family:var(--sans);font-weight:600;color:var(--peacock);font-size:15px;margin-bottom:14px;"></p>
+    <div class="form-group"><label>Vzkaz (nepovinné)</label><textarea id="urge-message" placeholder="např. Prosím dořešit do pátku, případně co upravit..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeUrge()">Zrušit</button>
+      <button class="btn-sm primary" onclick="sendUrge()">Odeslat připomínku</button>
     </div>
   </div>
 </div>
@@ -919,6 +962,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     </div>
     <div class="form-group" id="upd-audience-depts-wrap" style="display:none"><label>Segmenty</label><div id="upd-audience-depts-list" class="chips"></div></div>
     <div class="form-group" id="upd-audience-specific-wrap" style="display:none"><label>Vyberte zaměstnance</label><div id="upd-audience-specific-list" class="checklist"></div></div>
+    <label class="sign-toggle"><input type="checkbox" id="upd-requires-sign"> <span><strong>Vyžaduje podpis</strong> — zaměstnanec nahraje podepsaný dokument zpět</span></label>
 
     <div class="form-group">
       <label>Nahradit soubor (nepovinné)</label>
@@ -1344,6 +1388,7 @@ function openTaskDetail(taskId) {
     </div>
 
     <div class="modal-actions" style="border-top:1px solid var(--line);padding-top:18px;margin-top:22px">
+      ${(isOwner || isAdmin) && t.status !== 'done' && assignees.length ? `<button class="urge-btn" onclick="openUrge('task','${t.id}')">🔔 Zaurgovat</button>` : ''}
       ${canEdit ? `<button class="btn-sm secondary" onclick="openEditTask('${t.id}')">Upravit úkol</button>` : ''}
       ${canDelete ? `<button class="btn-sm danger" onclick="deleteTask('${t.id}')">Smazat</button>` : ''}
       <button class="btn-sm secondary" onclick="closeTaskDetail()">Zavřít</button>
@@ -1575,10 +1620,12 @@ function renderDocuments() {
     const conf = myConf.find(cf => cf.docId === doc.id);
     const dl = deadlineInfo(doc.deadline, conf ? 'done' : '');
     const card = document.createElement('div'); card.className = 'doc-card';
+    const needsSign = !!doc.requiresSignature;
+    const confLabel = conf ? (conf.signedUrl ? `✓ Podepsáno ${fmtDate(conf.confirmedAt)}` : `✓ Potvrzeno ${fmtDate(conf.confirmedAt)}`) : '';
     card.innerHTML = `
       <div class="doc-icon">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-info">
-        <div class="doc-name">${esc(doc.title)}</div>
+        <div class="doc-name">${esc(doc.title)} ${needsSign ? '<span class="sign-badge">✍ Podpis</span>' : ''}</div>
         <div class="doc-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
           ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
@@ -1587,8 +1634,9 @@ function renderDocuments() {
         </div>
       </div>
       <div class="doc-actions">
-        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-download">Stáhnout</a>` : ''}
-        ${conf ? `<div class="confirmed-badge">✓ Potvrzeno ${fmtDate(conf.confirmedAt)}</div>` : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${escAttr(doc.title)}')">Potvrdit přečtení</button>`}
+        ${doc.fileId ? `<button class="btn-download" onclick="openPreview('${escAttr(doc.title)}','${doc.fileId}','')">Zobrazit</button>` : ''}
+        ${doc.url && doc.url !== '#' ? `<a href="${doc.fileId ? driveDownloadUrl(doc.fileId) : esc(doc.url)}" target="_blank" class="btn-download">Stáhnout</a>` : ''}
+        ${conf ? `<div class="confirmed-badge">${confLabel}</div>` : `<button class="btn-confirm" onclick="openConfirmModal('${doc.id}','${escAttr(doc.title)}')">${needsSign ? 'Podepsat' : 'Potvrdit přečtení'}</button>`}
       </div>`;
     grid.appendChild(card);
   });
@@ -1596,27 +1644,92 @@ function renderDocuments() {
 }
 
 // ===== CONFIRM =====
+let signFile = null;
 function openConfirmModal(docId, docTitle) {
   pendingConfirmDocId = docId;
+  signFile = null;
+  const doc = documents.find(d => d.id === docId);
+  const needsSign = doc && doc.requiresSignature;
   document.getElementById('modal-doc-name').textContent = docTitle;
+  document.getElementById('confirm-modal-title').textContent = needsSign ? 'Podepsat dokument' : 'Potvrdit přečtení';
+  document.getElementById('confirm-modal-text').textContent = needsSign
+    ? 'Tento dokument vyžaduje podpis. Stáhněte ho, podepište a nahrajte podepsaný zpět.'
+    : 'Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí.';
+  document.getElementById('confirm-sign-area').style.display = needsSign ? 'block' : 'none';
+  document.getElementById('confirm-modal-btn').textContent = needsSign ? 'Nahrát podepsaný' : 'Potvrzuji přečtení';
+  document.getElementById('sign-file-label').textContent = 'Klikněte a nahrajte podepsaný dokument';
+  document.getElementById('sign-file-input').value = '';
+  if (needsSign) {
+    const dl = document.getElementById('confirm-orig-download');
+    if (doc.fileId) { dl.href = driveDownloadUrl(doc.fileId); dl.style.display = ''; }
+    else if (doc.url && doc.url !== '#') { dl.href = doc.url; dl.style.display = ''; }
+    else { dl.style.display = 'none'; }
+  }
   document.getElementById('confirm-modal').classList.add('open');
 }
-function closeConfirmModal() { document.getElementById('confirm-modal').classList.remove('open'); pendingConfirmDocId = null; }
+function closeConfirmModal() { document.getElementById('confirm-modal').classList.remove('open'); pendingConfirmDocId = null; signFile = null; }
+function onSignFileSelected(input) {
+  if (!input.files[0]) return;
+  signFile = input.files[0];
+  document.getElementById('sign-file-label').textContent = 'Vybráno: ' + signFile.name;
+}
 
 async function confirmDocument() {
-  const docId = pendingConfirmDocId;     // capture BEFORE closing (closeConfirmModal nulls it)
+  const docId = pendingConfirmDocId;
   if (!docId) return;
-  closeConfirmModal();
-  const conf = { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
-  confirmations.push(conf);
-  renderDocuments();
+  const doc = documents.find(d => d.id === docId);
+  const needsSign = doc && doc.requiresSignature;
+  if (needsSign && !signFile && !DEMO_MODE()) { showToast('Nahrajte podepsaný dokument', 'error'); return; }
+  const signedAt = new Date().toISOString();
+  closeConfirmModalKeepFile();
+  const conf = { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: signedAt, signedUrl: needsSign ? '#' : '', signedFileId: '', signedFileName: needsSign && signFile ? signFile.name : '' };
   if (!DEMO_MODE()) {
-    showLoading('Ukládám potvrzení...');
-    try { await apiCall('addConfirmation', { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: conf.confirmedAt }); }
-    catch(e) { hideLoading(); showToast('Chyba při ukládání potvrzení', 'error'); return; }
+    showLoading(needsSign ? 'Nahrávám podepsaný dokument...' : 'Ukládám potvrzení...');
+    try {
+      const payload = { docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: signedAt };
+      if (needsSign && signFile) { payload.fileData = await fileToB64(signFile); payload.fileName = signFile.name; payload.fileType = signFile.type; }
+      const res = await apiCall('addConfirmation', payload);
+      conf.signedUrl = res.signedUrl || ''; conf.signedFileId = res.signedFileId || '';
+    } catch(e) { hideLoading(); showToast('Chyba při ukládání', 'error'); return; }
     hideLoading();
   }
-  showToast('Potvrzení zaznamenáno. Děkujeme.', 'success');
+  confirmations.push(conf);
+  signFile = null;
+  renderDocuments();
+  showToast(needsSign ? 'Podepsaný dokument nahrán. Děkujeme.' : 'Potvrzení zaznamenáno. Děkujeme.', 'success');
+}
+function closeConfirmModalKeepFile() { document.getElementById('confirm-modal').classList.remove('open'); pendingConfirmDocId = null; }
+const signArea = document.getElementById('sign-upload-area');
+if (signArea) {
+  signArea.addEventListener('dragover', e => { e.preventDefault(); signArea.classList.add('drag-over'); });
+  signArea.addEventListener('dragleave', () => signArea.classList.remove('drag-over'));
+  signArea.addEventListener('drop', e => { e.preventDefault(); signArea.classList.remove('drag-over'); if (e.dataTransfer.files[0]) { document.getElementById('sign-file-input').files = e.dataTransfer.files; onSignFileSelected(document.getElementById('sign-file-input')); } });
+}
+
+// ===== URGE (owner / admin nudge) =====
+let urgeKind = null, urgeId = null;
+function openUrge(kind, id) {
+  urgeKind = kind; urgeId = id;
+  let sub = '';
+  if (kind === 'doc') { const d = documents.find(x => x.id === id); sub = d ? d.title : ''; }
+  else if (kind === 'task') { const t = tasks.find(x => x.id === id); sub = t ? t.title : ''; }
+  document.getElementById('urge-modal-sub').textContent = sub;
+  document.getElementById('urge-message').value = '';
+  document.getElementById('urge-modal').classList.add('open');
+}
+function closeUrge() { document.getElementById('urge-modal').classList.remove('open'); urgeKind = null; urgeId = null; }
+async function sendUrge() {
+  const message = document.getElementById('urge-message').value.trim();
+  const kind = urgeKind, id = urgeId;
+  closeUrge();
+  if (DEMO_MODE()) { showToast('Připomínka odeslána (demo)', 'success'); return; }
+  showLoading('Odesílám připomínku...');
+  try {
+    if (kind === 'doc') await apiCall('urgeDocument', { docId: id, message, byName: currentUser?.name || '' });
+    else if (kind === 'task') await apiCall('urgeTask', { taskId: id, message, byName: currentUser?.name || '' });
+    hideLoading();
+    showToast('Připomínka odeslána', 'success');
+  } catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); }
 }
 
 // ============================================================
@@ -1691,7 +1804,7 @@ function renderAdminDocsList() {
     row.innerHTML = `
       <div style="font-size:22px">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-admin-info">
-        <div class="doc-admin-name">${esc(doc.title)}${(doc.version && doc.version > 1) ? ` <span class="doc-cat-pill" title="Počet verzí">v${doc.version}</span>` : ''}</div>
+        <div class="doc-admin-name">${esc(doc.title)}${(doc.version && doc.version > 1) ? ` <span class="doc-cat-pill" title="Počet verzí">v${doc.version}</span>` : ''}${doc.requiresSignature ? ' <span class="sign-badge">✍ Podpis</span>' : ''}</div>
         <div class="doc-admin-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span> ` : ''}
           ${doc.desc ? esc(doc.desc) + ' · ' : ''}Nahráno ${fmtDate(doc.uploadedAt)}
@@ -1707,7 +1820,7 @@ function renderAdminDocsList() {
         <div class="conf-detail" id="detail-${doc.id}">
           <div class="conf-detail-section">
             <div class="conf-detail-title done">Potvrdili (${confirmed.length})</div>
-            ${confirmed.length ? confirmed.map(e => { const cf = docConfs.find(c => c.employeeId===e.id); return `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${cf?fmtDateTime(cf.confirmedAt):''}</span></div>`; }).join('') : '<div style="font-size:13px;color:var(--ink-faint)">Zatím nikdo</div>'}
+            ${confirmed.length ? confirmed.map(e => { const cf = docConfs.find(c => c.employeeId===e.id); const signLink = cf && cf.signedFileId ? ` <a class="signed-link" href="${driveDownloadUrl(cf.signedFileId)}" target="_blank">✍ podepsaný</a>` : (cf && cf.signedUrl && cf.signedUrl!=='#' ? ` <a class="signed-link" href="${esc(cf.signedUrl)}" target="_blank">✍ podepsaný</a>` : ''); return `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${cf?fmtDateTime(cf.confirmedAt):''}${signLink}</span></div>`; }).join('') : '<div style="font-size:13px;color:var(--ink-faint)">Zatím nikdo</div>'}
           </div>
           <div class="conf-detail-section">
             <div class="conf-detail-title pending">Čekají (${pending.length})</div>
@@ -1715,8 +1828,8 @@ function renderAdminDocsList() {
           </div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0" data-manage>
-        ${doc.url && doc.url !== '#' ? `<a href="${esc(doc.url)}" target="_blank" class="btn-icon" title="Stáhnout">⬇</a>` : ''}
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap" data-manage>
+        ${pending.length ? `<button class="urge-btn" onclick="openUrge('doc','${doc.id}')" title="Připomenout těm, kdo ještě nepotvrdili">🔔 Zaurgovat (${pending.length})</button>` : ''}
         <button class="btn-sm secondary" onclick="openUpdateDoc('${doc.id}')" title="Aktualizovat dokument">Aktualizovat</button>
         <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${escAttr(doc.title)}')" title="Smazat">🗑</button>
       </div>`;
@@ -1975,6 +2088,7 @@ async function uploadDocument() {
   const category = document.getElementById('doc-category').value;
   const desc = document.getElementById('doc-desc').value.trim();
   const deadlineRaw = document.getElementById('doc-deadline').value;
+  const requiresSignature = document.getElementById('doc-requires-sign').checked;
   const aud = collectAudience();
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
   if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jeden segment', 'error'); return; }
@@ -1982,7 +2096,7 @@ async function uploadDocument() {
   const deadline = deadlineRaw ? new Date(deadlineRaw + 'T23:59:59').toISOString() : '';
 
   if (DEMO_MODE()) {
-    documents.push({ id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: 'doc_'+Date.now(), title, category, desc, url: '#', fileId:'', uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
     cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
     showToast(`Dokument „${title}" přidán (demo)`, 'success'); return;
   }
@@ -1990,8 +2104,8 @@ async function uploadDocument() {
   showLoading('Nahrávám dokument a odesílám notifikace...');
   try {
     const b64 = await fileToB64(selectedFile);
-    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
-    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: res.docId, title, category, desc, url: res.url, fileId: res.fileId, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline, version:1, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList });
     cancelUpload(); toggleUploadForm(); renderAdminDocsList(); updateStats(); buildFilterOptions();
     hideLoading();
     showToast(`Dokument „${title}" nahrán a odeslán`, 'success');
@@ -2005,6 +2119,7 @@ function cancelUpload() {
   ['doc-title','doc-desc','doc-deadline'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('doc-category').value = '';
   document.getElementById('doc-audience-type').value = 'all';
+  document.getElementById('doc-requires-sign').checked = false;
   onAudienceTypeChange();
 }
 
@@ -2026,6 +2141,7 @@ function openUpdateDoc(docId) {
   document.getElementById('upd-desc').value = doc.desc || '';
   document.getElementById('upd-deadline').value = doc.deadline ? doc.deadline.slice(0,10) : '';
   document.getElementById('upd-audience-type').value = doc.audienceType || 'all';
+  document.getElementById('upd-requires-sign').checked = !!doc.requiresSignature;
   document.getElementById('upd-file-label').textContent = 'Ponechat stávající soubor, nebo klikněte pro nahrání nového';
   document.getElementById('upd-file-input').value = '';
   updBuildAudience(doc);
@@ -2086,6 +2202,7 @@ async function saveUpdateDoc() {
   const desc = document.getElementById('upd-desc').value.trim();
   const deadlineRaw = document.getElementById('upd-deadline').value;
   const aud = updCollectAudience();
+  const requiresSignature = document.getElementById('upd-requires-sign').checked;
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
   if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jeden segment', 'error'); return; }
   if (aud.audienceType === 'specific' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jednoho zaměstnance', 'error'); return; }
@@ -2093,7 +2210,7 @@ async function saveUpdateDoc() {
 
   // apply locally: bump version, clear this doc's confirmations
   const applyLocal = (url, fileId, fileName) => {
-    Object.assign(doc, { title, category, desc, deadline, audienceType: aud.audienceType, audienceList: aud.audienceList, version: (parseInt(doc.version)||1)+1, uploadedAt: new Date().toISOString() });
+    Object.assign(doc, { title, category, desc, deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList, version: (parseInt(doc.version)||1)+1, uploadedAt: new Date().toISOString() });
     if (url !== undefined) { doc.url = url; doc.fileId = fileId; if (fileName) doc.fileName = fileName; }
     confirmations = confirmations.filter(c => c.docId !== id);
   };
@@ -2105,7 +2222,7 @@ async function saveUpdateDoc() {
   }
   showLoading('Aktualizuji dokument a žádám o nové potvrzení...');
   try {
-    const payload = { id, title, category, desc, deadline, audienceType: aud.audienceType, audienceList: aud.audienceList };
+    const payload = { id, title, category, desc, deadline, requiresSignature, audienceType: aud.audienceType, audienceList: aud.audienceList };
     if (updFile) { payload.fileData = await fileToB64(updFile); payload.fileName = updFile.name; payload.fileType = updFile.type; }
     const res = await apiCall('updateDocument', payload);
     applyLocal(res.url, res.fileId, updFile ? updFile.name : undefined);
@@ -2596,6 +2713,33 @@ function renderOverview() {
     }).join('');
   }
 
+  // documents awaiting confirmation
+  const docRows = [];
+  documents.forEach(doc => {
+    const targets = docTargets(doc);
+    const confIds = new Set(confirmations.filter(c => c.docId === doc.id).map(c => c.employeeId));
+    const pending = targets.filter(e => !confIds.has(e.id));
+    if (targets.length > 0 && pending.length > 0) docRows.push({ doc, done: targets.length - pending.length, total: targets.length, pending: pending.length });
+  });
+  document.getElementById('dash-doc-count').textContent = docRows.length;
+  const docWrap = document.getElementById('dash-docs');
+  if (docRows.length === 0) {
+    docWrap.innerHTML = '<div class="dash-empty">Všechny dokumenty jsou potvrzené. ✓</div>';
+  } else {
+    docWrap.innerHTML = docRows.map(r => {
+      const pct = Math.round(r.done / r.total * 100);
+      return `<div class="dash-doc-row">
+        <div style="font-size:20px">${getDocIcon(r.doc.title, r.doc.category)}</div>
+        <div class="dash-doc-prog">
+          <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:14px;margin-bottom:6px">${esc(r.doc.title)}${r.doc.requiresSignature?' <span class="sign-badge">✍ Podpis</span>':''}</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+          <div style="font-size:12px;color:var(--ink-faint);margin-top:5px">${r.done} z ${r.total} ${r.doc.requiresSignature?'podepsalo':'potvrdilo'} · chybí ${r.pending}</div>
+        </div>
+        <button class="urge-btn" onclick="openUrge('doc','${r.doc.id}')">🔔 Zaurgovat</button>
+      </div>`;
+    }).join('');
+  }
+
   // task summary
   const active = tasks.filter(t => t.status !== 'done').length;
   const done = tasks.filter(t => t.status === 'done').length;
@@ -2633,10 +2777,11 @@ function loadDemoData() {
     { id:'e4', name:'Tomáš Horák', role:'Tenisový trenér', dept:'Sport', pin:'444', email:'tomas@vistaresort.cz' }
   ];
   documents = [
-    { id:'d1', title:'Pracovní řád 2025', category:'HR', desc:'Aktualizovaný pracovní řád', url:'#', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), deadline:new Date(Date.now()+86400000*2).toISOString(), audienceType:'all', audienceList:[] },
-    { id:'d2', title:'Bezpečnostní směrnice wellness', category:'Bezpečnost', desc:'Postupy pro wellness provoz', url:'#', uploadedAt:new Date(Date.now()-86400000).toISOString(), deadline:'', audienceType:'depts', audienceList:['Wellness'] }
+    { id:'d1', title:'Pracovní řád 2025', category:'HR', desc:'Aktualizovaný pracovní řád', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000*3).toISOString(), deadline:new Date(Date.now()+86400000*2).toISOString(), version:1, requiresSignature:false, audienceType:'all', audienceList:[] },
+    { id:'d2', title:'Bezpečnostní směrnice wellness', category:'Bezpečnost', desc:'Postupy pro wellness provoz', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000).toISOString(), deadline:'', version:1, requiresSignature:false, audienceType:'depts', audienceList:['Wellness'] },
+    { id:'d3', title:'Dohoda o mlčenlivosti (NDA)', category:'HR', desc:'Podepište prosím a nahrajte zpět', url:'#', fileId:'', uploadedAt:new Date(Date.now()-86400000*2).toISOString(), deadline:new Date(Date.now()+86400000*4).toISOString(), version:1, requiresSignature:true, audienceType:'all', audienceList:[] }
   ];
-  confirmations = [ { docId:'d1', docTitle:'Pracovní řád 2025', employeeId:'e1', employeeName:'Jana Nováková', confirmedAt:new Date().toISOString() } ];
+  confirmations = [ { docId:'d1', docTitle:'Pracovní řád 2025', employeeId:'e1', employeeName:'Jana Nováková', confirmedAt:new Date().toISOString(), signedUrl:'', signedFileId:'', signedFileName:'' } ];
   tasks = [
     { id:'t1', title:'Připravit víkendové menu', desc:'Sestavit nabídku na sobotu a neděli', segment:'Gastro', priority:'high', status:'inprogress', assignees:['e3'], dependsOn:[], deadline:new Date(Date.now()+86400000*2).toISOString(), createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
     { id:'t2', title:'Revize tenisových kurtů', desc:'Zkontrolovat stav povrchu', segment:'Sport', priority:'medium', status:'todo', assignees:['e4'], dependsOn:['e1'], deadline:'', createdBy:'__admin__', createdByName:'Administrátor', createdAt:new Date().toISOString(), attachments:[] },
