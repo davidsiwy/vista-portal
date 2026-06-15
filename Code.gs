@@ -38,6 +38,8 @@ function doPost(e) {
       case 'updateDocument':  result = updateDocument(data); break;
       case 'deleteDocument':  result = deleteDocument(data.id); break;
       case 'addConfirmation': result = addConfirmation(data); break;
+      case 'urgeDocument':    result = urgeDocument(data); break;
+      case 'urgeTask':        result = urgeTask(data); break;
       // tasks
       case 'getTasks':        result = getTasks(); break;
       case 'addTask':         result = addTask(data); break;
@@ -80,8 +82,8 @@ function jsonResponse(data) {
 function initSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
-  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','remindedAt']);
-  ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt']);
+  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','requiresSignature','remindedAt']);
+  ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt','signedUrl','signedFileId','signedFileName']);
   ensureSheet(ss, SHEETS.TASKS, ['id','title','desc','segment','priority','status','assignees','dependsOn','deadline','createdBy','createdByName','createdAt','completedAt','attachments','remindedAt']);
   ensureSheet(ss, SHEETS.COMMENTS, ['id','taskId','authorId','authorName','text','createdAt','entityType']);
   ensureSheet(ss, SHEETS.INVOICES, ['id','title','supplier','amount','currency','url','fileId','fileName','dueDate','uploadedBy','uploadedByName','uploadedAt','status','decidedBy','decidedByName','decidedAt']);
@@ -185,6 +187,7 @@ function getDocuments() {
   const documents = items.map(r => ({
     id: r.id, title: r.title, category: r.category, desc: r.desc, url: r.url, fileId: r.fileId || '',
     fileName: r.fileName, uploadedAt: r.uploadedAt, deadline: r.deadline || '', version: r.version || 1,
+    requiresSignature: r.requiresSignature === true || r.requiresSignature === 'true' || r.requiresSignature === 1 || r.requiresSignature === 'ANO',
     audienceType: r.audienceType || 'all', audienceList: parseList(r.audienceList)
   })).filter(d => d.id);
   return { documents };
@@ -203,10 +206,11 @@ function uploadDocument(data) {
   appendByHeaders(SHEETS.DOCUMENTS, {
     id: docId, title: data.title, category: data.category||'', desc: data.desc||'', url: fileUrl, fileId,
     fileName: data.fileName||'', uploadedAt: data.uploadedAt||new Date().toISOString(), deadline: data.deadline||'',
-    audienceType: data.audienceType||'all', audienceList: JSON.stringify(data.audienceList||[]), version: 1, remindedAt: ''
+    audienceType: data.audienceType||'all', audienceList: JSON.stringify(data.audienceList||[]), version: 1,
+    requiresSignature: data.requiresSignature ? true : false, remindedAt: ''
   });
   const targets = resolveAudience(data.audienceType||'all', data.audienceList||[]);
-  sendDocumentNotification(data.title, data.category||'', data.desc||'', fileUrl, data.deadline||'', targets);
+  sendDocumentNotification(data.title, data.category||'', data.desc||'', fileUrl, data.deadline||'', targets, data.requiresSignature);
   return { success: true, docId, url: fileUrl, fileId };
 }
 function updateDocument(data) {
@@ -215,6 +219,7 @@ function updateDocument(data) {
   const obj = {};
   ['title','category','desc','deadline','audienceType'].forEach(k => { if (data[k] !== undefined) obj[k] = data[k]; });
   if (data.audienceList !== undefined) obj.audienceList = JSON.stringify(data.audienceList);
+  if (data.requiresSignature !== undefined) obj.requiresSignature = data.requiresSignature ? true : false;
   let fileUrl = doc.url, fileId = doc.fileId;
   if (data.fileData && data.fileName) {
     const saved = saveFileToDrive(data.fileData, data.fileType, data.fileName);
@@ -225,12 +230,12 @@ function updateDocument(data) {
   obj.version = ver;
   obj.uploadedAt = new Date().toISOString();
   updateRowByHeaders(SHEETS.DOCUMENTS, 'id', data.id, obj);
-  // Vymaž všechna potvrzení -> všichni musí znovu potvrdit aktualizovaný dokument
   deleteRowByCol(SHEETS.CONFIRMATIONS, 'docId', data.id);
   const aType = obj.audienceType || doc.audienceType;
   const aList = data.audienceList !== undefined ? data.audienceList : parseList(doc.audienceList);
   const targets = resolveAudience(aType, aList);
-  sendDocumentUpdateNotification(obj.title || doc.title, obj.category !== undefined ? obj.category : doc.category, obj.desc !== undefined ? obj.desc : doc.desc, fileUrl, obj.deadline !== undefined ? obj.deadline : doc.deadline, targets);
+  const reqSig = obj.requiresSignature !== undefined ? obj.requiresSignature : (doc.requiresSignature === true || doc.requiresSignature === 'true');
+  sendDocumentUpdateNotification(obj.title || doc.title, obj.category !== undefined ? obj.category : doc.category, obj.desc !== undefined ? obj.desc : doc.desc, fileUrl, obj.deadline !== undefined ? obj.deadline : doc.deadline, targets, reqSig);
   return { success: true, version: ver, url: fileUrl, fileId };
 }
 function deleteDocument(id) { deleteRowByCol(SHEETS.DOCUMENTS, 'id', id); return { success: true }; }
@@ -249,13 +254,70 @@ function addConfirmation(data) {
   const { items } = readSheet(SHEETS.CONFIRMATIONS);
   if (items.some(r => r.docId === data.docId && r.employeeId === data.employeeId)) return { success: true, duplicate: true };
   const doc = readSheet(SHEETS.DOCUMENTS).items.find(d => d.id === data.docId);
-  appendByHeaders(SHEETS.CONFIRMATIONS, { docId: data.docId, docTitle: doc?doc.title:data.docId, employeeId: data.employeeId, employeeName: data.employeeName, confirmedAt: data.confirmedAt||new Date().toISOString() });
-  sendConfirmationNotification(data.employeeName, doc?doc.title:data.docId);
-  return { success: true };
+  let signedUrl = '', signedFileId = '', signedFileName = '';
+  if (data.fileData && data.fileName) {
+    const saved = saveFileToDrive(data.fileData, data.fileType, data.fileName);
+    signedUrl = saved.url; signedFileId = saved.id; signedFileName = data.fileName;
+  }
+  appendByHeaders(SHEETS.CONFIRMATIONS, { docId: data.docId, docTitle: doc?doc.title:data.docId, employeeId: data.employeeId, employeeName: data.employeeName, confirmedAt: data.confirmedAt||new Date().toISOString(), signedUrl, signedFileId, signedFileName });
+  sendConfirmationNotification(data.employeeName, doc?doc.title:data.docId, !!signedUrl);
+  return { success: true, signedUrl, signedFileId };
 }
 function getConfirmations() {
   const { items } = readSheet(SHEETS.CONFIRMATIONS);
-  return { confirmations: items.map(r => ({ docId: r.docId, docTitle: r.docTitle, employeeId: r.employeeId, employeeName: r.employeeName, confirmedAt: r.confirmedAt })).filter(c => c.docId) };
+  return { confirmations: items.map(r => ({ docId: r.docId, docTitle: r.docTitle, employeeId: r.employeeId, employeeName: r.employeeName, confirmedAt: r.confirmedAt, signedUrl: r.signedUrl||'', signedFileId: r.signedFileId||'', signedFileName: r.signedFileName||'' })).filter(c => c.docId) };
+}
+
+// ============================================================
+// URGE (zaurgovat) — owner/admin nudges
+// ============================================================
+function urgeDocument(data) {
+  const doc = readSheet(SHEETS.DOCUMENTS).items.find(d => d.id === data.docId);
+  if (!doc) return { error: 'Document not found' };
+  const targets = resolveAudience(doc.audienceType, parseList(doc.audienceList));
+  const confs = getConfirmations().confirmations.filter(c => c.docId === data.docId);
+  const confirmedIds = new Set(confs.map(c => c.employeeId));
+  const pending = targets.filter(e => !confirmedIds.has(e.id));
+  let sent = 0;
+  pending.forEach(e => { if (e.email && e.email.includes('@')) { sendDocUrge(e, doc, data.message||'', data.byName||''); sent++; } });
+  return { success: true, urged: sent, pending: pending.length };
+}
+function urgeTask(data) {
+  const task = readSheet(SHEETS.TASKS).items.find(t => t.id === data.taskId);
+  if (!task) return { error: 'Task not found' };
+  const ids = parseList(task.assignees);
+  let sent = 0;
+  ids.forEach(id => { const e = empById(id); if (e && e.email && e.email.includes('@')) { sendTaskUrge(e, task, data.message||'', data.byName||''); sent++; } });
+  return { success: true, urged: sent };
+}
+function sendDocUrge(emp, doc, message, byName) {
+  try {
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 18px;">Dobrý den ${emp.name},</p>
+      <div style="background:#f7eed8;border:1px solid #ecd6a3;border-radius:8px;padding:14px 18px;margin-bottom:18px;"><div style="font-size:14px;font-weight:bold;color:#a6781f;">Připomínka: čeká se na vás</div></div>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 16px;">Je třeba ${doc.requiresSignature ? 'podepsat a nahrát' : 'potvrdit'} dokument:</p>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${doc.title}${doc.category?' ['+doc.category+']':''}</div>
+        ${doc.deadline?`<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Termín: ${fmtDateCz(doc.deadline)}</div>`:''}
+      </div>
+      ${message?`<div style="background:#ffffff;border:1px solid #e8e5dd;border-radius:8px;padding:14px 16px;margin-bottom:20px;"><div style="font-size:12px;color:#9c7852;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Vzkaz${byName?' od '+byName:''}</div><div style="font-size:14px;color:#3d301f;">${message}</div></div>`:''}
+      ${btnHtml('Otevřít Vista Portál', PORTAL_URL)}`;
+    GmailApp.sendEmail(emp.email, 'Vista Portál: Připomínka — ' + doc.title, `Připomínka: ${doc.title}. ${message||''} ${PORTAL_URL}`, { htmlBody: emailShell('Připomínka', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('doc urge: ' + err.message); }
+}
+function sendTaskUrge(emp, task, message, byName) {
+  try {
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 18px;">Dobrý den ${emp.name},</p>
+      <div style="background:#f7eed8;border:1px solid #ecd6a3;border-radius:8px;padding:14px 18px;margin-bottom:18px;"><div style="font-size:14px;font-weight:bold;color:#a6781f;">Připomínka úkolu</div></div>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${task.title}</div>
+        <div style="font-size:13px;color:#3d301f;margin-top:6px;">Stav: <strong>${statusCz(task.status)}</strong>${task.deadline?` · Termín: <strong style="color:#9c3a2e">${fmtDateCz(task.deadline)}</strong>`:''}</div>
+      </div>
+      ${message?`<div style="background:#ffffff;border:1px solid #e8e5dd;border-radius:8px;padding:14px 16px;margin-bottom:20px;"><div style="font-size:12px;color:#9c7852;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Vzkaz${byName?' od '+byName:''}</div><div style="font-size:14px;color:#3d301f;">${message}</div></div>`:''}
+      ${btnHtml('Otevřít úkol', PORTAL_URL)}`;
+    GmailApp.sendEmail(emp.email, 'Vista Portál: Připomínka úkolu — ' + task.title, `Připomínka: ${task.title}. ${message||''} ${PORTAL_URL}`, { htmlBody: emailShell('Připomínka úkolu', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('task urge: ' + err.message); }
 }
 
 // ============================================================
@@ -439,57 +501,62 @@ function btnHtml(text, url) {
 // ============================================================
 // EMAIL — documents
 // ============================================================
-function sendDocumentNotification(title, category, desc, fileUrl, deadline, targets) {
+function sendDocumentNotification(title, category, desc, fileUrl, deadline, targets, requiresSignature) {
   try {
     const emails = (targets || getEmployees().employees).map(e => e.email).filter(em => em && em.includes('@'));
     if (emails.length === 0) return;
     const catText = category ? ` [${category}]` : '';
     const deadlineText = deadline ? fmtDateCz(deadline) : '';
+    const action = requiresSignature ? 'podepsat a nahrát zpět' : 'potvrdit';
+    const cta = requiresSignature ? 'Nahrát podepsaný dokument' : 'Potvrdit přečtení';
     const body = `
       <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
-      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">byl nahrán nový dokument, který je třeba potvrdit:</p>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">byl nahrán nový dokument, který je třeba ${action}:</p>
       <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
         <div style="font-size:16px;font-weight:bold;color:#13302e;">${title}${catText}</div>
         ${desc ? `<div style="font-size:13px;color:#9c7852;margin-top:4px;">${desc}</div>` : ''}
-        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Potvrďte do: ${deadlineText}</div>` : ''}
+        ${requiresSignature ? `<div style="font-size:13px;color:#a6781f;margin-top:8px;font-weight:bold;">Vyžaduje podpis</div>` : ''}
+        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">${requiresSignature?'Nahrajte do':'Potvrďte do'}: ${deadlineText}</div>` : ''}
       </div>
-      <p style="color:#9c7852;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a klikněte na „Potvrdit přečtení".</p>
+      <p style="color:#9c7852;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a klikněte na „${cta}".</p>
       ${btnHtml('Otevřít Vista Portál', PORTAL_URL)}`;
     const html = emailShell('Interní dokumentový systém', body);
-    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Nový dokument k potvrzení', `${title}${catText} — ${PORTAL_URL}`, { htmlBody: html, name: 'Vista Resort' }));
+    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Nový dokument k ' + (requiresSignature?'podpisu':'potvrzení'), `${title}${catText} — ${PORTAL_URL}`, { htmlBody: html, name: 'Vista Resort' }));
   } catch(err) { Logger.log('doc email: ' + err.message); }
 }
-function sendDocumentUpdateNotification(title, category, desc, fileUrl, deadline, targets) {
+function sendDocumentUpdateNotification(title, category, desc, fileUrl, deadline, targets, requiresSignature) {
   try {
     const emails = (targets || getEmployees().employees).map(e => e.email).filter(em => em && em.includes('@'));
     if (emails.length === 0) return;
     const catText = category ? ` [${category}]` : '';
     const deadlineText = deadline ? fmtDateCz(deadline) : '';
+    const action = requiresSignature ? 'znovu podepsat a nahrát' : 'znovu potvrdit';
     const body = `
       <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
-      <div style="background:#f7eed8;border:1px solid #ecd6a3;border-radius:8px;padding:12px 16px;margin-bottom:20px;"><div style="font-size:14px;font-weight:bold;color:#a6781f;">Dokument byl aktualizován</div><div style="font-size:13px;color:#876012;margin-top:3px;">Je třeba ho znovu potvrdit.</div></div>
+      <div style="background:#f7eed8;border:1px solid #ecd6a3;border-radius:8px;padding:12px 16px;margin-bottom:20px;"><div style="font-size:14px;font-weight:bold;color:#a6781f;">Dokument byl aktualizován</div><div style="font-size:13px;color:#876012;margin-top:3px;">Je třeba ho ${action}.</div></div>
       <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
         <div style="font-size:16px;font-weight:bold;color:#13302e;">${title}${catText}</div>
         ${desc ? `<div style="font-size:13px;color:#9c7852;margin-top:4px;">${desc}</div>` : ''}
-        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Potvrďte do: ${deadlineText}</div>` : ''}
+        ${requiresSignature ? `<div style="font-size:13px;color:#a6781f;margin-top:8px;font-weight:bold;">Vyžaduje podpis</div>` : ''}
+        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Termín: ${deadlineText}</div>` : ''}
       </div>
-      <p style="color:#9c7852;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a znovu potvrďte přečtení aktualizovaného dokumentu.</p>
       ${btnHtml('Otevřít Vista Portál', PORTAL_URL)}`;
-    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Aktualizovaný dokument k potvrzení', `${title}${catText} byl aktualizován — ${PORTAL_URL}`, { htmlBody: emailShell('Aktualizace dokumentu', body), name: 'Vista Resort' }));
+    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Aktualizovaný dokument k ' + (requiresSignature?'podpisu':'potvrzení'), `${title}${catText} byl aktualizován — ${PORTAL_URL}`, { htmlBody: emailShell('Aktualizace dokumentu', body), name: 'Vista Resort' }));
   } catch(err) { Logger.log('doc update email: ' + err.message); }
 }
-function sendConfirmationNotification(employeeName, docTitle) {
+function sendConfirmationNotification(employeeName, docTitle, signed) {
   try {
     if (!ADMIN_EMAIL) return;
     const now = new Date().toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
+    const label = signed ? 'Dokument podepsán a nahrán' : 'Dokument potvrzen';
     const body = `
-      <div style="background:#eef5ee;border:1px solid #b8d4b0;padding:16px 20px;margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#586845;">Dokument potvrzen</div></div>
+      <div style="background:#eef5ee;border:1px solid #b8d4b0;padding:16px 20px;margin-bottom:20px;"><div style="font-size:15px;font-weight:bold;color:#586845;">${label}</div></div>
       <table style="font-size:14px;color:#3d301f;width:100%">
         <tr><td style="padding:6px 0;color:#9c7852;width:120px;">Zaměstnanec</td><td style="padding:6px 0;font-weight:bold;">${employeeName}</td></tr>
         <tr><td style="padding:6px 0;color:#9c7852;">Dokument</td><td style="padding:6px 0;font-weight:bold;">${docTitle}</td></tr>
         <tr><td style="padding:6px 0;color:#9c7852;">Datum</td><td style="padding:6px 0;">${now}</td></tr>
       </table>`;
-    GmailApp.sendEmail(ADMIN_EMAIL, `Vista Portál: ${employeeName} potvrdil/a dokument`, `${employeeName} potvrdil/a: ${docTitle} (${now})`, { htmlBody: emailShell('Potvrzení dokumentu', body), name: 'Vista Resort' });
+    GmailApp.sendEmail(ADMIN_EMAIL, `Vista Portál: ${employeeName} ${signed?'podepsal/a':'potvrdil/a'} dokument`, `${employeeName}: ${docTitle} (${now})`, { htmlBody: emailShell(label, body), name: 'Vista Resort' });
   } catch(err) { Logger.log('conf email: ' + err.message); }
 }
 
