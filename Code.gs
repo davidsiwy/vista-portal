@@ -1,19 +1,22 @@
 // ============================================================
-// VISTA PORTÁL — Google Apps Script Backend v3.0
+// VISTA PORTÁL — Google Apps Script Backend v4.0
+// Dokumenty + Úkoly + Role
 // ============================================================
 
 const DRIVE_FOLDER_NAME = 'Vista Portal Dokumenty';
 const PORTAL_URL = 'https://davidsiwy.github.io/vista-portal/';
-const ADMIN_EMAIL = 'dsiwy2000@gmail.com';  // kam chodí souhrny adminovi
+const ADMIN_EMAIL = 'dsiwy2000@gmail.com';
 
 const SHEETS = {
   EMPLOYEES: 'Zaměstnanci',
   DOCUMENTS: 'Dokumenty',
-  CONFIRMATIONS: 'Potvrzení'
+  CONFIRMATIONS: 'Potvrzení',
+  TASKS: 'Úkoly',
+  COMMENTS: 'Komentáře'
 };
 
 // ============================================================
-// MAIN ENTRY POINT
+// ENTRY POINTS
 // ============================================================
 function doPost(e) {
   try {
@@ -21,43 +24,44 @@ function doPost(e) {
     const action = data.action;
     let result;
     switch (action) {
+      // employees
       case 'getEmployees':    result = getEmployees(); break;
-      case 'getDocuments':    result = getDocuments(); break;
-      case 'getAll':          result = getAll(); break;
       case 'addEmployee':     result = addEmployee(data); break;
       case 'updateEmployee':  result = updateEmployee(data); break;
       case 'deleteEmployee':  result = deleteEmployee(data.id); break;
+      // documents
+      case 'getDocuments':    result = getDocuments(); break;
       case 'uploadDocument':  result = uploadDocument(data); break;
       case 'deleteDocument':  result = deleteDocument(data.id); break;
       case 'addConfirmation': result = addConfirmation(data); break;
+      // tasks
+      case 'getTasks':        result = getTasks(); break;
+      case 'addTask':         result = addTask(data); break;
+      case 'updateTask':      result = updateTask(data); break;
+      case 'updateTaskStatus':result = updateTaskStatus(data); break;
+      case 'deleteTask':      result = deleteTask(data.id); break;
+      case 'addComment':      result = addComment(data); break;
+      case 'addTaskAttachment': result = addTaskAttachment(data); break;
+      // all
+      case 'getAll':          result = getAll(); break;
       default: result = { error: 'Unknown action: ' + action };
     }
     return jsonResponse(result);
   } catch (err) {
-    return jsonResponse({ error: err.message });
+    return jsonResponse({ error: err.message, stack: err.stack });
   }
 }
 
 function doGet(e) {
-  const action = e.parameter.action || 'getAll';
   try {
-    let result;
-    switch (action) {
-      case 'getAll':       result = getAll(); break;
-      case 'getEmployees': result = getEmployees(); break;
-      case 'getDocuments': result = getDocuments(); break;
-      default: result = { error: 'Unknown action' };
-    }
-    return jsonResponse(result);
+    return jsonResponse(getAll());
   } catch (err) {
     return jsonResponse({ error: err.message });
   }
 }
 
 function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================================
@@ -65,132 +69,124 @@ function jsonResponse(data) {
 // ============================================================
 function initSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
+  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileName','uploadedAt','deadline','audienceType','audienceList','remindedAt']);
+  ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt']);
+  ensureSheet(ss, SHEETS.TASKS, ['id','title','desc','segment','priority','status','assignees','dependsOn','deadline','createdBy','createdByName','createdAt','attachments','remindedAt']);
+  ensureSheet(ss, SHEETS.COMMENTS, ['id','taskId','authorId','authorName','text','createdAt']);
+  return { success: true };
+}
 
-  let empSheet = ss.getSheetByName(SHEETS.EMPLOYEES);
-  if (!empSheet) {
-    empSheet = ss.insertSheet(SHEETS.EMPLOYEES);
-    empSheet.appendRow(['id', 'name', 'role', 'dept', 'pin', 'email', 'createdAt']);
-    empSheet.setFrozenRows(1);
-    empSheet.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
-  }
-
-  let docSheet = ss.getSheetByName(SHEETS.DOCUMENTS);
-  if (!docSheet) {
-    docSheet = ss.insertSheet(SHEETS.DOCUMENTS);
-    docSheet.appendRow(['id', 'title', 'category', 'desc', 'url', 'fileName', 'uploadedAt', 'deadline', 'audienceType', 'audienceList', 'remindedAt']);
-    docSheet.setFrozenRows(1);
-    docSheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
+function ensureSheet(ss, name, headers) {
+  let s = ss.getSheetByName(name);
+  if (!s) {
+    s = ss.insertSheet(name);
+    s.appendRow(headers);
+    s.setFrozenRows(1);
+    s.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#13302e').setFontColor('#dfc196');
   } else {
-    // Upgrade: add new columns if missing
-    const h = docSheet.getRange(1, 1, 1, docSheet.getLastColumn()).getValues()[0];
-    ['deadline', 'audienceType', 'audienceList', 'remindedAt'].forEach(col => {
-      if (!h.includes(col)) {
-        const c = docSheet.getLastColumn() + 1;
-        docSheet.getRange(1, c).setValue(col).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
+    // add any missing columns
+    const have = s.getRange(1, 1, 1, s.getLastColumn()).getValues()[0];
+    headers.forEach(col => {
+      if (have.indexOf(col) < 0) {
+        const c = s.getLastColumn() + 1;
+        s.getRange(1, c).setValue(col).setFontWeight('bold').setBackground('#13302e').setFontColor('#dfc196');
       }
     });
   }
+  return s;
+}
 
-  let confSheet = ss.getSheetByName(SHEETS.CONFIRMATIONS);
-  if (!confSheet) {
-    confSheet = ss.insertSheet(SHEETS.CONFIRMATIONS);
-    confSheet.appendRow(['docId', 'docTitle', 'employeeId', 'employeeName', 'confirmedAt']);
-    confSheet.setFrozenRows(1);
-    confSheet.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
+// ============================================================
+// GENERIC ROW HELPERS
+// ============================================================
+function readSheet(name) {
+  const sheet = getSheet(name);
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length <= 1) return { headers: rows[0] || [], items: [] };
+  const headers = rows[0];
+  const items = rows.slice(1).map((r, i) => {
+    const o = { _row: i + 2 };
+    headers.forEach((h, ci) => o[h] = r[ci]);
+    return o;
+  }).filter(o => o[headers[0]]);
+  return { headers, items };
+}
+
+function appendByHeaders(name, obj) {
+  const sheet = getSheet(name);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const row = headers.map(h => (obj[h] !== undefined && obj[h] !== null) ? obj[h] : '');
+  sheet.appendRow(row);
+}
+
+function updateRowByHeaders(name, matchCol, matchVal, obj) {
+  const sheet = getSheet(name);
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const mi = headers.indexOf(matchCol);
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][mi]) === String(matchVal)) {
+      headers.forEach((h, ci) => {
+        if (obj[h] !== undefined) sheet.getRange(i + 1, ci + 1).setValue(obj[h]);
+      });
+      return true;
+    }
   }
+  return false;
+}
 
-  return { success: true };
+function deleteRowByCol(name, col, val) {
+  const sheet = getSheet(name);
+  const data = sheet.getDataRange().getValues();
+  const ci = data[0].indexOf(col);
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (String(data[i][ci]) === String(val)) { sheet.deleteRow(i + 1); }
+  }
+  return true;
 }
 
 // ============================================================
 // EMPLOYEES
 // ============================================================
 function getEmployees() {
-  const sheet = getSheet(SHEETS.EMPLOYEES);
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return { employees: [] };
-
-  const headers = rows[0];
-  const idx = {
-    id: headers.indexOf('id'), name: headers.indexOf('name'), role: headers.indexOf('role'),
-    dept: headers.indexOf('dept'), pin: headers.indexOf('pin'), email: headers.indexOf('email')
-  };
-
-  const employees = rows.slice(1).map(r => ({
-    id:    r[idx.id]    || '',
-    name:  r[idx.name]  || '',
-    role:  r[idx.role]  || '',
-    dept:  idx.dept  >= 0 ? r[idx.dept]  : '',
-    pin:   idx.pin   >= 0 ? String(r[idx.pin]) : '',
-    email: idx.email >= 0 ? r[idx.email] : ''
+  const { items } = readSheet(SHEETS.EMPLOYEES);
+  const employees = items.map(r => ({
+    id: r.id || '', name: r.name || '', role: r.role || '',
+    dept: r.dept || '', pin: r.pin !== undefined ? String(r.pin) : '',
+    email: r.email || ''
   })).filter(e => e.id);
-
   return { employees };
 }
 
 function addEmployee(data) {
-  const sheet = getSheet(SHEETS.EMPLOYEES);
   const id = data.id || 'emp_' + Date.now();
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const row = new Array(headers.length).fill('');
-  const set = (col, val) => { const i = headers.indexOf(col); if (i >= 0) row[i] = val; };
-  set('id', id); set('name', data.name || ''); set('role', data.role || '');
-  set('dept', data.dept || ''); set('pin', data.pin || ''); set('email', data.email || '');
-  set('createdAt', new Date().toISOString());
-  sheet.appendRow(row);
+  appendByHeaders(SHEETS.EMPLOYEES, {
+    id, name: data.name || '', role: data.role || '', dept: data.dept || '',
+    pin: data.pin || '', email: data.email || '', createdAt: new Date().toISOString()
+  });
   return { success: true, id };
 }
 
 function updateEmployee(data) {
-  const sheet = getSheet(SHEETS.EMPLOYEES);
-  const rows = sheet.getDataRange().getValues();
-  const headers = rows[0];
-  const idx = {
-    id: headers.indexOf('id'), name: headers.indexOf('name'), role: headers.indexOf('role'),
-    dept: headers.indexOf('dept'), pin: headers.indexOf('pin'), email: headers.indexOf('email')
-  };
-  for (let i = 1; i < rows.length; i++) {
-    if (rows[i][idx.id] === data.id) {
-      if (idx.name  >= 0) sheet.getRange(i+1, idx.name+1).setValue(data.name || '');
-      if (idx.role  >= 0) sheet.getRange(i+1, idx.role+1).setValue(data.role || '');
-      if (idx.dept  >= 0) sheet.getRange(i+1, idx.dept+1).setValue(data.dept || '');
-      if (idx.pin   >= 0) sheet.getRange(i+1, idx.pin+1).setValue(data.pin || '');
-      if (idx.email >= 0) sheet.getRange(i+1, idx.email+1).setValue(data.email || '');
-      break;
-    }
-  }
+  updateRowByHeaders(SHEETS.EMPLOYEES, 'id', data.id, {
+    name: data.name || '', role: data.role || '', dept: data.dept || '',
+    pin: data.pin || '', email: data.email || ''
+  });
   return { success: true };
 }
 
-function deleteEmployee(id) {
-  const sheet = getSheet(SHEETS.EMPLOYEES);
-  const rows = sheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i >= 1; i--) {
-    if (rows[i][0] === id) { sheet.deleteRow(i + 1); break; }
-  }
-  return { success: true };
-}
+function deleteEmployee(id) { deleteRowByCol(SHEETS.EMPLOYEES, 'id', id); return { success: true }; }
 
 // ============================================================
 // DOCUMENTS
 // ============================================================
 function getDocuments() {
-  const sheet = getSheet(SHEETS.DOCUMENTS);
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return { documents: [] };
-  const h = rows[0];
-  const idx = {
-    id: h.indexOf('id'), title: h.indexOf('title'), category: h.indexOf('category'),
-    desc: h.indexOf('desc'), url: h.indexOf('url'), fileName: h.indexOf('fileName'),
-    uploadedAt: h.indexOf('uploadedAt'), deadline: h.indexOf('deadline'),
-    audienceType: h.indexOf('audienceType'), audienceList: h.indexOf('audienceList')
-  };
-  const documents = rows.slice(1).map(r => ({
-    id: r[idx.id], title: r[idx.title], category: r[idx.category], desc: r[idx.desc],
-    url: r[idx.url], fileName: r[idx.fileName], uploadedAt: r[idx.uploadedAt],
-    deadline: idx.deadline >= 0 ? r[idx.deadline] : '',
-    audienceType: idx.audienceType >= 0 ? (r[idx.audienceType] || 'all') : 'all',
-    audienceList: idx.audienceList >= 0 ? parseList(r[idx.audienceList]) : []
+  const { items } = readSheet(SHEETS.DOCUMENTS);
+  const documents = items.map(r => ({
+    id: r.id, title: r.title, category: r.category, desc: r.desc, url: r.url,
+    fileName: r.fileName, uploadedAt: r.uploadedAt, deadline: r.deadline || '',
+    audienceType: r.audienceType || 'all', audienceList: parseList(r.audienceList)
   })).filter(d => d.id);
   return { documents };
 }
@@ -203,62 +199,27 @@ function parseList(val) {
 function uploadDocument(data) {
   let fileUrl = '';
   const docId = data.id || 'doc_' + Date.now();
-
   if (data.fileData && data.fileName) {
-    const folder = getDriveFolder();
-    const blob = Utilities.newBlob(
-      Utilities.base64Decode(data.fileData),
-      data.fileType || 'application/octet-stream',
-      data.fileName
-    );
-    const file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-    fileUrl = file.getDownloadUrl();
+    fileUrl = saveFileToDrive(data.fileData, data.fileType, data.fileName);
   }
-
-  const sheet = getSheet(SHEETS.DOCUMENTS);
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const row = new Array(headers.length).fill('');
-  const set = (col, val) => { const i = headers.indexOf(col); if (i >= 0) row[i] = val; };
-  set('id', docId);
-  set('title', data.title);
-  set('category', data.category || '');
-  set('desc', data.desc || '');
-  set('url', fileUrl);
-  set('fileName', data.fileName || '');
-  set('uploadedAt', data.uploadedAt || new Date().toISOString());
-  set('deadline', data.deadline || '');
-  set('audienceType', data.audienceType || 'all');
-  set('audienceList', JSON.stringify(data.audienceList || []));
-  set('remindedAt', '');
-  sheet.appendRow(row);
-
-  // Send notification to targeted employees
+  appendByHeaders(SHEETS.DOCUMENTS, {
+    id: docId, title: data.title, category: data.category || '', desc: data.desc || '',
+    url: fileUrl, fileName: data.fileName || '', uploadedAt: data.uploadedAt || new Date().toISOString(),
+    deadline: data.deadline || '', audienceType: data.audienceType || 'all',
+    audienceList: JSON.stringify(data.audienceList || []), remindedAt: ''
+  });
   const targets = resolveAudience(data.audienceType || 'all', data.audienceList || []);
   sendDocumentNotification(data.title, data.category || '', data.desc || '', fileUrl, data.deadline || '', targets);
-
   return { success: true, docId, url: fileUrl };
 }
 
-function deleteDocument(id) {
-  const sheet = getSheet(SHEETS.DOCUMENTS);
-  const rows = sheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i >= 1; i--) {
-    if (rows[i][0] === id) { sheet.deleteRow(i + 1); break; }
-  }
-  return { success: true };
-}
+function deleteDocument(id) { deleteRowByCol(SHEETS.DOCUMENTS, 'id', id); return { success: true }; }
 
-// Resolve who should receive a document based on audience settings
 function resolveAudience(audienceType, audienceList) {
   const all = getEmployees().employees;
   if (audienceType === 'all' || !audienceType) return all;
-  if (audienceType === 'depts') {
-    return all.filter(e => audienceList.indexOf(e.dept) >= 0);
-  }
-  if (audienceType === 'specific') {
-    return all.filter(e => audienceList.indexOf(e.id) >= 0);
-  }
+  if (audienceType === 'depts') return all.filter(e => audienceList.indexOf(e.dept) >= 0);
+  if (audienceType === 'specific') return all.filter(e => audienceList.indexOf(e.id) >= 0);
   return all;
 }
 
@@ -266,238 +227,395 @@ function resolveAudience(audienceType, audienceList) {
 // CONFIRMATIONS
 // ============================================================
 function addConfirmation(data) {
-  const sheet = getSheet(SHEETS.CONFIRMATIONS);
-  const rows = sheet.getDataRange().getValues();
-  const exists = rows.slice(1).some(r => r[0] === data.docId && r[2] === data.employeeId);
-  if (exists) return { success: true, duplicate: true };
-
-  const docSheet = getSheet(SHEETS.DOCUMENTS);
-  const docRows = docSheet.getDataRange().getValues();
-  const docRow = docRows.slice(1).find(r => r[0] === data.docId);
-  const docTitle = docRow ? docRow[1] : data.docId;
-
-  sheet.appendRow([data.docId, docTitle, data.employeeId, data.employeeName, data.confirmedAt || new Date().toISOString()]);
-
-  sendConfirmationNotification(data.employeeName, docTitle);
-
+  const { items } = readSheet(SHEETS.CONFIRMATIONS);
+  if (items.some(r => r.docId === data.docId && r.employeeId === data.employeeId)) return { success: true, duplicate: true };
+  const docs = readSheet(SHEETS.DOCUMENTS).items;
+  const doc = docs.find(d => d.id === data.docId);
+  appendByHeaders(SHEETS.CONFIRMATIONS, {
+    docId: data.docId, docTitle: doc ? doc.title : data.docId,
+    employeeId: data.employeeId, employeeName: data.employeeName,
+    confirmedAt: data.confirmedAt || new Date().toISOString()
+  });
+  sendConfirmationNotification(data.employeeName, doc ? doc.title : data.docId);
   return { success: true };
 }
 
 function getConfirmations() {
-  const sheet = getSheet(SHEETS.CONFIRMATIONS);
-  const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return { confirmations: [] };
-  const confirmations = rows.slice(1).map(r => ({
-    docId: r[0], docTitle: r[1], employeeId: r[2], employeeName: r[3], confirmedAt: r[4]
-  })).filter(c => c.docId);
-  return { confirmations };
+  const { items } = readSheet(SHEETS.CONFIRMATIONS);
+  return { confirmations: items.map(r => ({
+    docId: r.docId, docTitle: r.docTitle, employeeId: r.employeeId,
+    employeeName: r.employeeName, confirmedAt: r.confirmedAt
+  })).filter(c => c.docId) };
 }
 
+// ============================================================
+// TASKS
+// ============================================================
+function getTasks() {
+  const { items } = readSheet(SHEETS.TASKS);
+  const tasks = items.map(r => ({
+    id: r.id, title: r.title, desc: r.desc, segment: r.segment, priority: r.priority || 'medium',
+    status: r.status || 'todo', assignees: parseList(r.assignees), dependsOn: parseList(r.dependsOn),
+    deadline: r.deadline || '', createdBy: r.createdBy, createdByName: r.createdByName,
+    createdAt: r.createdAt, attachments: parseAttachments(r.attachments)
+  })).filter(t => t.id);
+  const comments = getComments().comments;
+  return { tasks, comments };
+}
+
+function parseAttachments(val) {
+  if (!val) return [];
+  try { return JSON.parse(val); } catch(e) { return []; }
+}
+
+function addTask(data) {
+  const id = data.id || 'task_' + Date.now();
+  appendByHeaders(SHEETS.TASKS, {
+    id, title: data.title, desc: data.desc || '', segment: data.segment || '',
+    priority: data.priority || 'medium', status: data.status || 'todo',
+    assignees: JSON.stringify(data.assignees || []), dependsOn: JSON.stringify(data.dependsOn || []),
+    deadline: data.deadline || '', createdBy: data.createdBy || '', createdByName: data.createdByName || '',
+    createdAt: new Date().toISOString(), attachments: JSON.stringify(data.attachments || []), remindedAt: ''
+  });
+  // Notify assignees
+  notifyTaskAssigned(id, data.title, data.desc || '', data.priority || 'medium', data.deadline || '', data.assignees || [], data.createdByName || '');
+  return { success: true, id };
+}
+
+function updateTask(data) {
+  const obj = {};
+  ['title','desc','segment','priority','status','deadline'].forEach(k => { if (data[k] !== undefined) obj[k] = data[k]; });
+  if (data.assignees !== undefined) obj.assignees = JSON.stringify(data.assignees);
+  if (data.dependsOn !== undefined) obj.dependsOn = JSON.stringify(data.dependsOn);
+  updateRowByHeaders(SHEETS.TASKS, 'id', data.id, obj);
+  return { success: true };
+}
+
+function updateTaskStatus(data) {
+  updateRowByHeaders(SHEETS.TASKS, 'id', data.id, { status: data.status });
+  // Notify creator + assignees about status change
+  const tasks = readSheet(SHEETS.TASKS).items;
+  const task = tasks.find(t => t.id === data.id);
+  if (task) {
+    notifyStatusChange(task, data.status, data.changedByName || '');
+  }
+  return { success: true };
+}
+
+function deleteTask(id) {
+  deleteRowByCol(SHEETS.TASKS, 'id', id);
+  deleteRowByCol(SHEETS.COMMENTS, 'taskId', id);
+  return { success: true };
+}
+
+function addTaskAttachment(data) {
+  const tasks = readSheet(SHEETS.TASKS).items;
+  const task = tasks.find(t => t.id === data.taskId);
+  if (!task) return { error: 'Task not found' };
+  let url = '';
+  if (data.fileData && data.fileName) {
+    url = saveFileToDrive(data.fileData, data.fileType, data.fileName);
+  }
+  const atts = parseAttachments(task.attachments);
+  atts.push({ name: data.fileName, url: url, uploadedAt: new Date().toISOString() });
+  updateRowByHeaders(SHEETS.TASKS, 'id', data.taskId, { attachments: JSON.stringify(atts) });
+  return { success: true, url, attachments: atts };
+}
+
+// ============================================================
+// COMMENTS
+// ============================================================
+function addComment(data) {
+  const id = 'cmt_' + Date.now();
+  appendByHeaders(SHEETS.COMMENTS, {
+    id, taskId: data.taskId, authorId: data.authorId || '', authorName: data.authorName || '',
+    text: data.text || '', createdAt: new Date().toISOString()
+  });
+  // Notify task assignees + creator about new comment
+  const tasks = readSheet(SHEETS.TASKS).items;
+  const task = tasks.find(t => t.id === data.taskId);
+  if (task) notifyNewComment(task, data.authorName || '', data.text || '');
+  return { success: true, id };
+}
+
+function getComments() {
+  const { items } = readSheet(SHEETS.COMMENTS);
+  return { comments: items.map(r => ({
+    id: r.id, taskId: r.taskId, authorId: r.authorId, authorName: r.authorName,
+    text: r.text, createdAt: r.createdAt
+  })).filter(c => c.id) };
+}
+
+// ============================================================
+// GET ALL
+// ============================================================
 function getAll() {
+  const t = getTasks();
   return {
     employees:     getEmployees().employees,
     documents:     getDocuments().documents,
-    confirmations: getConfirmations().confirmations
+    confirmations: getConfirmations().confirmations,
+    tasks:         t.tasks,
+    comments:      t.comments
   };
 }
 
 // ============================================================
-// EMAIL: nový dokument
+// DRIVE
+// ============================================================
+function saveFileToDrive(fileData, fileType, fileName) {
+  const folder = getDriveFolder();
+  const blob = Utilities.newBlob(Utilities.base64Decode(fileData), fileType || 'application/octet-stream', fileName);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return file.getDownloadUrl();
+}
+
+function getDriveFolder() {
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(DRIVE_FOLDER_NAME);
+}
+
+// ============================================================
+// EMAIL — shared shell
+// ============================================================
+function emailShell(headerTitle, headerSub, bodyHtml, accent) {
+  accent = accent || '#dfc196';
+  return `
+    <div style="font-family:Georgia,'Times New Roman',serif;max-width:560px;margin:0 auto;background:#ffffff;">
+      <div style="background:#13302e;padding:28px 36px;">
+        <div style="color:${accent};font-size:24px;font-weight:bold;letter-spacing:1px;">VISTA RESORT</div>
+        <div style="color:rgba(255,255,255,0.6);margin:6px 0 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif;">${headerSub}</div>
+      </div>
+      <div style="padding:36px;border:1px solid #e8e5dd;border-top:none;font-family:Arial,sans-serif;">
+        ${bodyHtml}
+      </div>
+      <div style="background:#f5f3ee;padding:18px 36px;border:1px solid #e8e5dd;border-top:none;">
+        <p style="color:#9c7852;font-size:12px;margin:0;font-family:Arial,sans-serif;">Vista Resort &amp; Club · Interní portál · Odesláno automaticky.</p>
+      </div>
+    </div>`;
+}
+
+function btnHtml(text, url) {
+  return `<a href="${url}" style="display:inline-block;background:#13302e;color:#dfc196;padding:13px 28px;border-radius:4px;text-decoration:none;font-size:15px;font-weight:bold;font-family:Arial,sans-serif;">${text}</a>`;
+}
+
+// ============================================================
+// EMAIL — documents
 // ============================================================
 function sendDocumentNotification(title, category, desc, fileUrl, deadline, targets) {
   try {
-    const emails = (targets || getEmployees().employees)
-      .map(e => e.email).filter(em => em && em.includes('@'));
+    const emails = (targets || getEmployees().employees).map(e => e.email).filter(em => em && em.includes('@'));
     if (emails.length === 0) return;
-
-    const subject = 'Vista Portál: Nový dokument vyžaduje vaše potvrzení';
     const catText = category ? ` [${category}]` : '';
     const deadlineText = deadline ? fmtDateCz(deadline) : '';
-
-    const htmlBody = `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-        <div style="background:#1a3a2a;padding:24px 32px;border-radius:8px 8px 0 0;">
-          <h1 style="color:#c9a84c;margin:0;font-size:22px;">Vista Portál</h1>
-          <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px;">Interní dokumentový systém</p>
-        </div>
-        <div style="background:#ffffff;padding:32px;border:1px solid #e8e8e4;border-top:none;">
-          <p style="color:#1a1a18;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
-          <p style="color:#1a1a18;font-size:15px;margin:0 0 20px;">byl nahrán nový dokument, který je třeba potvrdit:</p>
-          <div style="background:#f5f5f3;border-left:4px solid #1a3a2a;padding:16px 20px;border-radius:0 6px 6px 0;margin-bottom:24px;">
-            <div style="font-size:16px;font-weight:700;color:#1a3a2a;">${title}${catText}</div>
-            ${desc ? `<div style="font-size:13px;color:#6b6b64;margin-top:4px;">${desc}</div>` : ''}
-            ${deadlineText ? `<div style="font-size:13px;color:#c0392b;margin-top:8px;font-weight:600;">⏰ Potvrďte do: ${deadlineText}</div>` : ''}
-          </div>
-          <p style="color:#6b6b64;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a klikněte na <strong>"Potvrdit přečtení"</strong>.</p>
-          <a href="${PORTAL_URL}" style="display:inline-block;background:#1a3a2a;color:#ffffff;padding:13px 28px;border-radius:7px;text-decoration:none;font-size:15px;font-weight:600;">Otevřít Vista Portál →</a>
-          ${fileUrl ? `<p style="margin-top:20px;font-size:13px;color:#a0a09a;">Přímý odkaz: <a href="${fileUrl}" style="color:#2d5a3d;">Stáhnout dokument</a></p>` : ''}
-        </div>
-        <div style="background:#f5f5f3;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e8e8e4;border-top:none;">
-          <p style="color:#a0a09a;font-size:12px;margin:0;">Vista Resort &amp; Club · Interní portál · Odesláno automaticky.</p>
-        </div>
-      </div>`;
-
-    const plainBody = `Vista Portál — Nový dokument\n\n${title}${catText}\n${desc || ''}\n${deadlineText ? 'Potvrďte do: ' + deadlineText + '\n' : ''}\nPotvrďte přečtení: ${PORTAL_URL}`;
-
-    emails.forEach(email => {
-      GmailApp.sendEmail(email, subject, plainBody, { htmlBody, name: 'Vista Portál' });
-    });
-  } catch(err) {
-    Logger.log('Email error: ' + err.message);
-  }
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">byl nahrán nový dokument, který je třeba potvrdit:</p>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${title}${catText}</div>
+        ${desc ? `<div style="font-size:13px;color:#9c7852;margin-top:4px;">${desc}</div>` : ''}
+        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Potvrďte do: ${deadlineText}</div>` : ''}
+      </div>
+      <p style="color:#9c7852;font-size:14px;margin:0 0 24px;">Přihlaste se do portálu a klikněte na „Potvrdit přečtení".</p>
+      ${btnHtml('Otevřít Vista Portál', PORTAL_URL)}`;
+    const html = emailShell('', 'Interní dokumentový systém', body);
+    const plain = `Vista Portál — Nový dokument\n\n${title}${catText}\n${desc||''}\n${deadlineText?'Potvrďte do: '+deadlineText+'\n':''}\n${PORTAL_URL}`;
+    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Nový dokument k potvrzení', plain, { htmlBody: html, name: 'Vista Resort' }));
+  } catch(err) { Logger.log('doc email: ' + err.message); }
 }
 
-// ============================================================
-// EMAIL: potvrzení adminovi
-// ============================================================
 function sendConfirmationNotification(employeeName, docTitle) {
   try {
-    const adminEmail = ADMIN_EMAIL || Session.getActiveUser().getEmail();
+    const adminEmail = ADMIN_EMAIL;
     if (!adminEmail) return;
-    const subject = `✓ Vista Portál: ${employeeName} potvrdil/a dokument`;
     const now = new Date().toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
-
-    const htmlBody = `
-      <div style="font-family:Arial,sans-serif;max-width:480px;">
-        <div style="background:#1a3a2a;padding:20px 28px;border-radius:8px 8px 0 0;">
-          <h2 style="color:#c9a84c;margin:0;font-size:18px;">Vista Portál — Potvrzení</h2>
-        </div>
-        <div style="background:#ffffff;padding:28px;border:1px solid #e8e8e4;border-top:none;">
-          <div style="background:#eafaf1;border:1.5px solid #a9dfbf;border-radius:6px;padding:16px 20px;margin-bottom:20px;">
-            <div style="font-size:15px;font-weight:700;color:#27ae60;">✓ Dokument potvrzen</div>
-          </div>
-          <table style="font-size:14px;color:#1a1a18;border-collapse:collapse;width:100%">
-            <tr><td style="padding:6px 0;color:#6b6b64;width:120px;">Zaměstnanec</td><td style="padding:6px 0;font-weight:600;">${employeeName}</td></tr>
-            <tr><td style="padding:6px 0;color:#6b6b64;">Dokument</td><td style="padding:6px 0;font-weight:600;">${docTitle}</td></tr>
-            <tr><td style="padding:6px 0;color:#6b6b64;">Datum a čas</td><td style="padding:6px 0;">${now}</td></tr>
-          </table>
-          <p style="margin-top:20px;font-size:13px;color:#6b6b64;">Přehled: <a href="${PORTAL_URL}" style="color:#2d5a3d;">Vista Portál → Admin</a></p>
-        </div>
-      </div>`;
-
-    GmailApp.sendEmail(adminEmail, subject, `${employeeName} potvrdil/a: ${docTitle} (${now})`, { htmlBody, name: 'Vista Portál' });
-  } catch(err) {
-    Logger.log('Confirmation email error: ' + err.message);
-  }
+    const body = `
+      <div style="background:#eef5ee;border:1px solid #b8d4b0;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:bold;color:#586845;">Dokument potvrzen</div>
+      </div>
+      <table style="font-size:14px;color:#3d301f;width:100%">
+        <tr><td style="padding:6px 0;color:#9c7852;width:120px;">Zaměstnanec</td><td style="padding:6px 0;font-weight:bold;">${employeeName}</td></tr>
+        <tr><td style="padding:6px 0;color:#9c7852;">Dokument</td><td style="padding:6px 0;font-weight:bold;">${docTitle}</td></tr>
+        <tr><td style="padding:6px 0;color:#9c7852;">Datum</td><td style="padding:6px 0;">${now}</td></tr>
+      </table>`;
+    GmailApp.sendEmail(adminEmail, `Vista Portál: ${employeeName} potvrdil/a dokument`, `${employeeName} potvrdil/a: ${docTitle} (${now})`, { htmlBody: emailShell('', 'Potvrzení dokumentu', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('conf email: ' + err.message); }
 }
 
 // ============================================================
-// DENNÍ KONTROLA TERMÍNŮ — připomínky
-// Spouští se automaticky (time-driven trigger). Nastav přes setupTrigger().
+// EMAIL — tasks
+// ============================================================
+function empById(id) { return getEmployees().employees.find(e => e.id === id); }
+function emailsForIds(ids) {
+  const emps = getEmployees().employees;
+  return ids.map(id => { const e = emps.find(x => x.id === id); return e ? e.email : null; }).filter(em => em && em.includes('@'));
+}
+
+function priorityCz(p) { return p === 'high' ? 'Vysoká' : p === 'low' ? 'Nízká' : 'Střední'; }
+function statusCz(s) {
+  return s === 'todo' ? 'Zadáno' : s === 'inprogress' ? 'Probíhá' : s === 'review' ? 'Ke kontrole' : s === 'done' ? 'Hotovo' : s;
+}
+
+function notifyTaskAssigned(taskId, title, desc, priority, deadline, assigneeIds, createdByName) {
+  try {
+    const emails = emailsForIds(assigneeIds || []);
+    if (emails.length === 0) return;
+    const deadlineText = deadline ? fmtDateCz(deadline) : '';
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den,</p>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">byl vám přiřazen nový úkol${createdByName ? ' (zadal: ' + createdByName + ')' : ''}:</p>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${title}</div>
+        ${desc ? `<div style="font-size:13px;color:#9c7852;margin-top:6px;">${desc}</div>` : ''}
+        <div style="font-size:13px;color:#3d301f;margin-top:8px;">Priorita: <strong>${priorityCz(priority)}</strong>${deadlineText ? ` · Termín: <strong style="color:#9c3a2e">${deadlineText}</strong>` : ''}</div>
+      </div>
+      ${btnHtml('Otevřít úkol', PORTAL_URL)}`;
+    const html = emailShell('', 'Nový úkol', body);
+    emails.forEach(em => GmailApp.sendEmail(em, 'Vista Portál: Nový úkol — ' + title, `Nový úkol: ${title}. ${PORTAL_URL}`, { htmlBody: html, name: 'Vista Resort' }));
+  } catch(err) { Logger.log('task assign email: ' + err.message); }
+}
+
+function notifyStatusChange(task, newStatus, changedByName) {
+  try {
+    // notify creator + assignees (except the one who changed, but we don't know their email reliably; send to all involved)
+    const ids = parseList(task.assignees).slice();
+    if (task.createdBy) ids.push(task.createdBy);
+    const emails = [...new Set(emailsForIds(ids))];
+    if (emails.length === 0) return;
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Změna stavu úkolu:</p>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${task.title}</div>
+        <div style="font-size:14px;color:#3d301f;margin-top:8px;">Nový stav: <strong>${statusCz(newStatus)}</strong>${changedByName ? ` · změnil/a ${changedByName}` : ''}</div>
+      </div>
+      ${btnHtml('Otevřít úkol', PORTAL_URL)}`;
+    const html = emailShell('', 'Změna stavu úkolu', body);
+    emails.forEach(em => GmailApp.sendEmail(em, `Vista Portál: ${task.title} → ${statusCz(newStatus)}`, `${task.title} změněn na ${statusCz(newStatus)}. ${PORTAL_URL}`, { htmlBody: html, name: 'Vista Resort' }));
+  } catch(err) { Logger.log('status email: ' + err.message); }
+}
+
+function notifyNewComment(task, authorName, text) {
+  try {
+    const ids = parseList(task.assignees).slice();
+    if (task.createdBy) ids.push(task.createdBy);
+    const emails = [...new Set(emailsForIds(ids))];
+    if (emails.length === 0) return;
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 16px;">Nový komentář u úkolu:</p>
+      <div style="background:#f5f3ee;border-left:4px solid #13302e;padding:16px 20px;margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:bold;color:#13302e;">${task.title}</div>
+        <div style="font-size:14px;color:#3d301f;margin-top:10px;padding:10px 14px;background:#ffffff;border-radius:4px;"><strong>${authorName}:</strong> ${text}</div>
+      </div>
+      ${btnHtml('Odpovědět v portálu', PORTAL_URL)}`;
+    const html = emailShell('', 'Nový komentář', body);
+    emails.forEach(em => GmailApp.sendEmail(em, `Vista Portál: Komentář — ${task.title}`, `${authorName}: ${text} (${PORTAL_URL})`, { htmlBody: html, name: 'Vista Resort' }));
+  } catch(err) { Logger.log('comment email: ' + err.message); }
+}
+
+// ============================================================
+// DAILY CHECK — deadlines (docs + tasks)
 // ============================================================
 function checkDeadlines() {
-  const docs  = getDocuments().documents;
-  const emps  = getEmployees().employees;
+  checkDocumentDeadlines();
+  checkTaskDeadlines();
+}
+
+function checkDocumentDeadlines() {
+  const docs = getDocuments().documents;
   const confs = getConfirmations().confirmations;
-  const now   = new Date();
-
-  let adminSummary = [];
-
+  const now = new Date();
+  let summary = [];
   docs.forEach(doc => {
     if (!doc.deadline) return;
     const deadline = new Date(doc.deadline);
-
-    // Komu byl dokument určen
     const targets = resolveAudience(doc.audienceType, doc.audienceList);
-
-    // Kdo nepotvrdil
-    const notConfirmed = targets.filter(emp =>
-      !confs.some(c => c.docId === doc.id && c.employeeId === emp.id)
-    );
-
+    const notConfirmed = targets.filter(emp => !confs.some(c => c.docId === doc.id && c.employeeId === emp.id));
     if (notConfirmed.length === 0) return;
-
     const afterDeadline = now > deadline;
-
-    notConfirmed.forEach(emp => {
-      if (!emp.email || !emp.email.includes('@')) return;
-      sendReminder(emp, doc, afterDeadline);
-    });
-
-    // Souhrn pro admina
-    adminSummary.push({
-      doc: doc.title,
-      deadline: fmtDateCz(doc.deadline),
-      afterDeadline: afterDeadline,
-      notConfirmed: notConfirmed.map(e => e.name + (e.dept ? ' (' + e.dept + ')' : ''))
-    });
+    const dayBefore = !afterDeadline && (deadline - now) <= 24*60*60*1000;
+    if (!afterDeadline && !dayBefore) return; // only remind day-before or after
+    notConfirmed.forEach(emp => { if (emp.email && emp.email.includes('@')) sendDocReminder(emp, doc, afterDeadline); });
+    summary.push({ kind: 'Dokument', title: doc.title, deadline: fmtDateCz(doc.deadline), afterDeadline, names: notConfirmed.map(e => e.name + (e.dept ? ' ('+e.dept+')' : '')) });
   });
-
-  if (adminSummary.length > 0) {
-    sendAdminReminderSummary(adminSummary);
-  }
+  if (summary.length) sendAdminSummary(summary, 'Nepotvrzené dokumenty');
 }
 
-function sendReminder(emp, doc, afterDeadline) {
+function checkTaskDeadlines() {
+  const { tasks } = getTasks();
+  const now = new Date();
+  let summary = [];
+  tasks.forEach(task => {
+    if (!task.deadline || task.status === 'done') return;
+    const deadline = new Date(task.deadline);
+    const afterDeadline = now > deadline;
+    const dayBefore = !afterDeadline && (deadline - now) <= 24*60*60*1000;
+    if (!afterDeadline && !dayBefore) return;
+    const emails = emailsForIds(task.assignees);
+    const emps = getEmployees().employees;
+    task.assignees.forEach(id => {
+      const e = emps.find(x => x.id === id);
+      if (e && e.email && e.email.includes('@')) sendTaskReminder(e, task, afterDeadline);
+    });
+    const names = task.assignees.map(id => { const e = emps.find(x => x.id === id); return e ? e.name : id; });
+    summary.push({ kind: 'Úkol', title: task.title, deadline: fmtDateCz(task.deadline), afterDeadline, status: statusCz(task.status), names });
+  });
+  if (summary.length) sendAdminSummary(summary, 'Úkoly po termínu / blížící se termín');
+}
+
+function sendDocReminder(emp, doc, afterDeadline) {
   try {
-    const subject = afterDeadline
-      ? `⚠️ Vista Portál: Prošlý termín potvrzení — ${doc.title}`
-      : `Připomínka Vista Portál: Potvrďte dokument ${doc.title}`;
+    const subject = afterDeadline ? `Vista Portál: Prošlý termín — ${doc.title}` : `Vista Portál: Připomínka — ${doc.title}`;
     const deadlineText = doc.deadline ? fmtDateCz(doc.deadline) : '';
-    const intro = afterDeadline
-      ? `Termín pro potvrzení dokumentu <strong>již vypršel</strong>. Potvrďte ho prosím co nejdříve:`
-      : `Připomínáme, že máte k potvrzení dokument:`;
-
-    const htmlBody = `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-        <div style="background:${afterDeadline ? '#c0392b' : '#1a3a2a'};padding:24px 32px;border-radius:8px 8px 0 0;">
-          <h1 style="color:${afterDeadline ? '#ffffff' : '#c9a84c'};margin:0;font-size:22px;">Vista Portál</h1>
-          <p style="color:rgba(255,255,255,0.8);margin:4px 0 0;font-size:13px;">${afterDeadline ? 'Prošlý termín potvrzení' : 'Připomínka'}</p>
-        </div>
-        <div style="background:#ffffff;padding:32px;border:1px solid #e8e8e4;border-top:none;">
-          <p style="color:#1a1a18;font-size:15px;margin:0 0 20px;">Dobrý den ${emp.name},</p>
-          <p style="color:#1a1a18;font-size:15px;margin:0 0 20px;">${intro}</p>
-          <div style="background:#f5f5f3;border-left:4px solid ${afterDeadline ? '#c0392b' : '#1a3a2a'};padding:16px 20px;border-radius:0 6px 6px 0;margin-bottom:24px;">
-            <div style="font-size:16px;font-weight:700;color:#1a3a2a;">${doc.title}${doc.category ? ' [' + doc.category + ']' : ''}</div>
-            ${deadlineText ? `<div style="font-size:13px;color:#c0392b;margin-top:8px;font-weight:600;">⏰ Termín: ${deadlineText}</div>` : ''}
-          </div>
-          <a href="${PORTAL_URL}" style="display:inline-block;background:#1a3a2a;color:#ffffff;padding:13px 28px;border-radius:7px;text-decoration:none;font-size:15px;font-weight:600;">Potvrdit nyní →</a>
-        </div>
-        <div style="background:#f5f5f3;padding:16px 32px;border-radius:0 0 8px 8px;border:1px solid #e8e8e4;border-top:none;">
-          <p style="color:#a0a09a;font-size:12px;margin:0;">Vista Resort &amp; Club · Interní portál</p>
-        </div>
-      </div>`;
-
-    GmailApp.sendEmail(emp.email, subject, `${intro.replace(/<[^>]+>/g,'')} ${doc.title}. Potvrďte: ${PORTAL_URL}`, { htmlBody, name: 'Vista Portál' });
-  } catch(err) {
-    Logger.log('Reminder error: ' + err.message);
-  }
+    const intro = afterDeadline ? 'Termín pro potvrzení dokumentu <strong>již vypršel</strong>. Potvrďte ho prosím:' : 'Připomínáme dokument k potvrzení:';
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den ${emp.name},</p>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">${intro}</p>
+      <div style="background:#f5f3ee;border-left:4px solid ${afterDeadline ? '#9c3a2e' : '#13302e'};padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${doc.title}${doc.category ? ' ['+doc.category+']' : ''}</div>
+        ${deadlineText ? `<div style="font-size:13px;color:#9c3a2e;margin-top:8px;font-weight:bold;">Termín: ${deadlineText}</div>` : ''}
+      </div>
+      ${btnHtml('Potvrdit nyní', PORTAL_URL)}`;
+    GmailApp.sendEmail(emp.email, subject, `${doc.title} — potvrďte: ${PORTAL_URL}`, { htmlBody: emailShell('', afterDeadline ? 'Prošlý termín' : 'Připomínka', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('doc reminder: ' + err.message); }
 }
 
-function sendAdminReminderSummary(summary) {
+function sendTaskReminder(emp, task, afterDeadline) {
   try {
-    const adminEmail = ADMIN_EMAIL || Session.getActiveUser().getEmail();
-    if (!adminEmail) return;
+    const subject = afterDeadline ? `Vista Portál: Úkol po termínu — ${task.title}` : `Vista Portál: Blíží se termín — ${task.title}`;
+    const deadlineText = task.deadline ? fmtDateCz(task.deadline) : '';
+    const intro = afterDeadline ? 'Termín úkolu <strong>již vypršel</strong> a úkol stále není hotový:' : 'Blíží se termín úkolu:';
+    const body = `
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">Dobrý den ${emp.name},</p>
+      <p style="color:#3d301f;font-size:15px;margin:0 0 20px;">${intro}</p>
+      <div style="background:#f5f3ee;border-left:4px solid ${afterDeadline ? '#9c3a2e' : '#13302e'};padding:16px 20px;margin-bottom:24px;">
+        <div style="font-size:16px;font-weight:bold;color:#13302e;">${task.title}</div>
+        <div style="font-size:13px;color:#3d301f;margin-top:6px;">Stav: <strong>${statusCz(task.status)}</strong>${deadlineText ? ` · Termín: <strong style="color:#9c3a2e">${deadlineText}</strong>` : ''}</div>
+      </div>
+      ${btnHtml('Otevřít úkol', PORTAL_URL)}`;
+    GmailApp.sendEmail(emp.email, subject, `${task.title} — ${PORTAL_URL}`, { htmlBody: emailShell('', afterDeadline ? 'Úkol po termínu' : 'Blížící se termín', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('task reminder: ' + err.message); }
+}
 
+function sendAdminSummary(summary, heading) {
+  try {
+    const adminEmail = ADMIN_EMAIL;
+    if (!adminEmail) return;
     let rows = '';
     summary.forEach(s => {
-      const statusColor = s.afterDeadline ? '#c0392b' : '#e67e22';
-      const statusText = s.afterDeadline ? 'PO TERMÍNU' : 'Čeká';
+      const color = s.afterDeadline ? '#9c3a2e' : '#9c7852';
+      const status = s.afterDeadline ? 'PO TERMÍNU' : 'Blíží se termín';
       rows += `
-        <div style="margin-bottom:18px;padding:16px 20px;background:#f5f5f3;border-left:4px solid ${statusColor};border-radius:0 6px 6px 0;">
-          <div style="font-size:15px;font-weight:700;color:#1a3a2a;">${s.doc}</div>
-          <div style="font-size:12px;color:${statusColor};font-weight:600;margin:4px 0;">${statusText} · termín ${s.deadline}</div>
-          <div style="font-size:13px;color:#6b6b64;margin-top:6px;">Nepotvrdili (${s.notConfirmed.length}): ${s.notConfirmed.join(', ')}</div>
+        <div style="margin-bottom:16px;padding:16px 20px;background:#f5f3ee;border-left:4px solid ${color};">
+          <div style="font-size:15px;font-weight:bold;color:#13302e;">${s.kind}: ${s.title}</div>
+          <div style="font-size:12px;color:${color};font-weight:bold;margin:4px 0;">${status} · termín ${s.deadline}${s.status ? ' · stav '+s.status : ''}</div>
+          <div style="font-size:13px;color:#9c7852;margin-top:6px;">Dotčení (${s.names.length}): ${s.names.join(', ')}</div>
         </div>`;
     });
-
-    const htmlBody = `
-      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">
-        <div style="background:#1a3a2a;padding:24px 32px;border-radius:8px 8px 0 0;">
-          <h1 style="color:#c9a84c;margin:0;font-size:22px;">Vista Portál — Denní přehled</h1>
-          <p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px;">Nepotvrzené dokumenty</p>
-        </div>
-        <div style="background:#ffffff;padding:32px;border:1px solid #e8e8e4;border-top:none;">
-          <p style="color:#1a1a18;font-size:15px;margin:0 0 20px;">Přehled dokumentů které ještě nebyly potvrzeny:</p>
-          ${rows}
-          <a href="${PORTAL_URL}" style="display:inline-block;background:#1a3a2a;color:#ffffff;padding:13px 28px;border-radius:7px;text-decoration:none;font-size:15px;font-weight:600;margin-top:8px;">Otevřít admin panel →</a>
-        </div>
-      </div>`;
-
-    GmailApp.sendEmail(adminEmail, 'Vista Portál: Denní přehled nepotvrzených dokumentů', 'Přehled nepotvrzených dokumentů. Otevřete: ' + PORTAL_URL, { htmlBody, name: 'Vista Portál' });
-  } catch(err) {
-    Logger.log('Admin summary error: ' + err.message);
-  }
+    const body = `<p style="color:#3d301f;font-size:15px;margin:0 0 20px;">${heading}:</p>${rows}${btnHtml('Otevřít admin panel', PORTAL_URL)}`;
+    GmailApp.sendEmail(adminEmail, 'Vista Portál: Denní přehled — ' + heading, heading + ': ' + PORTAL_URL, { htmlBody: emailShell('', 'Denní přehled', body), name: 'Vista Resort' });
+  } catch(err) { Logger.log('admin summary: ' + err.message); }
 }
 
 // ============================================================
@@ -510,57 +628,32 @@ function getSheet(name) {
   return sheet;
 }
 
-function getDriveFolder() {
-  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
-  if (folders.hasNext()) return folders.next();
-  return DriveApp.createFolder(DRIVE_FOLDER_NAME);
-}
-
 function fmtDateCz(iso) {
   if (!iso) return '';
-  try {
-    return new Date(iso).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch(e) { return String(iso); }
+  try { return new Date(iso).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' }); }
+  catch(e) { return String(iso); }
 }
 
 // ============================================================
-// SETUP — spusť jednou ručně
+// SETUP
 // ============================================================
 function setup() {
   initSheets();
-  Logger.log('Vista Portál setup dokončen.');
+  Logger.log('Vista Portál v4 setup dokončen. Sheety: Zaměstnanci, Dokumenty, Potvrzení, Úkoly, Komentáře.');
 }
 
-// Nastaví denní automatickou kontrolu termínů (připomínky). Spusť jednou ručně.
 function setupTrigger() {
-  // Smaž staré triggery pro checkDeadlines
-  ScriptApp.getProjectTriggers().forEach(t => {
-    if (t.getHandlerFunction() === 'checkDeadlines') ScriptApp.deleteTrigger(t);
-  });
-  // Vytvoř nový denní trigger (každý den v 8:00)
-  ScriptApp.newTrigger('checkDeadlines')
-    .timeBased()
-    .atHour(8)
-    .everyDays(1)
-    .inTimezone('Europe/Prague')
-    .create();
-  Logger.log('Denní kontrola termínů nastavena na 8:00 (Europe/Prague).');
+  ScriptApp.getProjectTriggers().forEach(t => { if (t.getHandlerFunction() === 'checkDeadlines') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('checkDeadlines').timeBased().atHour(8).everyDays(1).inTimezone('Europe/Prague').create();
+  Logger.log('Denní kontrola termínů nastavena na 8:00.');
 }
 
-// Smaže rozbitý list Zaměstnanci a vytvoří čistý. POZOR: smaže všechny zaměstnance.
 function resetEmployees() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const old = ss.getSheetByName(SHEETS.EMPLOYEES);
   if (old) ss.deleteSheet(old);
-  const s = ss.insertSheet(SHEETS.EMPLOYEES);
-  s.appendRow(['id', 'name', 'role', 'dept', 'pin', 'email', 'createdAt']);
-  s.setFrozenRows(1);
-  s.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#1a3a2a').setFontColor('#ffffff');
+  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
   Logger.log('List Zaměstnanci resetován.');
 }
 
-// Test připomínek — spusť ručně pro otestování emailů bez čekání na trigger
-function testCheckDeadlines() {
-  checkDeadlines();
-  Logger.log('Kontrola termínů spuštěna ručně. Zkontroluj emaily.');
-}
+function testCheckDeadlines() { checkDeadlines(); Logger.log('Kontrola spuštěna ručně.'); }
