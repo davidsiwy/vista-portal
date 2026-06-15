@@ -128,7 +128,7 @@ a { color: inherit; }
 .login-error { color: #f0b8ad; font-size: 13px; text-align: center; margin-top: 16px; display: none; }
 
 /* ===== TOPBAR ===== */
-#app { display: none; visibility: hidden; }
+#app { display: none; }
 .topbar {
   background: var(--peacock, #13302e); color: #fff; height: 66px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px; position: sticky; top: 0; z-index: 200;
@@ -1634,9 +1634,6 @@ function switchTab(tab) {
   if (tab === 'overview') renderOverview();
   if (tab === 'trzby') { if (trzbyData || prijmyData) renderTrzby(); else renderTrzbyEmpty(); }
   if (tab === 'reports') renderReports();
-  // ensure app is visible once a tab is shown
-  const appEl = document.getElementById('app');
-  if (appEl && appEl.style.display !== 'none') appEl.style.visibility = 'visible';
 }
 
 // ===== LOAD DATA =====
@@ -3511,29 +3508,33 @@ function onPeriodTypeChange() {
 function buildPeriodOptions() {
   const data = activeData();
   if (!data || !data.length) return;
-  // months present
-  const monthKeys = [...new Set(data.map(r => r.y + '-' + String(r.m).padStart(2,'0')))].sort().reverse();
   const monthSel = document.getElementById('tf-month');
+  if (!monthSel) return;   // záložka Tržby ještě není viditelná — skip
+
+  const monthKeys = [...new Set(data.map(r => r.y + '-' + String(r.m).padStart(2,'0')))].sort().reverse();
   monthSel.innerHTML = monthKeys.map(k => { const [y,m]=k.split('-'); return `<option value="${k}">${MONTHS_CZ[parseInt(m)]} ${y}</option>`; }).join('');
   const years = [...new Set(data.map(r => r.y))].sort().reverse();
-  document.getElementById('tf-year').innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-  // compare selects
+  const yearSel = document.getElementById('tf-year');
+  if (yearSel) yearSel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
   const cmpOpts = monthKeys.map(k => { const [y,m]=k.split('-'); return `<option value="${k}">${MONTHS_CZ[parseInt(m)]} ${y}</option>`; }).join('');
-  document.getElementById('cmp-a').innerHTML = cmpOpts;
-  document.getElementById('cmp-b').innerHTML = cmpOpts;
-  if (monthKeys[1]) document.getElementById('cmp-b').value = monthKeys[1];
-  // range defaults
+  const cmpA = document.getElementById('cmp-a');
+  const cmpB = document.getElementById('cmp-b');
+  if (cmpA) cmpA.innerHTML = cmpOpts;
+  if (cmpB) { cmpB.innerHTML = cmpOpts; if (monthKeys[1]) cmpB.value = monthKeys[1]; }
   const allDates = data.map(r => r.date).sort((a,b)=>a-b);
-  if (allDates.length) {
-    document.getElementById('tf-from').value = allDates[0].toISOString().slice(0,10);
-    document.getElementById('tf-to').value = allDates[allDates.length-1].toISOString().slice(0,10);
-  }
+  const fromEl = document.getElementById('tf-from');
+  const toEl = document.getElementById('tf-to');
+  if (allDates.length && fromEl) fromEl.value = allDates[0].toISOString().slice(0,10);
+  if (allDates.length && toEl) toEl.value = allDates[allDates.length-1].toISOString().slice(0,10);
 }
 
 function buildSegFilter() {
+  const labelEl = document.getElementById('tf-seg-label');
+  const segEl = document.getElementById('tf-seg');
+  if (!labelEl || !segEl) return;   // záložka Tržby ještě není viditelná
   const cats = activeCats();
-  document.getElementById('tf-seg-label').textContent = trzbyView === 'prijmy' ? 'Platba' : 'Středisko';
-  document.getElementById('tf-seg').innerHTML = '<option value="">Vše</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  labelEl.textContent = trzbyView === 'prijmy' ? 'Platba' : 'Středisko';
+  segEl.innerHTML = '<option value="">Vše</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
 // returns rows filtered by current period selection
