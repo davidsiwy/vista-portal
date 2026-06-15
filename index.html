@@ -518,29 +518,175 @@ a { color: inherit; }
 .dash-doc-row:last-child { border-bottom: none; }
 .dash-doc-prog { flex: 1; min-width: 0; }
 
+/* ===================================================
+   RESPONSIVE — tablet 960px
+   =================================================== */
 @media (max-width: 960px) {
-  .kanban { grid-template-columns: 1fr 1fr; }
+  .kanban { grid-template-columns: 1fr 1fr; gap: 12px; }
   .stats-row { grid-template-columns: 1fr 1fr; }
+  .modal.xwide { max-width: 96vw; }
 }
+
+/* ===================================================
+   RESPONSIVE — mobile 640px
+   =================================================== */
 @media (max-width: 640px) {
-  .kanban { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: 1fr 1fr; }
-  .form-row, .form-row-3 { grid-template-columns: 1fr; }
-  .checklist { grid-template-columns: 1fr; }
-  .doc-card { flex-direction: column; align-items: flex-start; }
-  .doc-actions { width: 100%; }
-  .topbar { padding: 0 16px; height: 60px; }
+
+  /* topbar */
+  .topbar { padding: 0 14px; height: 56px; }
   .topbar-title { display: none; }
-  .tabs { top: 60px; padding: 0 12px; }
-  .main { padding: 24px 16px 60px; }
-  .section-title { font-size: 26px; }
-  .dash-greeting { font-size: 30px; }
-  .dash-hero { padding: 28px 24px; }
-  .modal { padding: 26px 22px; }
-  .file-viewer { height: 60vh; }
-  .invoice-card { flex-wrap: wrap; }
-  .invoice-amount { font-size: 20px; }
+  .topbar-logo img { height: 26px; }
+  .topbar-divider { display: none; }
+  .topbar-badge { font-size: 9.5px; padding: 4px 9px; }
+  .topbar-user { display: none; }
+  .btn-logout { padding: 7px 12px; font-size: 12px; }
+
+  /* tabs — scrollable, bigger tap targets */
+  .tabs { top: 56px; padding: 0 8px; gap: 0; }
+  .tab-btn { padding: 14px 13px 12px; font-size: 13px; }
+  .tab-btn::after { left: 13px; right: 13px; }
+
+  /* main content */
+  .main { padding: 20px 14px 80px; }
+  .section-header { margin-bottom: 20px; gap: 12px; }
+  .section-title { font-size: 24px; }
+  .section-subtitle { font-size: 12.5px; }
+
+  /* stats */
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .stat-card { padding: 18px 16px; }
+  .stat-value { font-size: 32px; }
+
+  /* forms */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; gap: 12px; }
+  .form-group input, .form-group select, .form-group textarea { font-size: 16px; } /* prevents iOS zoom */
+
+  /* login */
+  #login-screen::before { opacity: 0.04; right: -20%; width: 90vw; }
+  .login-card { max-width: 100%; }
+  .login-logo img.brand-full { width: 190px; }
+  .login-panel { padding: 24px 20px; }
+
+  /* kanban — single column on mobile */
+  .kanban { grid-template-columns: 1fr; gap: 10px; }
+  .kanban-col-header { margin-bottom: 10px; }
+  .task-card { padding: 14px; margin-bottom: 10px; }
+  .task-card-title { font-size: 14px; }
+
+  /* task modal person chips — 1 per row on very small screens */
+  .person-pick { gap: 7px; }
+  .person-chip { padding: 9px 13px 9px 9px; width: 100%; }
+  .pc-name { font-size: 14px; }
+
+  /* documents */
+  .doc-card { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+  .doc-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+  .doc-actions .btn-download,
+  .doc-actions .btn-confirm,
+  .doc-actions .confirmed-badge { flex: 1; justify-content: center; }
+  .btn-download, .btn-confirm { min-height: 42px; font-size: 13px; }
+
+  /* invoices */
+  .invoice-card { flex-wrap: wrap; gap: 12px; padding: 16px; }
+  .invoice-amount { font-size: 20px; width: 100%; }
+  .inv-status { font-size: 11.5px; }
+  .invoice-grid { gap: 10px; }
+
+  /* invoice / preview modal */
+  .file-viewer { height: 55vh; }
+  .inv-decision-row { gap: 8px; }
+  .btn-approve, .btn-reject { flex: 1; justify-content: center; padding: 13px 12px; font-size: 14px; }
+
+  /* modals */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal, .modal.wide, .modal.xwide {
+    max-width: 100%; width: 100%; border-radius: 20px 20px 0 0;
+    padding: 28px 20px 36px; max-height: 92vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 22px; }
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .btn-sm { width: 100%; justify-content: center; padding: 14px; font-size: 14px; }
+
+  /* task detail modal */
+  .task-detail-title { font-size: 20px; }
+  .task-detail-row { gap: 14px; }
+  .status-selector { gap: 6px; }
+  .status-opt { padding: 8px 11px; font-size: 11.5px; }
+
+  /* admin cards */
+  .admin-card { padding: 20px 16px; }
+  .admin-card-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+  /* worklog */
+  .worklog-compose { padding: 18px 16px; }
+  .worklog-entry { padding: 14px 16px; }
+  .worklog-day-label { font-size: 17px; }
+
+  /* owner dashboard */
+  .dash-hero { padding: 24px 18px; border-radius: var(--r); }
+  .dash-hero::before { display: none; }
+  .dash-greeting { font-size: 26px; }
+  .dash-sub { font-size: 12.5px; }
+  .dash-block { padding: 20px 16px; border-radius: var(--r); }
+  .dash-block-title { font-size: 20px; }
+  .dash-block-icon { width: 38px; height: 38px; font-size: 18px; }
+  .dash-task-summary { gap: 22px; }
+  .dash-task-stat .num { font-size: 34px; }
+  .dash-inv-row { gap: 10px; }
+  .dash-inv-row:hover { margin: 0; padding: 15px 0; border-radius: 0; } /* no hover offset on mobile */
+  .dash-doc-row { gap: 10px; }
+
+  /* chips */
+  .chips { gap: 7px; }
+  .chip { padding: 9px 13px; font-size: 13px; }
+
+  /* filters */
+  .filters { gap: 8px; }
+  .filter-select { font-size: 13px; padding: 8px 30px 8px 12px; }
+  .search-input { font-size: 13px; }
+
+  /* buttons */
+  .btn-sm { padding: 10px 16px; font-size: 13px; }
+  .section-header .btn-sm { white-space: nowrap; }
+
+  /* checklist */
+  .checklist { grid-template-columns: 1fr; }
+
+  /* doc admin rows */
+  .doc-admin-row { flex-direction: column; gap: 12px; }
+  .doc-admin-row > div[data-manage] { width: 100%; flex-wrap: wrap; }
+  .doc-admin-row > div[data-manage] .btn-sm,
+  .doc-admin-row > div[data-manage] .urge-btn { flex: 1; justify-content: center; }
+
+  /* sign upload */
+  .sign-toggle { padding: 12px 14px; font-size: 13px; }
+
+  /* upd modal file area */
+  .upload-area { padding: 20px 14px; }
+
+  /* confirmation detail */
+  .conf-detail { padding: 14px; }
+  .conf-person { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* progress bars */
+  .progress-bar-wrap { margin-top: 10px; }
+
+  /* table on small screen */
+  .data-table { font-size: 13px; }
+  .data-table th, .data-table td { padding: 10px 10px; }
 }
+
+/* ===================================================
+   RESPONSIVE — very small 375px (iPhone SE etc.)
+   =================================================== */
+@media (max-width: 375px) {
+  .main { padding: 16px 12px 80px; }
+  .tab-btn { padding: 13px 10px 11px; font-size: 12px; }
+  .stats-row { grid-template-columns: 1fr; }
+  .section-title { font-size: 22px; }
+  .dash-task-summary { flex-direction: column; gap: 16px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
