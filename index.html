@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="assets/vista-mark-dark.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   /* Vista forest palette */
@@ -702,6 +704,8 @@ a { color: inherit; }
   .search-input { font-size: 13px; }
 
   /* buttons */
+  /* trzby grid stacks on mobile */
+  #trzby-grid-2 { grid-template-columns: 1fr !important; }
   .btn-sm { padding: 10px 16px; font-size: 13px; }
   .section-header .btn-sm { white-space: nowrap; }
   /* notif panel — full width bottom on mobile */
@@ -1061,6 +1065,85 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       <div class="dash-task-summary" id="dash-tasks"></div>
     </div>
   </div>
+  <!-- ============ TRŽBY TAB ============ -->
+  <div id="tab-trzby" class="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Tržby</div>
+        <div class="section-subtitle" id="trzby-subtitle">Nahrajte denní report pro zobrazení přehledu</div>
+      </div>
+      <label class="btn-sm primary" style="cursor:pointer">
+        📊 Nahrát report (xlsx)
+        <input type="file" id="trzby-file-input" accept=".xlsx,.xls" style="display:none" onchange="onTrzbyFile(this)">
+      </label>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="stats-row" id="trzby-kpi" style="display:none">
+      <div class="stat-card">
+        <div class="stat-label">Měsíc celkem</div>
+        <div class="stat-value" id="kpi-mesic">—</div>
+        <div class="stat-sub" id="kpi-mesic-diff"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Průměr / den</div>
+        <div class="stat-value" id="kpi-avg">—</div>
+        <div class="stat-sub" id="kpi-avg-diff"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Stejné období loni</div>
+        <div class="stat-value" id="kpi-loni">—</div>
+        <div class="stat-sub" id="kpi-yoy"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Nejlepší den</div>
+        <div class="stat-value" id="kpi-best">—</div>
+        <div class="stat-sub" id="kpi-best-date"></div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div id="trzby-charts" style="display:none">
+      <div class="admin-card" style="margin-bottom:18px">
+        <div class="admin-card-header" style="margin-bottom:16px">
+          <div class="admin-card-title">Denní výnosy</div>
+          <div id="trzby-period-label" style="font-size:13px;color:var(--ink-faint);font-family:var(--sans)"></div>
+        </div>
+        <canvas id="chart-daily" style="width:100%;max-height:280px"></canvas>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px" id="trzby-grid-2">
+        <div class="admin-card">
+          <div class="admin-card-title" style="margin-bottom:18px">Segmenty (tento měsíc)</div>
+          <canvas id="chart-segs" style="max-height:240px"></canvas>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-title" style="margin-bottom:14px">Měsíční srovnání</div>
+          <canvas id="chart-monthly" style="max-height:240px"></canvas>
+        </div>
+      </div>
+
+      <!-- Daily table -->
+      <div class="admin-card">
+        <div class="admin-card-header" style="margin-bottom:14px">
+          <div class="admin-card-title">Denní přehled</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="trzby-table">
+            <thead><tr><th>Datum</th><th style="text-align:right">Celkem</th><th style="text-align:right">Hotel</th><th style="text-align:right">F&amp;B</th><th style="text-align:right">Wellness</th><th style="text-align:right">Sport</th><th style="text-align:right">C&amp;B</th><th style="text-align:right">Akademie</th></tr></thead>
+            <tbody id="trzby-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="trzby-empty" class="empty-state">
+      <div class="empty-icon">📊</div>
+      <h3>Žádná data</h3>
+      <p>Nahrajte denní report Excel (soubor Výnosy dle středisek) tlačítkem výše.<br>Data se zobrazí okamžitě, nic se neukládá na server.</p>
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- CONFIRM DOCUMENT MODAL -->
@@ -1328,22 +1411,23 @@ function tabsForRole() {
   if (isOwner) return [
     { key:'overview', label:'Přehled' },
     { key:'invoices', label:'Faktury' },
-    { key:'tasks',    label:'Úkoly' },
-    { key:'docs',     label:'Dokumenty' }
+    { key:'trzby',   label:'Tržby' },
+    { key:'tasks',   label:'Úkoly' },
+    { key:'docs',    label:'Dokumenty' }
   ];
   if (isAdmin) return [
-    { key:'tasks',    label:'Úkoly' },
-    { key:'docs',     label:'Dokumenty' },
-    { key:'invoices', label:'Faktury' },
-    { key:'worklog',  label:'Deník' },
-    { key:'admin',    label:'Správa' }
+    { key:'tasks',   label:'Úkoly' },
+    { key:'docs',    label:'Dokumenty' },
+    { key:'invoices',label:'Faktury' },
+    { key:'trzby',   label:'Tržby' },
+    { key:'worklog', label:'Deník' },
+    { key:'admin',   label:'Správa' }
   ];
-  // employee
   return [
-    { key:'tasks',    label:'Úkoly' },
-    { key:'docs',     label:'Dokumenty' },
-    { key:'invoices', label:'Faktury' },
-    { key:'worklog',  label:'Můj deník' }
+    { key:'tasks',   label:'Úkoly' },
+    { key:'docs',    label:'Dokumenty' },
+    { key:'invoices',label:'Faktury' },
+    { key:'worklog', label:'Můj deník' }
   ];
 }
 
@@ -1361,7 +1445,7 @@ function buildTabs() {
   });
 }
 
-const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview'];
+const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby'];
 
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
@@ -1402,6 +1486,7 @@ function switchTab(tab) {
   if (tab === 'invoices') renderInvoices();
   if (tab === 'worklog') renderWorklog();
   if (tab === 'overview') renderOverview();
+  if (tab === 'trzby') renderTrzbyEmpty();
 }
 
 // ===== LOAD DATA =====
@@ -3190,6 +3275,170 @@ function generateInitialNotifs() {
 }
 
 // ── live notifs jsou napojeny přímo v action funkcích (pushNotif volání) ──
+
+// ============================================================
+// TRŽBY — Excel upload + SheetJS parsing + Chart.js
+// ============================================================
+let trzbyData = null;
+let chartDaily = null, chartSegs = null, chartMonthly = null;
+
+const SEGS = ['Hotel', 'F&B', 'C&B', 'Wellness', 'Sport', 'Akademie'];
+const SEG_COLORS = ['#13302e','#586845','#9da38b','#dfc196','#9c7852','#3d301f'];
+const SEG_COLS = [2, 3, 4, 5, 6, 7];
+const MONTHS_CZ = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+
+function renderTrzbyEmpty() {
+  if (trzbyData) return;
+  document.getElementById('trzby-empty').style.display = 'block';
+  document.getElementById('trzby-kpi').style.display   = 'none';
+  document.getElementById('trzby-charts').style.display= 'none';
+}
+
+function onTrzbyFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  showLoading('Načítám report...');
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const XLSX2 = window.XLSX;
+      if (!XLSX2) throw new Error('SheetJS se nenačetl. Zkontroluj připojení k internetu.');
+      const wb = XLSX2.read(e.target.result, { type: 'array', cellDates: true });
+      const rows = [];
+      wb.SheetNames.forEach(sname => {
+        const ws = wb.Sheets[sname];
+        const arr = XLSX2.utils.sheet_to_json(ws, { header: 1, defval: null });
+        for (let i = 1; i < arr.length; i++) {
+          const r = arr[i];
+          if (!r || r[0] === null || r[0] === undefined) continue;
+          let d = r[0];
+          if (typeof d === 'number') { const nd = XLSX2.SSF.parse_date_code(d); d = new Date(nd.y, nd.m-1, nd.d); }
+          else if (typeof d === 'string') d = new Date(d);
+          if (!(d instanceof Date) || isNaN(d.getTime())) continue;
+          const celkem = parseFloat(r[1]) || 0;
+          if (celkem <= 0) continue;
+          const segs = {};
+          SEGS.forEach((s,i) => { segs[s] = parseFloat(r[SEG_COLS[i]]) || 0; });
+          rows.push({ date: d, y: d.getFullYear(), m: d.getMonth()+1, day: d.getDate(), celkem, segs });
+        }
+      });
+      if (rows.length === 0) throw new Error('Žádná data nenalezena. Zkontroluj formát souboru.');
+      rows.sort((a,b) => a.date - b.date);
+      trzbyData = rows;
+      hideLoading();
+      renderTrzby();
+      pushNotif('invoice','📊','Tržby nahrány: <strong>' + esc(file.name) + '</strong>',{tab:'trzby'});
+    } catch(err) {
+      hideLoading();
+      showToast('Chyba: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value = '';
+}
+
+function renderTrzby() {
+  if (!trzbyData || trzbyData.length === 0) { renderTrzbyEmpty(); return; }
+  document.getElementById('trzby-empty').style.display = 'none';
+  document.getElementById('trzby-kpi').style.display   = 'grid';
+  document.getElementById('trzby-charts').style.display= 'block';
+
+  const last = trzbyData[trzbyData.length - 1];
+  const curY = last.y, curM = last.m;
+  const curRows  = trzbyData.filter(r => r.y === curY && r.m === curM);
+  const pm = curM === 1 ? 12 : curM - 1, py = curM === 1 ? curY - 1 : curY;
+  const prevRows = trzbyData.filter(r => r.y === py && r.m === pm);
+  const lyRows   = trzbyData.filter(r => r.y === curY - 1 && r.m === curM);
+
+  const sum = arr => arr.reduce((s,r) => s + r.celkem, 0);
+  const curTotal = sum(curRows), prevTotal = sum(prevRows), lyTotal = sum(lyRows);
+  const curAvg   = curRows.length ? curTotal / curRows.length : 0;
+  const prevAvg  = prevRows.length ? prevTotal / prevRows.length : 0;
+  const bestRow  = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
+
+  document.getElementById('trzby-subtitle').textContent = MONTHS_CZ[curM] + ' ' + curY + ' · ' + curRows.length + ' dní · ' + Math.round(curTotal).toLocaleString('cs-CZ') + ' Kč';
+  document.getElementById('trzby-period-label').textContent = MONTHS_CZ[curM] + ' ' + curY;
+
+  const fmt = v => Math.round(v).toLocaleString('cs-CZ') + ' Kč';
+  const setDiff = (elId, a, b, label) => {
+    const el = document.getElementById(elId);
+    if (!b) { el.textContent = ''; return; }
+    const d = ((a-b)/b*100).toFixed(1);
+    el.textContent = (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d) + ' % vs ' + label;
+    el.style.color = d >= 0 ? 'var(--ok)' : 'var(--danger)';
+  };
+  document.getElementById('kpi-mesic').textContent = fmt(curTotal);
+  setDiff('kpi-mesic-diff', curTotal, prevTotal, 'min. měsíc');
+  document.getElementById('kpi-avg').textContent = fmt(curAvg);
+  setDiff('kpi-avg-diff', curAvg, prevAvg, 'min. měsíc');
+  document.getElementById('kpi-loni').textContent = lyRows.length ? fmt(lyTotal) : '—';
+  if (lyRows.length) setDiff('kpi-yoy', curTotal, lyTotal, 'loni');
+  else { const el = document.getElementById('kpi-yoy'); el.textContent = 'Data loni nejsou k dispozici'; el.style.color = 'var(--ink-faint)'; }
+  document.getElementById('kpi-best').textContent = fmt(bestRow.celkem || 0);
+  document.getElementById('kpi-best-date').textContent = bestRow.date ? bestRow.date.toLocaleDateString('cs-CZ') : '';
+
+  // Chart 1 — daily bars
+  if (chartDaily) { chartDaily.destroy(); chartDaily = null; }
+  const ctx1 = document.getElementById('chart-daily').getContext('2d');
+  chartDaily = new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: curRows.map(r => r.day + '.'),
+      datasets: [
+        { label: 'Výnos', data: curRows.map(r => r.celkem), backgroundColor: curRows.map(r => r.celkem >= curAvg ? '#13302e' : '#586845'), borderRadius: 5, borderSkipped: false },
+        { label: 'Průměr', data: curRows.map(() => curAvg), type: 'line', borderColor: '#dfc196', borderWidth: 2.5, borderDash: [6,4], pointRadius: 0, fill: false }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + Math.round(ctx.raw).toLocaleString('cs-CZ') + ' Kč' }, backgroundColor: '#13302e', padding: 12, cornerRadius: 8, titleFont: {family:'Fraunces'}, bodyFont:{family:'Outfit'} } },
+      scales: { x: { grid: { display:false }, ticks:{font:{family:'Outfit',size:11},color:'#9a9b8c'} }, y: { ticks:{font:{family:'Outfit',size:11},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'}, grid:{color:'#e7e0d2'} } },
+      animation: { duration: 500 }
+    }
+  });
+  document.getElementById('chart-daily').style.height = '260px';
+
+  // Chart 2 — segment doughnut
+  if (chartSegs) { chartSegs.destroy(); chartSegs = null; }
+  const segTotals = SEGS.map(s => curRows.reduce((sum,r) => sum + (r.segs[s]||0), 0)).filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
+  const segLabels = SEGS.filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
+  const segColors = SEG_COLORS.filter((_,i) => curRows.some(r => (r.segs[SEGS[i]]||0) > 0));
+  const ctx2 = document.getElementById('chart-segs').getContext('2d');
+  chartSegs = new Chart(ctx2, {
+    type: 'doughnut',
+    data: { labels: segLabels, datasets: [{ data: segTotals, backgroundColor: segColors, borderWidth: 3, borderColor: '#fff' }] },
+    options: { responsive:true, plugins:{ legend:{position:'right',labels:{font:{family:'Outfit'},boxWidth:14,padding:10}}, tooltip:{callbacks:{label:ctx=>' '+Math.round(ctx.raw).toLocaleString('cs-CZ')+' Kč'},backgroundColor:'#13302e',bodyFont:{family:'Outfit'},padding:10,cornerRadius:8} }, cutout:'62%', animation:{duration:600} }
+  });
+
+  // Chart 3 — monthly bars last 12 months
+  if (chartMonthly) { chartMonthly.destroy(); chartMonthly = null; }
+  const monthMap = {};
+  trzbyData.forEach(r => { const k = r.y+'-'+String(r.m).padStart(2,'0'); monthMap[k] = (monthMap[k]||0) + r.celkem; });
+  const mKeys   = Object.keys(monthMap).sort().slice(-12);
+  const curKey  = curY + '-' + String(curM).padStart(2,'0');
+  const mLabels = mKeys.map(k => { const [y,m]=k.split('-'); return MONTHS_CZ[parseInt(m)].slice(0,3)+" '"+y.slice(2); });
+  const ctx3 = document.getElementById('chart-monthly').getContext('2d');
+  chartMonthly = new Chart(ctx3, {
+    type: 'bar',
+    data: { labels: mLabels, datasets: [{ label: 'Výnosy', data: mKeys.map(k => monthMap[k]), backgroundColor: mKeys.map(k => k===curKey?'#13302e':'#58684588'), borderRadius: 4, borderSkipped:false }] },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+Math.round(ctx.raw/1000).toLocaleString('cs-CZ')+' tis. Kč'},backgroundColor:'#13302e',padding:10,cornerRadius:8,titleFont:{family:'Fraunces'},bodyFont:{family:'Outfit'}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c'}}, y:{ticks:{font:{family:'Outfit',size:10},color:'#9a9b8c',callback:v=>(v/1000).toFixed(0)+'k'},grid:{color:'#e7e0d2'}} },
+      animation:{duration:400}
+    }
+  });
+  document.getElementById('chart-monthly').style.height = '200px';
+
+  // Table
+  const tbody = document.getElementById('trzby-tbody');
+  tbody.innerHTML = curRows.slice().reverse().map(r => `
+    <tr>
+      <td>${r.date.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})}</td>
+      <td style="text-align:right;font-weight:700;color:var(--peacock)">${Math.round(r.celkem).toLocaleString('cs-CZ')}</td>
+      ${SEGS.map(s=>`<td style="text-align:right;color:var(--ink-soft)">${(r.segs[s]||0)>0?Math.round(r.segs[s]).toLocaleString('cs-CZ'):'—'}</td>`).join('')}
+    </tr>`).join('');
+}
 
 // ============================================================
 // DEMO DATA
