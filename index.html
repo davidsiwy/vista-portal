@@ -3711,29 +3711,40 @@ function renderCompare() {
 // ── init: načte uložené reporty ze serveru, jinak výchozí Vista data ──
 async function initTrzbyData() {
   if (!isOwner && !isAdmin) return;
+
+  // 1) localStorage — funguje vždy, hned, bez serveru
+  try {
+    const lsV = localStorage.getItem('vista_trzby_vynosy');
+    const lsP = localStorage.getItem('vista_trzby_prijmy');
+    const lsT = localStorage.getItem('vista_trzby_time');
+    if (lsV) { const p = JSON.parse(lsV); if (p.length) trzbyData = p.map(r=>({...r,date:new Date(r.date)})); }
+    if (lsP) { const p = JSON.parse(lsP); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
+    if (lsT) trzbyUploadedAt = lsT;
+  } catch(e) {}
+
+  // 2) server (pokud je Code.gs nasazen a má novější data) — nepovinné
   if (!DEMO_MODE()) {
     try {
       const res = await apiCall('getTrzby', {});
-      if (res) {
+      if (res && (res.json || res.json2)) {
         if (res.json)  { const p = JSON.parse(res.json);  if (p.length) trzbyData  = p.map(r=>({...r,date:new Date(r.date)})); }
         if (res.json2) { const p = JSON.parse(res.json2); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
-        trzbyUploadedAt = res.uploadedAt || '';
+        if (res.uploadedAt) trzbyUploadedAt = res.uploadedAt;
       }
-    } catch(e) {}
+    } catch(e) { /* server nedostupný nebo starý Code.gs — nevadí, máme localStorage */ }
   }
-  // načti výchozí data z externího JSON pokud nemáme nic ze serveru
+
+  // 3) výchozí Vista data z JSON souboru (jen pokud nemáme vůbec nic)
   if (!trzbyData || !prijmyData) {
     try {
-      const base = window.location.hostname === 'localhost' || window.location.protocol === 'file:'
-        ? '.'
-        : (window.location.hostname.includes('github.io') ? '/vista-portal' : '');
+      const base = window.location.hostname.includes('github.io') ? '/vista-portal' : '';
       const r2 = await fetch(base + '/trzby-data.json');
       if (r2.ok) {
         const d2 = await r2.json();
         if (!trzbyData && d2.vynosy) trzbyData = d2.vynosy.map(r=>({...r, date:new Date(r.date)}));
         if (!prijmyData && d2.prijmy) prijmyData = d2.prijmy.map(r=>({...r, date:new Date(r.date)}));
       }
-    } catch(e2) { /* bez dat */ }
+    } catch(e2) {}
   }
   buildPeriodOptions();
   buildSegFilter();
@@ -3779,25 +3790,33 @@ function onTrzbyFile(input) {
       rows.sort((a,b)=>a.date-b.date);
       if (isPrijmy) { prijmyData = rows; trzbyView = 'prijmy'; }
       else { trzbyData = rows; trzbyView = 'vynosy'; }
+      trzbyUploadedAt = new Date().toISOString();
       document.getElementById('vt-vynosy').classList.toggle('active', !isPrijmy);
       document.getElementById('vt-prijmy').classList.toggle('active', isPrijmy);
       buildPeriodOptions(); buildSegFilter();
       hideLoading();
       renderTrzby();
-      // ulož na server
+
+      // ulož do prohlížeče (funguje vždy, hned)
+      let savedLocal = false;
+      try {
+        if (trzbyData)  localStorage.setItem('vista_trzby_vynosy', JSON.stringify(trzbyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,segs:r.segs}))));
+        if (prijmyData) localStorage.setItem('vista_trzby_prijmy', JSON.stringify(prijmyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,pays:r.pays}))));
+        localStorage.setItem('vista_trzby_time', trzbyUploadedAt);
+        savedLocal = true;
+      } catch(e) {}
+
+      // pokus o uložení na server (pro sdílení) — selhání nevadí, data jsou v prohlížeči
       if (!DEMO_MODE()) {
-        showLoading('Ukládám na server...');
         try {
           const payload = { uploadedBy: currentUser?.name || '' };
           if (trzbyData)  payload.json  = JSON.stringify(trzbyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,segs:r.segs})));
           if (prijmyData) payload.json2 = JSON.stringify(prijmyData.map(r=>({date:r.date.toISOString().slice(0,10),y:r.y,m:r.m,day:r.day,celkem:r.celkem,pays:r.pays})));
           await apiCall('saveTrzby', payload);
-          hideLoading();
-          showToast((isPrijmy?'Příjmy':'Výnosy') + ' uloženy, vidí je i majitel', 'success');
-        } catch(err) { hideLoading(); showToast('Zobrazeno, ale uložení selhalo: ' + err.message, 'error'); }
-      } else {
-        showToast((isPrijmy?'Příjmy':'Výnosy') + ' načteny (' + rows.length + ' dní)', 'success');
+        } catch(err) { /* starý Code.gs nebo offline — nevadí, máme localStorage */ }
       }
+
+      showToast((isPrijmy?'Příjmy':'Výnosy') + ' nahrány (' + rows.length + ' dní)', 'success');
       pushNotif('invoice','📊',(isPrijmy?'Příjmy':'Výnosy')+' nahrány: <strong>'+esc(file.name)+'</strong>',{tab:'trzby'});
     } catch(err) { hideLoading(); showToast('Chyba: ' + err.message, 'error'); }
   };
