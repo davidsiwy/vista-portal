@@ -1082,12 +1082,33 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
   <div id="tab-overview" class="main" style="display:none">
     <div class="dash-hero">
       <div class="dash-greeting" id="dash-greeting">Dobrý den</div>
-      <div class="dash-sub" id="dash-sub">Faktury ke schválení a přehled tržeb</div>
+      <div class="dash-sub" id="dash-sub">Přehled</div>
     </div>
 
-    <div class="dash-block">
+    <!-- moje úkoly (zaměstnanci + vedení) -->
+    <div class="dash-block" id="dash-mytasks-block" style="display:none">
+      <div class="dash-block-head">
+        <div class="dash-block-icon dark" style="color:var(--tan)">✓</div>
+        <div class="dash-block-title">Moje úkoly</div>
+        <div class="dash-block-count" id="dash-mytasks-count">0</div>
+      </div>
+      <div id="dash-mytasks"></div>
+    </div>
+
+    <!-- dokumenty k potvrzení (zaměstnanci + vedení) -->
+    <div class="dash-block" id="dash-mydocs-block" style="display:none">
       <div class="dash-block-head">
         <div class="dash-block-icon gold">📄</div>
+        <div class="dash-block-title">K potvrzení</div>
+        <div class="dash-block-count" id="dash-mydocs-count">0</div>
+      </div>
+      <div id="dash-mydocs"></div>
+    </div>
+
+    <!-- faktury ke schválení (majitel + vedení) -->
+    <div class="dash-block" id="dash-inv-block" style="display:none">
+      <div class="dash-block-head">
+        <div class="dash-block-icon gold">🧾</div>
         <div class="dash-block-title">Faktury ke schválení</div>
         <div class="dash-block-count" id="dash-inv-count">0</div>
       </div>
@@ -1559,6 +1580,7 @@ function tabsForRole() {
     { key:'reports',  label:'Reporty' }
   ];
   if (isAdmin) return [
+    { key:'overview', label:'Přehled' },
     { key:'tasks',    label:'Úkoly' },
     { key:'docs',     label:'Dokumenty' },
     { key:'invoices', label:'Faktury' },
@@ -1568,6 +1590,7 @@ function tabsForRole() {
     { key:'admin',    label:'Správa' }
   ];
   return [
+    { key:'overview', label:'Přehled' },
     { key:'tasks',    label:'Úkoly' },
     { key:'docs',     label:'Dokumenty' },
     { key:'reports',  label:'Reporty' },
@@ -3205,84 +3228,152 @@ async function saveEditWorklog(id) {
 }
 
 // ============================================================
-// OWNER OVERVIEW (Přehled)
+// PŘEHLED (Overview) — role-aware
 // ============================================================
 function renderOverview() {
-  document.getElementById('dash-greeting').textContent = 'Dobrý den';
-  document.getElementById('dash-sub').textContent = 'Faktury ke schválení a přehled tržeb';
+  const firstName = (currentUser?.name || '').split(' ')[0] || '';
+  document.getElementById('dash-greeting').textContent = firstName ? ('Dobrý den, ' + firstName) : 'Dobrý den';
 
-  // pending invoices
-  const pending = invoices.filter(i => (i.status||'pending')==='pending').sort((a,b)=>new Date(b.uploadedAt||0)-new Date(a.uploadedAt||0));
-  document.getElementById('dash-inv-count').textContent = pending.length;
-  const invWrap = document.getElementById('dash-invoices');
-  if (pending.length === 0) {
-    invWrap.innerHTML = '<div class="dash-empty">Žádné faktury nečekají na schválení. ✓</div>';
-  } else {
-    invWrap.innerHTML = pending.map(inv => `
-      <div class="dash-inv-row" onclick="openInvoiceDetail('${inv.id}')">
-        <div class="invoice-icon" style="width:40px;height:40px;font-size:18px">🧾</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(inv.title)}</div>
-          <div style="font-size:12px;color:var(--ink-faint)">${inv.supplier?esc(inv.supplier)+' · ':''}nahrál ${esc(inv.uploadedByName||'—')}${inv.dueDate?' · splatnost '+fmtDate(inv.dueDate):''}</div>
+  const blkMyTasks = document.getElementById('dash-mytasks-block');
+  const blkMyDocs  = document.getElementById('dash-mydocs-block');
+  const blkInv     = document.getElementById('dash-inv-block');
+  const blkTrzby   = document.getElementById('dash-trzby-block');
+
+  // sub text per role
+  document.getElementById('dash-sub').textContent =
+    isOwner ? 'Faktury ke schválení a přehled tržeb'
+    : isAdmin ? 'Vaše úkoly, schválení a tržby'
+    : 'Vaše úkoly a dokumenty k potvrzení';
+
+  // ── MOJE ÚKOLY (všichni kromě čistého majitele, ale i majitel může mít) ──
+  const myTasks = tasks.filter(t => (t.assignees||[]).includes(currentUser?.id) && t.status !== 'done')
+    .sort((a,b) => {
+      const ad = a.deadline ? new Date(a.deadline) : new Date('2999');
+      const bd = b.deadline ? new Date(b.deadline) : new Date('2999');
+      return ad - bd;
+    });
+  if (!isOwner) {
+    blkMyTasks.style.display = 'block';
+    document.getElementById('dash-mytasks-count').textContent = myTasks.length;
+    const mtWrap = document.getElementById('dash-mytasks');
+    if (myTasks.length === 0) {
+      mtWrap.innerHTML = '<div class="dash-empty">Žádné aktivní úkoly. ✓</div>';
+    } else {
+      mtWrap.innerHTML = myTasks.slice(0, 8).map(t => {
+        const overdue = t.deadline && new Date(t.deadline) < new Date();
+        const statusLabel = { todo:'Zadáno', inprogress:'Probíhá', review:'Ke kontrole' }[t.status] || t.status;
+        return `<div class="dash-inv-row" onclick="switchTab('tasks');setTimeout(()=>openTaskDetail('${t.id}'),60)">
+          <div class="dash-block-icon" style="width:38px;height:38px;font-size:16px;background:var(--paper)">📌</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(t.title)}</div>
+            <div style="font-size:12px;color:var(--ink-faint)">${statusLabel}${t.deadline?` · <span style="color:${overdue?'var(--danger)':'var(--ink-faint)'}">${overdue?'po termínu ':'do '}${fmtDate(t.deadline)}</span>`:''}</div>
+          </div>
+          <span style="color:var(--ink-faint);font-size:18px">›</span>
+        </div>`;
+      }).join('');
+    }
+  } else { blkMyTasks.style.display = 'none'; }
+
+  // ── DOKUMENTY K POTVRZENÍ (zaměstnanci + vedení, ne majitel) ──
+  if (!isOwner) {
+    const myConfs = new Set(confirmations.filter(c => c.employeeId === currentUser?.id).map(c => c.docId));
+    const pendingDocs = documents.filter(doc => {
+      const targets = docTargets(doc);
+      return targets.some(e => e.id === currentUser?.id) && !myConfs.has(doc.id);
+    });
+    blkMyDocs.style.display = 'block';
+    document.getElementById('dash-mydocs-count').textContent = pendingDocs.length;
+    const mdWrap = document.getElementById('dash-mydocs');
+    if (pendingDocs.length === 0) {
+      mdWrap.innerHTML = '<div class="dash-empty">Vše potvrzeno. ✓</div>';
+    } else {
+      mdWrap.innerHTML = pendingDocs.map(doc => `
+        <div class="dash-inv-row" onclick="switchTab('docs')">
+          <div class="dash-block-icon" style="width:38px;height:38px;font-size:16px;background:var(--warn-soft)">${doc.requiresSignature?'✍️':'📄'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(doc.title)}</div>
+            <div style="font-size:12px;color:var(--ink-faint)">${doc.requiresSignature?'Vyžaduje podpis':'K potvrzení'}${doc.deadline?' · do '+fmtDate(doc.deadline):''}</div>
+          </div>
+          <span class="btn-sm primary" style="pointer-events:none">${doc.requiresSignature?'Podepsat':'Potvrdit'}</span>
+        </div>`).join('');
+    }
+  } else { blkMyDocs.style.display = 'none'; }
+
+  // ── FAKTURY KE SCHVÁLENÍ (majitel + vedení) ──
+  if (canApproveInv) {
+    blkInv.style.display = 'block';
+    const pending = invoices.filter(i => (i.status||'pending')==='pending').sort((a,b)=>new Date(b.uploadedAt||0)-new Date(a.uploadedAt||0));
+    document.getElementById('dash-inv-count').textContent = pending.length;
+    const invWrap = document.getElementById('dash-invoices');
+    if (pending.length === 0) {
+      invWrap.innerHTML = '<div class="dash-empty">Žádné faktury nečekají na schválení. ✓</div>';
+    } else {
+      invWrap.innerHTML = pending.map(inv => `
+        <div class="dash-inv-row" onclick="openInvoiceDetail('${inv.id}')">
+          <div class="invoice-icon" style="width:40px;height:40px;font-size:18px">🧾</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(inv.title)}</div>
+            <div style="font-size:12px;color:var(--ink-faint)">${inv.supplier?esc(inv.supplier)+' · ':''}nahrál ${esc(inv.uploadedByName||'—')}${inv.dueDate?' · splatnost '+fmtDate(inv.dueDate):''}</div>
+          </div>
+          ${inv.amount!==''?`<div class="invoice-amount" style="font-size:19px">${fmtMoney(inv.amount,inv.currency)}</div>`:''}
+          <span class="btn-sm primary" style="pointer-events:none">Zobrazit</span>
+        </div>`).join('');
+    }
+  } else { blkInv.style.display = 'none'; }
+
+  // ── TRŽBY SOUHRN (majitel + vedení) ──
+  if ((isOwner || isAdmin) && trzbyData && trzbyData.length > 0) {
+    blkTrzby.style.display = 'block';
+    const last = trzbyData[trzbyData.length - 1];
+    const curY = last.y, curM = last.m;
+    const MONTHS_SHORT = ['','Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
+    const MONTHS_FULL2 = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
+    const pm = curM === 1 ? 12 : curM-1, py = curM === 1 ? curY-1 : curY;
+    const curRows  = trzbyData.filter(r => r.y === curY && r.m === curM);
+    const prevRows = trzbyData.filter(r => r.y === py && r.m === pm);
+    const sumRows = arr => arr.reduce((s,r) => s+r.celkem, 0);
+    const curTotal = sumRows(curRows), prevTotal = sumRows(prevRows);
+    const diff = prevTotal > 0 ? ((curTotal-prevTotal)/prevTotal*100).toFixed(1) : null;
+    const avg = curRows.length ? curTotal/curRows.length : 0;
+    const bestRow = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
+    const today = curRows.length ? curRows[curRows.length-1] : null;
+
+    document.getElementById('dash-trzby-title').textContent = 'Tržby — ' + MONTHS_FULL2[curM] + ' ' + curY;
+
+    const SEGS_OV = ['Hotel','F&B','Wellness','Sport','C&B','Akademie'];
+    const segTotals = SEGS_OV.map(s => curRows.reduce((sum,r) => sum+(r.segs?.[s]||0), 0));
+    const maxSeg = Math.max(...segTotals, 1);
+
+    document.getElementById('dash-trzby').innerHTML = `
+      <div class="dash-trzby-kpi">
+        <div class="dash-trzby-card">
+          <div class="dash-trzby-label">Poslední den</div>
+          <div class="dash-trzby-val">${today?Math.round(today.celkem).toLocaleString('cs-CZ'):'—'} Kč</div>
+          <div class="dash-trzby-diff" style="color:var(--ink-faint)">${today?today.date.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'}):''}</div>
         </div>
-        ${inv.amount!==''?`<div class="invoice-amount" style="font-size:19px">${fmtMoney(inv.amount,inv.currency)}</div>`:''}
-        <span class="btn-sm primary" style="pointer-events:none">Zobrazit</span>
-      </div>`).join('');
-  }
-
-  // tržby summary
-  const trzbyBlock = document.getElementById('dash-trzby-block');
-  if (!trzbyData || trzbyData.length === 0) { trzbyBlock.style.display = 'none'; return; }
-  trzbyBlock.style.display = 'block';
-
-  const last = trzbyData[trzbyData.length - 1];
-  const curY = last.y, curM = last.m;
-  const MONTHS_SHORT = ['','Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
-  const MONTHS_FULL2 = ['','Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'];
-  const pm = curM === 1 ? 12 : curM-1, py = curM === 1 ? curY-1 : curY;
-  const curRows  = trzbyData.filter(r => r.y === curY && r.m === curM);
-  const prevRows = trzbyData.filter(r => r.y === py && r.m === pm);
-  const sumRows = arr => arr.reduce((s,r) => s+r.celkem, 0);
-  const curTotal = sumRows(curRows), prevTotal = sumRows(prevRows);
-  const diff = prevTotal > 0 ? ((curTotal-prevTotal)/prevTotal*100).toFixed(1) : null;
-  const avg = curRows.length ? curTotal/curRows.length : 0;
-  const bestRow = curRows.reduce((b,r) => r.celkem > (b.celkem||0) ? r : b, curRows[0] || {celkem:0});
-
-  document.getElementById('dash-trzby-title').textContent = 'Tržby — ' + MONTHS_FULL2[curM] + ' ' + curY;
-
-  const SEGS_OV = ['Hotel','F&B','Wellness','Sport','C&B','Akademie'];
-  const segTotals = SEGS_OV.map(s => curRows.reduce((sum,r) => sum+(r.segs?.[s]||0), 0));
-  const maxSeg = Math.max(...segTotals, 1);
-
-  document.getElementById('dash-trzby').innerHTML = `
-    <div class="dash-trzby-kpi">
-      <div class="dash-trzby-card">
-        <div class="dash-trzby-label">Měsíc celkem</div>
-        <div class="dash-trzby-val">${Math.round(curTotal).toLocaleString('cs-CZ')} Kč</div>
-        ${diff !== null ? `<div class="dash-trzby-diff" style="color:${diff>=0?'var(--ok)':'var(--danger)'}">${diff>=0?'▲':'▼'} ${Math.abs(diff)} % vs ${MONTHS_SHORT[pm]}</div>` : ''}
+        <div class="dash-trzby-card">
+          <div class="dash-trzby-label">Měsíc celkem</div>
+          <div class="dash-trzby-val">${Math.round(curTotal).toLocaleString('cs-CZ')} Kč</div>
+          ${diff !== null ? `<div class="dash-trzby-diff" style="color:${diff>=0?'var(--ok)':'var(--danger)'}">${diff>=0?'▲':'▼'} ${Math.abs(diff)} % vs ${MONTHS_SHORT[pm]}</div>` : ''}
+        </div>
+        <div class="dash-trzby-card">
+          <div class="dash-trzby-label">Průměr / den</div>
+          <div class="dash-trzby-val">${Math.round(avg).toLocaleString('cs-CZ')} Kč</div>
+          <div class="dash-trzby-diff" style="color:var(--ink-faint)">${curRows.length} dní</div>
+        </div>
       </div>
-      <div class="dash-trzby-card">
-        <div class="dash-trzby-label">Průměr / den</div>
-        <div class="dash-trzby-val">${Math.round(avg).toLocaleString('cs-CZ')} Kč</div>
-        <div class="dash-trzby-diff" style="color:var(--ink-faint)">${curRows.length} dní dat</div>
+      <div class="dash-trzby-segs">
+        ${SEGS_OV.map((s,i) => segTotals[i] > 100 ? `
+          <div class="dash-trzby-seg-row">
+            <div class="dash-trzby-seg-label">${s}</div>
+            <div class="dash-trzby-bar"><div class="dash-trzby-bar-fill" style="width:${Math.round(segTotals[i]/maxSeg*100)}%"></div></div>
+            <div class="dash-trzby-seg-val">${Math.round(segTotals[i]/1000)} tis.</div>
+          </div>` : '').join('')}
       </div>
-      <div class="dash-trzby-card">
-        <div class="dash-trzby-label">Nejlepší den</div>
-        <div class="dash-trzby-val">${Math.round(bestRow.celkem||0).toLocaleString('cs-CZ')} Kč</div>
-        <div class="dash-trzby-diff" style="color:var(--ink-faint)">${bestRow.date ? bestRow.date.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric'}) : ''}</div>
-      </div>
-    </div>
-    <div class="dash-trzby-segs">
-      ${SEGS_OV.map((s,i) => segTotals[i] > 100 ? `
-        <div class="dash-trzby-seg-row">
-          <div class="dash-trzby-seg-label">${s}</div>
-          <div class="dash-trzby-bar"><div class="dash-trzby-bar-fill" style="width:${Math.round(segTotals[i]/maxSeg*100)}%"></div></div>
-          <div class="dash-trzby-seg-val">${Math.round(segTotals[i]/1000)} tis.</div>
-        </div>` : '').join('')}
-    </div>
-    <div style="margin-top:14px;text-align:right">
-      <button class="btn-sm secondary" onclick="switchTab('trzby')" style="font-size:12px;padding:7px 14px">Zobrazit celé Tržby →</button>
-    </div>`;
+      <div style="margin-top:14px;text-align:right">
+        <button class="btn-sm secondary" onclick="switchTab('trzby')" style="font-size:12px;padding:7px 14px">Zobrazit celé Tržby →</button>
+      </div>`;
+  } else { blkTrzby.style.display = 'none'; }
 }
 
 function fmtMoney(amount, currency) {
