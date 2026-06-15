@@ -368,6 +368,63 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var
 }
 .loading-text { font-size: 16px; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
 .loading-sub { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
+
+/* AUDIENCE SELECTORS */
+.audience-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.audience-chip {
+  padding: 8px 16px; border: 1.5px solid var(--gray-200); border-radius: 20px;
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+  background: var(--white); color: var(--gray-600); user-select: none;
+}
+.audience-chip:hover { border-color: var(--green-mid); }
+.audience-chip.selected { background: var(--green-dark); color: var(--white); border-color: var(--green-dark); }
+.audience-checklist {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 220px;
+  overflow-y: auto; border: 1.5px solid var(--gray-200); border-radius: var(--radius); padding: 12px;
+}
+.audience-check-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px;
+  cursor: pointer; transition: background 0.15s; font-size: 13px;
+}
+.audience-check-item:hover { background: var(--gray-100); }
+.audience-check-item input { width: 16px; height: 16px; accent-color: var(--green-dark); cursor: pointer; }
+.audience-check-item .ac-name { font-weight: 600; color: var(--gray-900); }
+.audience-check-item .ac-dept { font-size: 11px; color: var(--gray-400); }
+
+/* CONFIRMATION DETAIL (expandable) */
+.conf-detail {
+  margin-top: 10px; padding: 14px 16px; background: var(--gray-50);
+  border-radius: 8px; border: 1px solid var(--gray-200); display: none;
+}
+.conf-detail.open { display: block; }
+.conf-detail-section { margin-bottom: 14px; }
+.conf-detail-section:last-child { margin-bottom: 0; }
+.conf-detail-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.conf-detail-title.done { color: var(--green-ok); }
+.conf-detail-title.pending { color: var(--orange); }
+.conf-person {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 12px; background: var(--white); border-radius: 6px;
+  border: 1px solid var(--gray-200); margin-bottom: 6px; font-size: 13px;
+}
+.conf-person:last-child { margin-bottom: 0; }
+.conf-person-name { font-weight: 600; color: var(--gray-900); }
+.conf-person-meta { font-size: 11px; color: var(--gray-400); }
+.btn-toggle-detail {
+  background: none; border: none; color: var(--green-mid); font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; padding: 4px 0;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.btn-toggle-detail:hover { text-decoration: underline; }
+.deadline-pill {
+  display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.deadline-pill.ok { background: #eef7f0; color: #2d6a3a; }
+.deadline-pill.soon { background: var(--orange-light); color: var(--orange); }
+.deadline-pill.over { background: var(--red-light); color: var(--red); }
 .divider { border: none; border-top: 1px solid var(--gray-200); margin: 20px 0; }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 .tag.new { background: #e8f7ee; color: #1d7a40; border: 1px solid #b3e0c0; }
@@ -390,8 +447,8 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var
 <script>
 const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxL-O0Y0T1HRbCaH-CTXv4X52zTGR1VX_HHQO2tlAMoxxDytGingkaBrD5FxF6ShpWx/exec',
-  ADMIN_PIN: 'vista2024admin',
-  VERSION: '2.0'
+  ADMIN_PIN: 'VistaResort2050',
+  VERSION: '3.0'
 };
 
 const DEPARTMENTS = ['Hotel', 'Wellness', 'Gastro', 'Sport', 'Správa', 'IT', 'Ostatní'];
@@ -518,8 +575,29 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
               <label>Popis (volitelné)</label>
               <input type="text" id="doc-desc" placeholder="Krátký popis obsahu dokumentu">
             </div>
+            <div class="form-group">
+              <label>Termín potvrzení (volitelné)</label>
+              <input type="date" id="doc-deadline">
+              <div class="hint">Pokud někdo nepotvrdí do termínu, dostane připomínku a vám přijde upozornění.</div>
+            </div>
+            <div class="form-group">
+              <label>Komu poslat</label>
+              <select id="doc-audience-type" onchange="onAudienceTypeChange()">
+                <option value="all">Všem zaměstnancům</option>
+                <option value="depts">Vybraným oddělením</option>
+                <option value="specific">Konkrétním lidem</option>
+              </select>
+            </div>
+            <div class="form-group" id="audience-depts-wrap" style="display:none">
+              <label>Oddělení</label>
+              <div id="audience-depts-list" class="audience-chips"></div>
+            </div>
+            <div class="form-group" id="audience-specific-wrap" style="display:none">
+              <label>Vyberte zaměstnance</label>
+              <div id="audience-specific-list" class="audience-checklist"></div>
+            </div>
             <div style="display:flex;gap:8px;">
-              <button class="btn-sm primary" onclick="uploadDocument()">⬆ Nahrát</button>
+              <button class="btn-sm primary" onclick="uploadDocument()">⬆ Nahrát a odeslat</button>
               <button class="btn-sm secondary" onclick="cancelUpload()">Zrušit</button>
             </div>
           </div>
@@ -596,10 +674,10 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
             <div class="form-group" style="margin:0">
               <label>PIN kód</label>
               <div class="pin-gen-wrap">
-                <input type="text" id="new-emp-pin" placeholder="min. 4 znaky" maxlength="8">
+                <input type="text" id="new-emp-pin" placeholder="min. 3 znaky" maxlength="8">
                 <button class="btn-sm gold" onclick="generatePin()" title="Vygenerovat náhodný PIN">🎲 PIN</button>
               </div>
-              <div class="hint">Klikni 🎲 pro náhodný 4-místný PIN. PIN bude viditelný při uložení.</div>
+              <div class="hint">Klikni 🎲 pro náhodný 3-místný PIN. PIN bude viditelný při uložení.</div>
             </div>
           </div>
           <div class="form-group">
@@ -831,17 +909,23 @@ function renderDocuments() {
   const search = (document.getElementById('docs-search')?.value || '').toLowerCase();
   const cat    = document.getElementById('docs-cat-filter')?.value || '';
 
-  let filtered = documents.filter(d =>
+  // Employees see only docs targeted to them; admin sees all
+  const visibleDocs = isAdmin ? documents : documents.filter(d => {
+    const ids = docTargets(d).map(e => e.id);
+    return ids.indexOf(currentUser?.id) >= 0;
+  });
+
+  let filtered = visibleDocs.filter(d =>
     (!search || d.title.toLowerCase().includes(search) || (d.desc||'').toLowerCase().includes(search)) &&
     (!cat || d.category === cat)
   );
 
-  const total = documents.length;
+  const total = visibleDocs.length;
   const sub   = document.getElementById('docs-subtitle');
   sub.textContent = total === 0 ? 'Žádné dokumenty' : total + ' dokument' + (total > 4 ? 'ů' : total > 1 ? 'y' : '');
 
   if (filtered.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Administrátor zatím nenahrál žádné dokumenty.':'Zkuste jiný hledaný výraz.'}</p></div>`;
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Zatím pro vás nejsou žádné dokumenty.':'Zkuste jiný hledaný výraz.'}</p></div>`;
     return;
   }
 
@@ -852,6 +936,7 @@ function renderDocuments() {
 
   filtered.forEach(doc => {
     const conf = myConf.find(cf => cf.docId === doc.id);
+    const dl   = deadlineInfo(doc);
     const card = document.createElement('div');
     card.className = 'doc-card';
     card.innerHTML = `
@@ -862,6 +947,7 @@ function renderDocuments() {
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
           ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
           <span>Přidáno ${fmtDate(doc.uploadedAt)}</span>
+          ${dl && !conf ? `<span class="deadline-pill ${dl.cls}">⏰ ${dl.txt}</span>` : ''}
         </div>
       </div>
       <div class="doc-actions">
@@ -920,18 +1006,53 @@ async function loadAdminData() {
 }
 
 function updateStats() {
-  const total    = documents.length * employees.length;
-  const confPct  = total > 0 ? Math.round(confirmations.length / total * 100) : 0;
-  const pending  = total - confirmations.length;
+  // Count expected confirmations based on each doc's audience
+  let expected = 0, done = 0;
+  documents.forEach(doc => {
+    const targets = docTargets(doc);
+    expected += targets.length;
+    const confIds = new Set(confirmations.filter(cf => cf.docId === doc.id).map(cf => cf.employeeId));
+    done += targets.filter(e => confIds.has(e.id)).length;
+  });
+  const confPct = expected > 0 ? Math.round(done / expected * 100) : 0;
+  const pending = expected - done;
   document.getElementById('stat-docs').textContent      = documents.length;
   document.getElementById('stat-employees').textContent = employees.length;
-  document.getElementById('stat-confirms').textContent  = confirmations.length;
+  document.getElementById('stat-confirms').textContent  = done;
   document.getElementById('stat-pct').textContent       = confPct + '%';
-  document.getElementById('stat-pending').textContent   = pending > 0 ? pending + ' čeká na potvrzení' : 'Vše potvrzeno ✓';
+  document.getElementById('stat-pending').textContent   = pending > 0 ? pending + ' čeká na potvrzení' : (expected > 0 ? 'Vše potvrzeno ✓' : '');
   buildConfFilters();
 }
 
 // ===== ADMIN DOCS LIST =====
+function audienceLabel(doc) {
+  if (!doc.audienceType || doc.audienceType === 'all') return 'Všichni zaměstnanci';
+  if (doc.audienceType === 'depts') return 'Oddělení: ' + (doc.audienceList || []).join(', ');
+  if (doc.audienceType === 'specific') {
+    const names = (doc.audienceList || []).map(id => { const e = employees.find(x => x.id === id); return e ? e.name : id; });
+    return 'Vybraní: ' + names.join(', ');
+  }
+  return 'Všichni';
+}
+
+function docTargets(doc) {
+  if (!doc.audienceType || doc.audienceType === 'all') return employees;
+  if (doc.audienceType === 'depts') return employees.filter(e => (doc.audienceList || []).indexOf(e.dept) >= 0);
+  if (doc.audienceType === 'specific') return employees.filter(e => (doc.audienceList || []).indexOf(e.id) >= 0);
+  return employees;
+}
+
+function deadlineInfo(doc) {
+  if (!doc.deadline) return null;
+  const dl = new Date(doc.deadline);
+  const now = new Date();
+  const days = Math.ceil((dl - now) / (1000*60*60*24));
+  let cls = 'ok', txt = 'do ' + fmtDate(doc.deadline);
+  if (days < 0) { cls = 'over'; txt = 'Po termínu (' + fmtDate(doc.deadline) + ')'; }
+  else if (days <= 3) { cls = 'soon'; txt = 'do ' + fmtDate(doc.deadline) + ' (' + days + ' dní)'; }
+  return { cls, txt };
+}
+
 function renderAdminDocsList() {
   const c = document.getElementById('admin-docs-list');
   if (documents.length === 0) {
@@ -940,10 +1061,17 @@ function renderAdminDocsList() {
   }
   c.innerHTML = '';
   documents.forEach(doc => {
-    const docConfs = confirmations.filter(cf => cf.docId === doc.id);
-    const pct = employees.length > 0 ? Math.round(docConfs.length / employees.length * 100) : 0;
+    const targets   = docTargets(doc);
+    const docConfs  = confirmations.filter(cf => cf.docId === doc.id);
+    const confirmedIds = new Set(docConfs.map(cf => cf.employeeId));
+    const confirmed = targets.filter(e => confirmedIds.has(e.id));
+    const pending   = targets.filter(e => !confirmedIds.has(e.id));
+    const pct = targets.length > 0 ? Math.round(confirmed.length / targets.length * 100) : 0;
+    const dl  = deadlineInfo(doc);
+
     const row = document.createElement('div');
     row.className = 'doc-admin-row';
+    row.style.flexWrap = 'wrap';
     row.innerHTML = `
       <div style="font-size:22px">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-admin-info">
@@ -952,14 +1080,38 @@ function renderAdminDocsList() {
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span> ` : ''}
           ${doc.desc ? esc(doc.desc) + ' · ' : ''}
           Nahráno ${fmtDate(doc.uploadedAt)}
+          ${dl ? ` · <span class="deadline-pill ${dl.cls}">⏰ ${dl.txt}</span>` : ''}
           ${doc.url && doc.url !== '#' ? ` · <a href="${esc(doc.url)}" target="_blank" style="color:var(--green-mid)">Otevřít soubor</a>` : ''}
         </div>
+        <div class="doc-admin-meta" style="margin-top:3px;">👥 ${esc(audienceLabel(doc))}</div>
         <div class="doc-admin-progress">
           <div class="progress-bar-label">
-            <span>${docConfs.length} z ${employees.length} zaměstnanců potvrdilo</span>
+            <span>${confirmed.length} z ${targets.length} potvrdilo</span>
             <span style="font-weight:700;color:${pct===100?'var(--green-ok)':'var(--orange)'}">${pct}%</span>
           </div>
           <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        </div>
+        <button class="btn-toggle-detail" onclick="toggleDocDetail('${doc.id}')">
+          <span id="detail-arrow-${doc.id}">▸</span> Zobrazit kdo potvrdil
+        </button>
+        <div class="conf-detail" id="detail-${doc.id}">
+          <div class="conf-detail-section">
+            <div class="conf-detail-title done">✓ Potvrdili (${confirmed.length})</div>
+            ${confirmed.length ? confirmed.map(e => {
+              const cf = docConfs.find(c => c.employeeId === e.id);
+              return `<div class="conf-person">
+                <span class="conf-person-name">${esc(e.name)}${e.dept ? ` <span class="conf-person-meta">· ${esc(e.dept)}</span>` : ''}</span>
+                <span class="conf-person-meta">${cf ? fmtDateTime(cf.confirmedAt) : ''}</span>
+              </div>`;
+            }).join('') : '<div style="font-size:13px;color:var(--gray-400)">Zatím nikdo</div>'}
+          </div>
+          <div class="conf-detail-section">
+            <div class="conf-detail-title pending">⏳ Čekají (${pending.length})</div>
+            ${pending.length ? pending.map(e => `<div class="conf-person">
+                <span class="conf-person-name">${esc(e.name)}${e.dept ? ` <span class="conf-person-meta">· ${esc(e.dept)}</span>` : ''}</span>
+                <span class="conf-person-meta">${e.email || 'bez emailu'}</span>
+              </div>`).join('') : '<div style="font-size:13px;color:var(--green-ok)">Všichni potvrdili ✓</div>'}
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
@@ -968,6 +1120,13 @@ function renderAdminDocsList() {
       </div>`;
     c.appendChild(row);
   });
+}
+
+function toggleDocDetail(docId) {
+  const d = document.getElementById('detail-' + docId);
+  const a = document.getElementById('detail-arrow-' + docId);
+  const open = d.classList.toggle('open');
+  if (a) a.textContent = open ? '▾' : '▸';
 }
 
 async function deleteDocument(id, title) {
@@ -1013,7 +1172,8 @@ function renderConfirmations() {
   documents
     .filter(d => !docFilter || d.id === docFilter)
     .forEach(doc => {
-      employees
+      // Only employees this doc was sent to
+      docTargets(doc)
         .filter(e => !deptFilter || e.dept === deptFilter)
         .forEach(emp => {
           const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
@@ -1053,7 +1213,7 @@ function renderConfirmations() {
 function exportConfirmations() {
   const rows = [['Zaměstnanec','Pozice','Oddělení','Dokument','Potvrzeno','Datum']];
   documents.forEach(doc => {
-    employees.forEach(emp => {
+    docTargets(doc).forEach(emp => {
       const cf = confirmations.find(c => c.docId === doc.id && c.employeeId === emp.id);
       rows.push([emp.name, emp.role||'', emp.dept||'', doc.title, cf?'Ano':'Ne', cf?fmtDate(cf.confirmedAt):'']);
     });
@@ -1124,13 +1284,13 @@ function toggleAddEmpForm() {
 }
 
 function generatePin() {
-  const pin = String(Math.floor(1000 + Math.random() * 9000));
+  const pin = String(Math.floor(100 + Math.random() * 900));
   document.getElementById('new-emp-pin').value = pin;
   document.getElementById('new-emp-pin').type = 'text';
   showToast('Vygenerován PIN: ' + pin);
 }
 function generatePinEdit() {
-  const pin = String(Math.floor(1000 + Math.random() * 9000));
+  const pin = String(Math.floor(100 + Math.random() * 900));
   document.getElementById('edit-emp-pin').value = pin;
   showToast('Vygenerován PIN: ' + pin);
 }
@@ -1141,7 +1301,7 @@ async function addEmployee() {
   const dept = document.getElementById('new-emp-dept').value;
   const pin  = document.getElementById('new-emp-pin').value.trim();
   if (!name || !pin) { showToast('Vyplňte jméno a PIN', 'error'); return; }
-  if (pin.length < 4) { showToast('PIN musí mít alespoň 4 znaky', 'error'); return; }
+  if (pin.length < 3) { showToast('PIN musí mít alespoň 3 znaky', 'error'); return; }
   if (employees.some(e => e.pin === pin)) { showToast('Tento PIN už existuje', 'error'); return; }
   const email = document.getElementById('new-emp-email').value.trim();
   const emp = { id: 'emp_' + Date.now(), name, role, dept, pin, email };
@@ -1220,6 +1380,38 @@ async function deleteEmployee(id) {
 function toggleUploadForm() {
   uploadFormVisible = !uploadFormVisible;
   document.getElementById('upload-section').style.display = uploadFormVisible ? 'block' : 'none';
+  if (uploadFormVisible) buildAudienceSelectors();
+}
+
+function buildAudienceSelectors() {
+  // Departments present among employees
+  const depts = [...new Set(employees.map(e => e.dept).filter(Boolean))];
+  const dWrap = document.getElementById('audience-depts-list');
+  dWrap.innerHTML = '';
+  depts.forEach(d => {
+    const chip = document.createElement('div');
+    chip.className = 'audience-chip';
+    chip.textContent = d;
+    chip.dataset.dept = d;
+    chip.onclick = () => chip.classList.toggle('selected');
+    dWrap.appendChild(chip);
+  });
+  // Specific employees
+  const sWrap = document.getElementById('audience-specific-list');
+  sWrap.innerHTML = '';
+  employees.forEach(e => {
+    const item = document.createElement('label');
+    item.className = 'audience-check-item';
+    item.innerHTML = `<input type="checkbox" value="${e.id}">
+      <span><span class="ac-name">${esc(e.name)}</span>${e.dept ? ` <span class="ac-dept">· ${esc(e.dept)}</span>` : ''}</span>`;
+    sWrap.appendChild(item);
+  });
+}
+
+function onAudienceTypeChange() {
+  const type = document.getElementById('doc-audience-type').value;
+  document.getElementById('audience-depts-wrap').style.display    = type === 'depts'    ? 'block' : 'none';
+  document.getElementById('audience-specific-wrap').style.display = type === 'specific' ? 'block' : 'none';
 }
 
 function onFileSelected(input) {
@@ -1237,14 +1429,31 @@ uploadArea.addEventListener('drop', e => {
   if (e.dataTransfer.files[0]) { document.getElementById('upload-file-input').files = e.dataTransfer.files; onFileSelected(document.getElementById('upload-file-input')); }
 });
 
+function collectAudience() {
+  const type = document.getElementById('doc-audience-type').value;
+  let list = [];
+  if (type === 'depts') {
+    list = [...document.querySelectorAll('#audience-depts-list .audience-chip.selected')].map(c => c.dataset.dept);
+  } else if (type === 'specific') {
+    list = [...document.querySelectorAll('#audience-specific-list input:checked')].map(c => c.value);
+  }
+  return { audienceType: type, audienceList: list };
+}
+
 async function uploadDocument() {
   const title    = document.getElementById('doc-title').value.trim();
   const category = document.getElementById('doc-category').value;
   const desc     = document.getElementById('doc-desc').value.trim();
+  const deadline = document.getElementById('doc-deadline').value; // YYYY-MM-DD or ''
+  const aud      = collectAudience();
   if (!title) { showToast('Zadejte název dokumentu', 'error'); return; }
+  if (aud.audienceType === 'depts' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jedno oddělení', 'error'); return; }
+  if (aud.audienceType === 'specific' && aud.audienceList.length === 0) { showToast('Vyberte alespoň jednoho zaměstnance', 'error'); return; }
+
+  const deadlineISO = deadline ? new Date(deadline + 'T23:59:59').toISOString() : '';
 
   if (DEMO_MODE()) {
-    const doc = { id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString() };
+    const doc = { id: 'doc_'+Date.now(), title, category, desc, url: '#', uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList };
     documents.push(doc);
     cancelUpload(); toggleUploadForm();
     renderAdminDocsList(); renderDocuments(); updateStats();
@@ -1254,12 +1463,12 @@ async function uploadDocument() {
   showLoading('Nahrávám dokument a odesílám notifikace...');
   try {
     const b64 = await fileToB64(selectedFile);
-    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString() });
-    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString() });
+    const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList });
+    documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString(), deadline: deadlineISO, audienceType: aud.audienceType, audienceList: aud.audienceList });
     cancelUpload(); toggleUploadForm();
     renderAdminDocsList(); renderDocuments(); updateStats();
     hideLoading();
-    showToast(`Dokument "${title}" nahrán`, 'success');
+    showToast(`Dokument "${title}" nahrán a odeslán`, 'success');
   } catch(e) { hideLoading(); showToast('Chyba při nahrávání: '+e.message, 'error'); }
 }
 
@@ -1267,8 +1476,10 @@ function cancelUpload() {
   selectedFile = null;
   document.getElementById('upload-form').classList.remove('visible');
   document.getElementById('upload-file-input').value = '';
-  ['doc-title','doc-desc'].forEach(id => document.getElementById(id).value = '');
+  ['doc-title','doc-desc','doc-deadline'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('doc-category').value = '';
+  document.getElementById('doc-audience-type').value = 'all';
+  onAudienceTypeChange();
 }
 
 function fileToB64(file) {
@@ -1301,6 +1512,12 @@ function getDocIcon(name, cat) {
 function fmtDate(iso) {
   if (!iso) return '';
   try { return new Date(iso).toLocaleDateString('cs-CZ', { day:'numeric', month:'short', year:'numeric' }); }
+  catch { return iso; }
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  try { return new Date(iso).toLocaleString('cs-CZ', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }); }
   catch { return iso; }
 }
 
