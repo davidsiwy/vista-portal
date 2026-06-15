@@ -389,20 +389,11 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
       <p>Interní dokumentový systém</p>
     </div>
     <div class="form-group">
-      <label>Vyberte jméno</label>
-      <select id="login-name"><option value="">Načítám...</option></select>
-    </div>
-    <div class="form-group">
       <label>PIN kód</label>
-      <input type="password" id="login-pin" placeholder="••••" maxlength="32" inputmode="numeric">
+      <input type="password" id="login-pin" placeholder="Zadejte svůj PIN" maxlength="32" inputmode="numeric" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
     </div>
     <button class="btn-primary" onclick="doLogin()">Přihlásit se</button>
-    <p class="login-error" id="login-error">Nesprávné jméno nebo PIN.</p>
-    <div style="margin-top:18px;text-align:center;">
-      <button onclick="showAdminLogin()" style="background:none;border:none;font-size:12px;color:var(--gray-400);cursor:pointer;font-family:Inter,sans-serif;text-decoration:underline;">
-        Přihlásit jako admin
-      </button>
-    </div>
+    <p class="login-error" id="login-error">Nesprávný PIN kód.</p>
   </div>
 </div>
 
@@ -691,50 +682,64 @@ function loadDemoData() {
 }
 
 // ===== INIT =====
-window.onload = () => {
+window.onload = async () => {
   if (DEMO_MODE()) loadDemoData();
-  populateLoginSelect();
+  // Restore session after refresh
+  const saved = sessionStorage.getItem('vista_session');
+  if (saved) {
+    try {
+      const s = JSON.parse(saved);
+      // Reload data so we have fresh employees/docs
+      if (!DEMO_MODE()) {
+        const d = await apiCall('getAll');
+        if (d.employees)     employees     = d.employees;
+        if (d.documents)     documents     = d.documents;
+        if (d.confirmations) confirmations = d.confirmations;
+      }
+      if (s.isAdmin) {
+        isAdmin = true;
+        currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
+        enterApp(); return;
+      } else {
+        const emp = employees.find(e => e.id === s.userId);
+        if (emp) { isAdmin = false; currentUser = emp; enterApp(); return; }
+      }
+    } catch(e) { sessionStorage.removeItem('vista_session'); }
+  }
 };
 
-function populateLoginSelect() {
-  const sel = document.getElementById('login-name');
-  sel.innerHTML = '<option value="">Vyberte jméno...</option>';
-  employees.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value = e.id;
-    opt.textContent = e.name + (e.dept ? ' (' + e.dept + ')' : '');
-    sel.appendChild(opt);
-  });
-}
-
-// ===== LOGIN =====
-function showAdminLogin() {
-  const sel = document.getElementById('login-name');
-  sel.innerHTML = '<option value="__admin__">— Admin —</option>';
-  document.getElementById('login-pin').focus();
-}
-
+// ===== LOGIN (PIN only) =====
 async function doLogin() {
-  const nameEl = document.getElementById('login-name');
-  const pinEl  = document.getElementById('login-pin');
-  const errEl  = document.getElementById('login-error');
-  const selId  = nameEl.value;
-  const pin    = pinEl.value.trim();
+  const pinEl = document.getElementById('login-pin');
+  const errEl = document.getElementById('login-error');
+  const pin   = pinEl.value.trim();
   errEl.style.display = 'none';
 
-  if (!selId || !pin) { errEl.textContent = 'Vyplňte jméno a PIN.'; errEl.style.display = 'block'; return; }
+  if (!pin) { errEl.textContent = 'Zadejte PIN.'; errEl.style.display = 'block'; return; }
 
-  if (selId === '__admin__' && pin === CONFIG.ADMIN_PIN) {
-    isAdmin = true; currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
+  // Admin PIN check
+  if (pin === CONFIG.ADMIN_PIN) {
+    isAdmin = true;
+    currentUser = { id: '__admin__', name: 'Admin', role: 'Administrator', dept: '' };
+    sessionStorage.setItem('vista_session', JSON.stringify({ isAdmin: true }));
     enterApp(); return;
   }
-  if (selId !== '__admin__') {
-    if (!DEMO_MODE()) {
-      try { const d = await apiCall('getEmployees'); if (d.employees) employees = d.employees; } catch(e) {}
-    }
-    const emp = employees.find(e => e.id === selId && e.pin === pin);
-    if (emp) { isAdmin = false; currentUser = emp; enterApp(); return; }
+
+  // Employee PIN lookup
+  if (!DEMO_MODE()) {
+    try { const d = await apiCall('getAll');
+      if (d.employees)     employees     = d.employees;
+      if (d.documents)     documents     = d.documents;
+      if (d.confirmations) confirmations = d.confirmations;
+    } catch(e) {}
   }
+  const emp = employees.find(e => String(e.pin) === pin);
+  if (emp) {
+    isAdmin = false; currentUser = emp;
+    sessionStorage.setItem('vista_session', JSON.stringify({ isAdmin: false, userId: emp.id }));
+    enterApp(); return;
+  }
+
   errEl.textContent = 'Nesprávný PIN kód.'; errEl.style.display = 'block'; pinEl.value = '';
 }
 
@@ -752,13 +757,13 @@ function enterApp() {
 }
 
 function logout() {
+  sessionStorage.removeItem('vista_session');
   currentUser = null; isAdmin = false;
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-pin').value = '';
   document.getElementById('login-error').style.display = 'none';
   if (!DEMO_MODE()) { employees = []; documents = []; confirmations = []; }
-  populateLoginSelect();
 }
 
 // ===== TABS =====
@@ -1032,7 +1037,7 @@ function renderEmployees() {
   const c = document.getElementById('employees-container');
   if (employees.length === 0) {
     c.innerHTML = '<p style="font-size:13px;color:var(--gray-400);padding:8px 0">Zatím žádní zaměstnanci. Přidej prvního výše.</p>';
-    populateLoginSelect(); return;
+    return;
   }
   const byDept = {};
   employees.forEach(e => { const d = e.dept || 'Ostatní'; if (!byDept[d]) byDept[d] = []; byDept[d].push(e); });
@@ -1073,7 +1078,6 @@ function renderEmployees() {
   });
   html += '</tbody></table>';
   c.innerHTML = html;
-  populateLoginSelect();
 }
 
 function togglePin(id) {
