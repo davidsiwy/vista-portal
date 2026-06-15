@@ -719,11 +719,13 @@ a { color: inherit; }
   /* buttons */
   /* trzby grid stacks on mobile */
   #trzby-grid-2 { grid-template-columns: 1fr !important; }
-  .trzby-filters { flex-direction: column; align-items: stretch; }
-  .tf-group .filter-select { width: 100%; }
-  .seg-toggle { width: 100%; }
-  .seg-toggle-btn { flex: 1; padding: 11px 10px; font-size: 12.5px; }
+  .trzby-filters { flex-direction: column; align-items: stretch; gap: 10px; }
+  .tf-group { width: 100%; }
+  .tf-group .filter-select, .tf-group input[type="date"] { width: 100%; min-width: 0; box-sizing: border-box; }
+  .seg-toggle { display: flex; width: 100%; box-sizing: border-box; }
+  .seg-toggle-btn { flex: 1; text-align: center; padding: 12px 6px; font-size: 12px; }
   .cmp-grid { grid-template-columns: 1fr; gap: 10px; }
+  .cmp-arrow { text-align: center; font-size: 22px; padding: 4px 0; }
   .btn-sm { padding: 10px 16px; font-size: 13px; }
   .section-header .btn-sm { white-space: nowrap; }
   /* notif panel — full width bottom on mobile */
@@ -989,7 +991,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div class="section-title">Faktury</div>
         <div class="section-subtitle" id="invoices-subtitle">Faktury ke schválení majitelem</div>
       </div>
-      <button class="btn-sm primary" id="add-invoice-btn" onclick="toggleInvoiceForm()">+ Nahrát fakturu</button>
+      <button class="btn-sm primary" id="add-invoice-btn" onclick="toggleInvoiceForm()" style="display:none">+ Nahrát fakturu</button>
     </div>
     <div id="invoice-upload-section" style="display:none">
       <div class="admin-card">
@@ -1187,6 +1189,21 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       <div class="empty-icon">📊</div>
       <h3>Žádná data</h3>
       <p>Nahrajte report Excel (Výnosy dle středisek nebo Příjmy) tlačítkem výše.</p>
+    </div>
+  </div>
+
+  <!-- ============ REPORTY TAB ============ -->
+  <div id="tab-reports" class="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Reporty</div>
+        <div class="section-subtitle">Přehledy a exporty pro vedení</div>
+      </div>
+    </div>
+    <div class="admin-card" style="text-align:center;padding:60px 30px">
+      <div style="font-size:48px;margin-bottom:16px">📋</div>
+      <div style="font-family:var(--serif);font-size:22px;color:var(--peacock);margin-bottom:10px">Reporty</div>
+      <div style="font-family:var(--sans);font-size:14px;color:var(--ink-faint);max-width:380px;margin:0 auto">Tato sekce se teprve připravuje. Brzy zde bude možné stahovat měsíční přehledy, výkazy docházky a souhrny schválených faktur.</div>
     </div>
   </div>
 
@@ -1455,9 +1472,11 @@ function applyRole() {
 // Tab definitions per role
 function tabsForRole() {
   if (isOwner) return [
-    { key:'overview', label:'Přehled' },
-    { key:'invoices', label:'Faktury' },
-    { key:'trzby',   label:'Tržby' }
+    { key:'overview',  label:'Přehled' },
+    { key:'invoices',  label:'Faktury' },
+    { key:'trzby',    label:'Tržby' },
+    { key:'tasks',    label:'Úkoly' },
+    { key:'reports',  label:'Reporty' }
   ];
   if (isAdmin) return [
     { key:'tasks',   label:'Úkoly' },
@@ -1489,7 +1508,7 @@ function buildTabs() {
   });
 }
 
-const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby'];
+const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby','reports'];
 
 async function enterApp() {
   document.getElementById('login-screen').style.display = 'none';
@@ -2133,9 +2152,15 @@ function renderAdmin() {
 }
 
 function applyOwnerRestrictions() {
-  // Owner can view overview + confirmations, but not add/edit employees or upload docs
-  const hide = isOwner; // owner restricted
+  // Owner can view + approve, but not upload docs/invoices/trzby or manage employees
+  const hide = isOwner;
   document.querySelectorAll('[data-manage]').forEach(el => el.style.display = hide ? 'none' : '');
+  // invoice upload button — jen admin/GM
+  const addInvBtn = document.getElementById('add-invoice-btn');
+  if (addInvBtn) addInvBtn.style.display = (isOwner) ? 'none' : '';
+  // trzby upload label — jen admin/GM
+  const trzbyUploadLabel = document.querySelector('#tab-trzby .section-header label.btn-sm');
+  if (trzbyUploadLabel) trzbyUploadLabel.style.display = (isOwner) ? 'none' : '';
 }
 
 function updateStats() {
@@ -2768,8 +2793,8 @@ function visibleInvoices() {
 
 function renderInvoices() {
   const c = document.getElementById('invoices-container');
-  // employees can upload; everyone can view. Approve only canApproveInv.
-  document.getElementById('add-invoice-btn').style.display = '';
+  // owner jen schvaluje, nenahrává — upload jen admin/GM/zaměstnanci
+  document.getElementById('add-invoice-btn').style.display = isOwner ? 'none' : '';
   const pending = invoices.filter(i => (i.status||'pending')==='pending').length;
   document.getElementById('invoices-subtitle').textContent = invoices.length === 0 ? 'Zatím žádné faktury' : `${invoices.length} ${plural(invoices.length,'faktura','faktury','faktur')} · ${pending} ke schválení`;
   const list = visibleInvoices();
