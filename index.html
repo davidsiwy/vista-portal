@@ -349,6 +349,25 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-100); color: var
   padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #78590a; line-height: 1.6;
 }
 .setup-banner code { background: rgba(0,0,0,0.07); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: monospace; }
+
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(26,58,42,0.55);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  display: none; align-items: center; justify-content: center; z-index: 2000;
+}
+.loading-overlay.show { display: flex; }
+.loading-box {
+  background: var(--white); border-radius: var(--radius-lg); padding: 36px 44px;
+  text-align: center; box-shadow: var(--shadow-lg); max-width: 340px;
+}
+.loading-spinner {
+  width: 40px; height: 40px; border: 4px solid var(--gray-200);
+  border-top-color: var(--green-mid); border-radius: 50%;
+  animation: spin 0.7s linear infinite; margin: 0 auto 18px;
+}
+.loading-text { font-size: 16px; font-weight: 700; color: var(--green-dark); margin-bottom: 6px; }
+.loading-sub { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
 .divider { border: none; border-top: 1px solid var(--gray-200); margin: 20px 0; }
 .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 .tag.new { background: #e8f7ee; color: #1d7a40; border: 1px solid #b3e0c0; }
@@ -657,6 +676,15 @@ const DEMO_MODE   = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HER
 
 <div class="toast" id="toast"></div>
 
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loading-text">Ukládám...</div>
+    <div class="loading-sub">Vyčkejte prosím, neodcházejte ze stránky.</div>
+  </div>
+</div>
+
 <script>
 // ===== STATE =====
 let currentUser = null, isAdmin = false;
@@ -864,8 +892,10 @@ async function confirmDocument() {
   closeModal();
   const cf = { docId: docId, employeeId: currentUser.id, employeeName: currentUser.name, confirmedAt: new Date().toISOString() };
   if (!DEMO_MODE()) {
+    showLoading('Ukládám potvrzení...');
     try { await apiCall('addConfirmation', cf); }
-    catch(e) { showToast('Chyba při ukládání potvrzení', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba při ukládání potvrzení', 'error'); return; }
+    hideLoading();
   }
   confirmations.push(cf);
   renderDocuments();
@@ -943,8 +973,10 @@ function renderAdminDocsList() {
 async function deleteDocument(id, title) {
   if (!confirm(`Opravdu smazat dokument "${title}"?\nSmaže se i z Google Drive a všechna potvrzení k němu.`)) return;
   if (!DEMO_MODE()) {
+    showLoading('Mažu dokument...');
     try { await apiCall('deleteDocument', { id }); }
-    catch(e) { showToast('Chyba při mazání dokumentu', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba při mazání dokumentu', 'error'); return; }
+    hideLoading();
   }
   documents     = documents.filter(d => d.id !== id);
   confirmations = confirmations.filter(cf => cf.docId !== id);
@@ -1114,8 +1146,10 @@ async function addEmployee() {
   const email = document.getElementById('new-emp-email').value.trim();
   const emp = { id: 'emp_' + Date.now(), name, role, dept, pin, email };
   if (!DEMO_MODE()) {
+    showLoading('Přidávám zaměstnance...');
     try { await apiCall('addEmployee', emp); }
-    catch(e) { showToast('Chyba při přidávání', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba při přidávání', 'error'); return; }
+    hideLoading();
   }
   employees.push(emp);
   pinVisible[emp.id] = true; // show PIN after creation
@@ -1153,8 +1187,10 @@ async function saveEditEmployee() {
   const dup = employees.find(e => e.pin === pin && e.id !== id);
   if (dup) { showToast(`PIN ${pin} už má ${dup.name}`, 'error'); return; }
   if (!DEMO_MODE()) {
+    showLoading('Ukládám změny...');
     try { await apiCall('updateEmployee', { id, name, role, dept, pin, email }); }
-    catch(e) { showToast('Chyba při ukládání', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba při ukládání', 'error'); return; }
+    hideLoading();
   }
   const emp = employees.find(e => e.id === id);
   if (emp) { emp.name = name; emp.role = role; emp.dept = dept; emp.pin = pin; emp.email = email; }
@@ -1169,8 +1205,10 @@ async function deleteEmployee(id) {
   const emp = employees.find(e => e.id === id);
   if (!emp || !confirm(`Opravdu odstranit ${emp.name}?\nSmaže se i přihlášení a jejich potvrzení.`)) return;
   if (!DEMO_MODE()) {
+    showLoading('Mažu zaměstnance...');
     try { await apiCall('deleteEmployee', { id }); }
-    catch(e) { showToast('Chyba při mazání', 'error'); return; }
+    catch(e) { hideLoading(); showToast('Chyba při mazání', 'error'); return; }
+    hideLoading();
   }
   employees     = employees.filter(e => e.id !== id);
   confirmations = confirmations.filter(cf => cf.employeeId !== id);
@@ -1213,15 +1251,16 @@ async function uploadDocument() {
     showToast(`Dokument "${title}" přidán (demo mód)`, 'success'); return;
   }
   if (!selectedFile) { showToast('Vyberte soubor', 'error'); return; }
-  showToast('Nahrávám soubor...');
+  showLoading('Nahrávám dokument a odesílám notifikace...');
   try {
     const b64 = await fileToB64(selectedFile);
     const res = await apiCall('uploadDocument', { title, category, desc, fileName: selectedFile.name, fileType: selectedFile.type, fileData: b64, uploadedAt: new Date().toISOString() });
     documents.push({ id: res.docId, title, category, desc, url: res.url, fileName: selectedFile.name, uploadedAt: new Date().toISOString() });
     cancelUpload(); toggleUploadForm();
     renderAdminDocsList(); renderDocuments(); updateStats();
+    hideLoading();
     showToast(`Dokument "${title}" nahrán`, 'success');
-  } catch(e) { showToast('Chyba při nahrávání: '+e.message, 'error'); }
+  } catch(e) { hideLoading(); showToast('Chyba při nahrávání: '+e.message, 'error'); }
 }
 
 function cancelUpload() {
@@ -1275,6 +1314,14 @@ function showToast(msg, type='') {
   t.textContent = msg; t.className = 'toast ' + type;
   setTimeout(() => t.classList.add('show'), 10);
   setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+function showLoading(text) {
+  document.getElementById('loading-text').textContent = text || 'Ukládám...';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
 }
 </script>
 </body>
