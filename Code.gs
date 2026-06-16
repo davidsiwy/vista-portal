@@ -28,7 +28,8 @@ const SHEETS = {
   INVOICES: 'Faktury',
   WORKLOG: 'Deník',
   TRZBY: 'Tržby',
-  REPORTS: 'Reporty'
+  REPORTS: 'Reporty',
+  NOTIFICATIONS: 'Notifikace'
 };
 
 // ============================================================
@@ -132,6 +133,10 @@ function doPost(e) {
       case 'getTrzby':        result = getTrzby(); break;
       case 'uploadReport':    result = uploadReport(data); break;
       case 'deleteReport':    result = deleteReport(data.id); break;
+      // notifications
+      case 'getNotifications':  result = getNotifications(data); break;
+      case 'markNotifRead':     result = markNotifRead(data); break;
+      case 'pushNotification':  result = pushNotification(data); break;
       case 'addWorklog':      result = addWorklog(data); break;
       case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
@@ -160,7 +165,7 @@ function jsonResponse(data) {
 function initSheets() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
-  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','requiresSignature','remindedAt']);
+  ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','requiresSignature','readOnly','remindedAt']);
   ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt','signedUrl','signedFileId','signedFileName']);
   ensureSheet(ss, SHEETS.TASKS, ['id','title','desc','segment','priority','status','assignees','dependsOn','deadline','createdBy','createdByName','createdAt','completedAt','attachments','remindedAt']);
   ensureSheet(ss, SHEETS.COMMENTS, ['id','taskId','authorId','authorName','text','createdAt','entityType']);
@@ -168,6 +173,7 @@ function initSheets() {
   ensureSheet(ss, SHEETS.WORKLOG, ['id','employeeId','employeeName','segment','date','text','createdAt']);
   ensureSheet(ss, SHEETS.TRZBY, ['key','json','uploadedBy','uploadedAt']);
   ensureSheet(ss, SHEETS.REPORTS, ['id','title','category','desc','url','fileId','fileName','uploadedBy','uploadedByName','uploadedAt']);
+  ensureSheet(ss, SHEETS.NOTIFICATIONS, ['id','recipientId','type','icon','message','link','createdAt','readBy']);
   return { success: true };
 }
 
@@ -268,6 +274,7 @@ function getDocuments() {
     id: r.id, title: r.title, category: r.category, desc: r.desc, url: r.url, fileId: r.fileId || '',
     fileName: r.fileName, uploadedAt: r.uploadedAt, deadline: r.deadline || '', version: r.version || 1,
     requiresSignature: r.requiresSignature === true || r.requiresSignature === 'true' || r.requiresSignature === 1 || r.requiresSignature === 'ANO',
+    readOnly: r.readOnly === true || r.readOnly === 'true' || r.readOnly === 1 || r.readOnly === 'ANO',
     audienceType: r.audienceType || 'all', audienceList: parseList(r.audienceList)
   })).filter(d => d.id);
   return { documents };
@@ -287,10 +294,13 @@ function uploadDocument(data) {
     id: docId, title: data.title, category: data.category||'', desc: data.desc||'', url: fileUrl, fileId,
     fileName: data.fileName||'', uploadedAt: data.uploadedAt||new Date().toISOString(), deadline: data.deadline||'',
     audienceType: data.audienceType||'all', audienceList: JSON.stringify(data.audienceList||[]), version: 1,
-    requiresSignature: data.requiresSignature ? true : false, remindedAt: ''
+    requiresSignature: data.requiresSignature ? true : false, readOnly: data.readOnly ? true : false, remindedAt: ''
   });
   const targets = resolveAudience(data.audienceType||'all', data.audienceList||[]);
   sendDocumentNotification(data.title, data.category||'', data.desc||'', fileUrl, data.deadline||'', targets, data.requiresSignature);
+  // push notif na každého cílového zaměstnance
+  const docIcon = data.requiresSignature ? '✍️' : (data.readOnly ? '👁' : '📄');
+  targets.forEach(function(emp) { notifyUser(emp.id, 'doc', docIcon, 'Nový dokument k ' + (data.requiresSignature?'podpisu':'přečtení') + ': ' + data.title, ''); });
   return { success: true, docId, url: fileUrl, fileId };
 }
 function updateDocument(data) {
@@ -300,6 +310,7 @@ function updateDocument(data) {
   ['title','category','desc','deadline','audienceType'].forEach(k => { if (data[k] !== undefined) obj[k] = data[k]; });
   if (data.audienceList !== undefined) obj.audienceList = JSON.stringify(data.audienceList);
   if (data.requiresSignature !== undefined) obj.requiresSignature = data.requiresSignature ? true : false;
+  if (data.readOnly !== undefined) obj.readOnly = data.readOnly ? true : false;
   let fileUrl = doc.url, fileId = doc.fileId;
   if (data.fileData && data.fileName) {
     const saved = saveFileToDrive(data.fileData, data.fileType, data.fileName);
@@ -424,6 +435,10 @@ function addTask(data) {
     createdAt: new Date().toISOString(), completedAt: '', attachments: JSON.stringify(data.attachments||[]), remindedAt: ''
   });
   notifyTaskAssigned(id, data.title, data.desc||'', data.priority||'medium', data.deadline||'', data.assignees||[], data.createdByName||'');
+  // push notif na každého řešitele
+  (data.assignees||[]).forEach(function(uid) {
+    notifyUser(uid, 'task', '📌', 'Byl vám přiřazen úkol: ' + data.title, '');
+  });
   return { success: true, id };
 }
 function updateTask(data) {
@@ -502,13 +517,18 @@ function addInvoice(data) {
     status: 'pending', decidedBy: '', decidedByName: '', decidedAt: ''
   });
   notifyInvoiceUploaded({ id, title: data.title||data.fileName, supplier: data.supplier||'', amount: data.amount||'', currency: data.currency||'CZK', dueDate: data.dueDate||'', uploadedByName: data.uploadedByName||'' });
+  notifyManagement('invoice', '🧾', 'Nová faktura k schválení: ' + (data.title||data.fileName||'faktura'), '');
   return { success: true, id, url, fileId };
 }
 function decideInvoice(data) {
-  // data: id, status ('approved'|'rejected'), decidedBy, decidedByName
   updateRowByHeaders(SHEETS.INVOICES, 'id', data.id, { status: data.status, decidedBy: data.decidedBy||'', decidedByName: data.decidedByName||'', decidedAt: new Date().toISOString() });
   const inv = readSheet(SHEETS.INVOICES).items.find(i => i.id === data.id);
-  if (inv) notifyInvoiceDecision(inv, data.status, data.decidedByName||'');
+  if (inv) {
+    notifyInvoiceDecision(inv, data.status, data.decidedByName||'');
+    const icon = data.status === 'approved' ? '✅' : '❌';
+    const label = data.status === 'approved' ? 'schválena k proplacení' : 'zamítnuta';
+    notifyManagement('invoice', icon, 'Faktura ' + label + ': ' + (inv.title||''), '');
+  }
   return { success: true };
 }
 function deleteInvoice(id) { deleteRowByCol(SHEETS.INVOICES, 'id', id); deleteRowByCol(SHEETS.COMMENTS, 'taskId', id); return { success: true }; }
@@ -1038,3 +1058,62 @@ function resetEmployees() {
 
 function testCheckDeadlines() { checkDeadlines(); Logger.log('Kontrola termínů spuštěna ručně.'); }
 function testReport() { sendBiweeklyReport(); Logger.log('Report spuštěn ručně. Zkontroluj email majitele.'); }
+
+// ============================================================
+// NOTIFIKACE — server-side, viditelné napříč zařízeními
+// ============================================================
+// recipientId: konkrétní user ID, nebo '__admin__', '__gm__', '__owner__', nebo 'all'
+function pushNotification(data) {
+  const id = 'notif_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  appendByHeaders(SHEETS.NOTIFICATIONS, {
+    id, recipientId: data.recipientId || 'all', type: data.type || 'info',
+    icon: data.icon || '🔔', message: data.message || '', link: data.link || '',
+    createdAt: new Date().toISOString(), readBy: ''
+  });
+  return { success: true, id };
+}
+
+function getNotifications(data) {
+  const uid = data.uid || '';
+  const since = data.since ? new Date(data.since) : new Date(Date.now() - 30*86400000);
+  const { items } = readSheet(SHEETS.NOTIFICATIONS);
+  const notifs = items.filter(function(n) {
+    if (!n.id) return false;
+    if (new Date(n.createdAt) < since) return false;
+    // Recipient matches: this user, their role, or 'all'
+    const r = String(n.recipientId);
+    if (r !== 'all' && r !== uid && r !== data.role) return false;
+    return true;
+  }).map(function(n) {
+    const readBy = String(n.readBy || '');
+    return { id:n.id, type:n.type||'info', icon:n.icon||'🔔', message:n.message||'', link:n.link||'', createdAt:n.createdAt, read: readBy.split(',').filter(Boolean).indexOf(uid) >= 0 };
+  }).sort(function(a,b){ return new Date(b.createdAt)-new Date(a.createdAt); }).slice(0,60);
+  return { notifications: notifs };
+}
+
+function markNotifRead(data) {
+  const uid = data.uid || '';
+  const ids = Array.isArray(data.ids) ? data.ids : [data.id];
+  const sheet = getSheet(SHEETS.NOTIFICATIONS);
+  const rows = sheet.getDataRange().getValues();
+  const headers = rows[0];
+  const idCol = headers.indexOf('id'), readCol = headers.indexOf('readBy');
+  if (idCol < 0 || readCol < 0) return { success: false };
+  for (let i = 1; i < rows.length; i++) {
+    if (ids.indexOf(rows[i][idCol]) >= 0) {
+      const existing = String(rows[i][readCol]);
+      const readers = existing.split(',').filter(Boolean);
+      if (readers.indexOf(uid) < 0) { readers.push(uid); sheet.getRange(i+1, readCol+1).setValue(readers.join(',')); }
+    }
+  }
+  return { success: true };
+}
+
+// Pomocná funkce pro ostatní endpointy — pošle notif na vedení
+function notifyManagement(type, icon, message, link) {
+  ['__owner__','__admin__','__gm__'].forEach(function(r) { pushNotification({ recipientId:r, type, icon, message, link }); });
+}
+// Pošle notif konkrétnímu zaměstnanci
+function notifyUser(uid, type, icon, message, link) {
+  pushNotification({ recipientId:uid, type, icon, message, link:link||'' });
+}
