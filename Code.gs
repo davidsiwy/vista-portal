@@ -32,14 +32,74 @@ const SHEETS = {
 };
 
 // ============================================================
+// AUTENTIZACE — PINy jsou TADY na serveru (ne v prohlížeči).
+// Endpoint vyžaduje platný token (kromě akce 'login').
+// ============================================================
+const AUTH = {
+  pins: {
+    owner: 'VistaMajitel2050',
+    gm:    'VistaGM2050',
+    admin: 'VistaResort2050'
+  },
+  // Podpisový klíč tokenů. KLIDNĚ ZMĚŇ na vlastní náhodný řetězec (a pak znovu Deploy).
+  secret: 'Vista-Token-Secret-2026-eY7pQ2mZ',
+  ttlDays: 30,
+  // Když true, endpoint odmítne požadavky bez platného tokenu.
+  // Pokud by se cokoli pokazilo a nešlo se přihlásit, dočasně dej false a Deploy.
+  enforce: true
+};
+
+function _hmacHex(message) {
+  const raw = Utilities.computeHmacSha256Signature(message, AUTH.secret);
+  return raw.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+}
+function makeToken(role, uid, name) {
+  const payload = { role: role, uid: uid, name: name, exp: Date.now() + AUTH.ttlDays * 86400000 };
+  const pstr = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
+  return pstr + '.' + _hmacHex(pstr);
+}
+function validateToken(token) {
+  if (!token || String(token).indexOf('.') < 0) return null;
+  const parts = String(token).split('.');
+  if (parts.length !== 2) return null;
+  if (_hmacHex(parts[0]) !== parts[1]) return null;
+  try {
+    const json = Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString();
+    const payload = JSON.parse(json);
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    return payload;
+  } catch (e) { return null; }
+}
+function doLoginAction(data) {
+  const pin = String(data.pin || '').trim();
+  if (!pin) return { error: 'Zadejte PIN', code: 401 };
+  if (pin === AUTH.pins.owner) return { success: true, role: 'owner', user: { id: '__owner__', name: 'Majitel', role: 'Majitel', dept: '' }, token: makeToken('owner', '__owner__', 'Majitel') };
+  if (pin === AUTH.pins.gm)    return { success: true, role: 'gm',    user: { id: '__gm__', name: 'General Manager', role: 'GM', dept: '' }, token: makeToken('gm', '__gm__', 'General Manager') };
+  if (pin === AUTH.pins.admin) return { success: true, role: 'admin', user: { id: '__admin__', name: 'Administrátor', role: 'Admin', dept: '' }, token: makeToken('admin', '__admin__', 'Administrátor') };
+  const emp = readSheet(SHEETS.EMPLOYEES).items.find(function(e){ return String(e.pin).trim() === pin; });
+  if (emp) return { success: true, role: 'employee', user: { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }, token: makeToken('employee', emp.id, emp.name) };
+  return { error: 'Nesprávný PIN', code: 401 };
+}
+
+// ============================================================
 // ENTRY POINTS
 // ============================================================
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
+
+    // 'login' je veřejná akce; vše ostatní vyžaduje platný token (když AUTH.enforce)
+    if (action !== 'login' && AUTH.enforce) {
+      if (!validateToken(data.token)) {
+        return jsonResponse({ error: 'Neautorizováno. Přihlaste se prosím znovu.', code: 401 });
+      }
+    }
+
     let result;
     switch (action) {
+      // auth
+      case 'login':           result = doLoginAction(data); break;
       // employees
       case 'getEmployees':    result = getEmployees(); break;
       case 'addEmployee':     result = addEmployee(data); break;
@@ -86,8 +146,8 @@ function doPost(e) {
 }
 
 function doGet(e) {
-  try { return jsonResponse(getAll()); }
-  catch (err) { return jsonResponse({ error: err.message }); }
+  // Data se vrací jen přes autentizovaný POST. GET nevrací žádná citlivá data.
+  return jsonResponse({ status: 'Vista Portál API', message: 'Použijte aplikaci pro přístup.' });
 }
 
 function jsonResponse(data) {
