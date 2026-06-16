@@ -29,7 +29,8 @@ const SHEETS = {
   WORKLOG: 'Deník',
   TRZBY: 'Tržby',
   REPORTS: 'Reporty',
-  NOTIFICATIONS: 'Notifikace'
+  NOTIFICATIONS: 'Notifikace',
+  TEMPLATES: 'Šablony'
 };
 
 // ============================================================
@@ -137,6 +138,10 @@ function doPost(e) {
       case 'getNotifications':  result = getNotifications(data); break;
       case 'markNotifRead':     result = markNotifRead(data); break;
       case 'pushNotification':  result = pushNotification(data); break;
+      // task templates
+      case 'saveTemplate':           result = saveTemplate(data); break;
+      case 'deleteTemplate':         result = deleteTemplate(data.id); break;
+      case 'updateTemplateLastRun':  result = updateTemplateLastRun(data); break;
       case 'addWorklog':      result = addWorklog(data); break;
       case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
@@ -174,6 +179,7 @@ function initSheets() {
   ensureSheet(ss, SHEETS.TRZBY, ['key','json','uploadedBy','uploadedAt']);
   ensureSheet(ss, SHEETS.REPORTS, ['id','title','category','desc','url','fileId','fileName','uploadedBy','uploadedByName','uploadedAt']);
   ensureSheet(ss, SHEETS.NOTIFICATIONS, ['id','recipientId','type','icon','message','link','createdAt','readBy']);
+  ensureSheet(ss, SHEETS.TEMPLATES, ['id','title','desc','segment','priority','assignees','freq','days','monthDay','deadlineOffset','active','createdAt','lastRun']);
   return { success: true };
 }
 
@@ -626,7 +632,8 @@ function getAll() {
     comments: t.comments,
     invoices: getInvoices().invoices,
     worklog: getWorklog().worklog,
-    reports: getReports().reports
+    reports: getReports().reports,
+    taskTemplates: getTemplates().templates
   };
 }
 
@@ -1045,7 +1052,8 @@ function setupTrigger() {
     if (fn === 'checkDeadlines' || fn === 'sendBiweeklyReport') ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('checkDeadlines').timeBased().atHour(8).everyDays(1).inTimezone('Europe/Prague').create();
-  Logger.log('Spouštěč nastaven: denní kontrola termínů v 8:00. Majiteli nechodí žádné emaily (přehled vidí v portálu).');
+  ScriptApp.newTrigger('runDailyTemplates').timeBased().atHour(8).everyDays(1).inTimezone('Europe/Prague').create();
+  Logger.log('Spouštěče nastaveny: denní kontrola termínů + generování šablon úkolů v 8:00.');
 }
 
 function resetEmployees() {
@@ -1116,4 +1124,64 @@ function notifyManagement(type, icon, message, link) {
 // Pošle notif konkrétnímu zaměstnanci
 function notifyUser(uid, type, icon, message, link) {
   pushNotification({ recipientId:uid, type, icon, message, link:link||'' });
+}
+
+// ============================================================
+// ŠABLONY ÚKOLŮ
+// ============================================================
+function getTemplates() {
+  const { items } = readSheet(SHEETS.TEMPLATES);
+  return { templates: items.filter(function(r){ return r.id; }).map(function(r) {
+    var assignees=[],days=[];
+    try{ assignees=JSON.parse(r.assignees||'[]'); }catch(e){}
+    try{ days=JSON.parse(r.days||'[]').map(Number); }catch(e){}
+    return { id:r.id, title:r.title||'', desc:r.desc||'', segment:r.segment||'', priority:r.priority||'medium',
+      assignees, freq:r.freq||'weekly', days, monthDay:r.monthDay||'', deadlineOffset:parseInt(r.deadlineOffset)||0,
+      active: r.active===true||r.active==='true'||r.active==='ANO'||r.active===1,
+      createdAt:r.createdAt||'', lastRun:r.lastRun||'' };
+  }) };
+}
+function saveTemplate(data) {
+  var existing = readSheet(SHEETS.TEMPLATES).items.find(function(r){ return r.id===data.id; });
+  var row = { id:data.id, title:data.title||'', desc:data.desc||'', segment:data.segment||'',
+    priority:data.priority||'medium', assignees:JSON.stringify(data.assignees||[]),
+    freq:data.freq||'weekly', days:JSON.stringify(data.days||[]), monthDay:data.monthDay||'',
+    deadlineOffset:data.deadlineOffset||0, active:data.active?true:false,
+    createdAt:data.createdAt||new Date().toISOString(), lastRun:data.lastRun||'' };
+  if (existing) { updateRowByHeaders(SHEETS.TEMPLATES,'id',data.id,row); }
+  else { appendByHeaders(SHEETS.TEMPLATES, row); }
+  return { success:true };
+}
+function deleteTemplate(id) { deleteRowByCol(SHEETS.TEMPLATES,'id',id); return { success:true }; }
+function updateTemplateLastRun(data) { updateRowByHeaders(SHEETS.TEMPLATES,'id',data.id,{lastRun:data.lastRun||new Date().toISOString()}); return { success:true }; }
+
+// Denní trigger spouští šablony (běží v 8:00 přes setupTrigger)
+function runDailyTemplates() {
+  var today = new Date();
+  var dow = today.getDay();
+  var dom = today.getDate();
+  var lastDay = new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  var todayKey = today.toISOString().slice(0,10);
+  var templates = getTemplates().templates;
+  templates.forEach(function(t) {
+    if (!t.active) return;
+    if (t.lastRun && t.lastRun.slice(0,10)===todayKey) return;
+    var shouldRun=false;
+    if (t.freq==='daily') shouldRun=true;
+    else if (t.freq==='weekly') shouldRun=t.days.indexOf(dow)>=0;
+    else if (t.freq==='monthly') { if (t.monthDay==='last') shouldRun=(dom===lastDay); else shouldRun=(dom===parseInt(t.monthDay)); }
+    if (!shouldRun) return;
+    var deadline='';
+    if (t.deadlineOffset>0) { var d=new Date(today.getTime()+t.deadlineOffset*86400000); deadline=d.toISOString().slice(0,10); }
+    else deadline=todayKey;
+    var taskId='task_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+    appendByHeaders(SHEETS.TASKS,{id:taskId,title:t.title,desc:t.desc||'',segment:t.segment||'',priority:t.priority||'medium',
+      status:'todo',assignees:JSON.stringify(t.assignees||[]),dependsOn:'[]',deadline:deadline,
+      createdBy:'__system__',createdByName:'Systém (šablona)',createdAt:new Date().toISOString(),
+      completedAt:'',attachments:'[]',remindedAt:''});
+    updateRowByHeaders(SHEETS.TEMPLATES,'id',t.id,{lastRun:new Date().toISOString()});
+    // notif na přiřazené zaměstnance
+    (t.assignees||[]).forEach(function(uid){ notifyUser(uid,'task','📌','Nový opakující se úkol: '+t.title,''); });
+    Logger.log('Vygenerován úkol z šablony: '+t.title+' ('+taskId+')');
+  });
 }
