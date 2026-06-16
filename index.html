@@ -526,6 +526,16 @@ a { color: inherit; }
 .dash-trzby-kpi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
 .dash-trzby-card { background: var(--paper, #f6f3ec); border-radius: var(--r, 10px); padding: 16px 18px; border: 1px solid var(--line, #e7e0d2); }
 .dash-trzby-label { font-size: 11px; font-weight: 700; color: var(--ink-faint, #9a9b8c); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--sans); margin-bottom: 6px; }
+.day-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1.5px solid var(--line, #e7e0d2); border-radius: 20px; cursor: pointer; font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--ink-soft, #5f6357); transition: all 0.15s; user-select: none; }
+.day-pill:has(input:checked) { background: var(--peacock, #13302e); border-color: var(--peacock, #13302e); color: #fff; }
+.day-pill input { display: none; }
+.tmpl-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line, #e7e0d2); gap: 12px; }
+.tmpl-row:last-child { border-bottom: none; padding-bottom: 0; }
+.tmpl-info { flex: 1; min-width: 0; }
+.tmpl-name { font-family: var(--sans); font-weight: 700; font-size: 15px; color: var(--peacock, #13302e); margin-bottom: 3px; }
+.tmpl-meta { font-size: 12px; color: var(--ink-faint, #9a9b8c); font-family: var(--sans); }
+.tmpl-freq-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; font-family: var(--sans); background: var(--paper, #f6f3ec); color: var(--ink-soft, #5f6357); border: 1px solid var(--line, #e7e0d2); }
+.tmpl-inactive { opacity: 0.5; }
 .dash-trzby-val { font-family: var(--serif); font-size: 22px; color: var(--peacock, #13302e); font-weight: 500; }
 .dash-trzby-diff { font-size: 12px; font-family: var(--sans); margin-top: 3px; }
 .dash-trzby-segs { display: flex; flex-direction: column; gap: 8px; }
@@ -1026,6 +1036,18 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div id="employees-container" style="margin-top:16px;"><div class="loading"><div class="spinner"></div>Načítám...</div></div>
       </div>
     </div>
+
+    <!-- ── ŠABLONY ÚKOLŮ ── -->
+    <div class="admin-card" style="margin-top:24px">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">Šablony úkolů</div>
+          <div class="admin-card-sub">Opakující se úkoly — denně, týdně, měsíčně</div>
+        </div>
+        <button class="btn-sm primary" onclick="openTemplateModal()">+ Nová šablona</button>
+      </div>
+      <div id="templates-list" style="margin-top:16px"><div class="dash-empty">Zatím žádné šablony. Vytvořte první opakující se úkol.</div></div>
+    </div>
   </div><!-- /admin -->
 
   <!-- ============ FAKTURY TAB ============ -->
@@ -1377,6 +1399,80 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
   </div>
 </div>
 
+<!-- TEMPLATE MODAL -->
+<div class="modal-overlay" id="template-modal">
+  <div class="modal wide">
+    <h2 id="template-modal-title">Nová šablona úkolu</h2>
+    <input type="hidden" id="tmpl-edit-id">
+    <div class="form-group"><label>Název úkolu *</label><input type="text" id="tmpl-title" placeholder="např. Kontrola wellness zařízení"></div>
+    <div class="form-group"><label>Popis</label><textarea id="tmpl-desc" placeholder="Co přesně je třeba udělat..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group" style="margin:0">
+        <label>Segment</label>
+        <select id="tmpl-segment"><option value="">— bez segmentu —</option></select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label>Priorita</label>
+        <select id="tmpl-priority">
+          <option value="low">Nízká</option>
+          <option value="medium" selected>Střední</option>
+          <option value="high">Vysoká</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Přiřadit zaměstnancům</label><div class="checklist" id="tmpl-assignees"></div></div>
+    <div class="form-group">
+      <label>Opakování *</label>
+      <select id="tmpl-freq" onchange="onTmplFreqChange()">
+        <option value="daily">Denně</option>
+        <option value="weekly">Týdně</option>
+        <option value="monthly">Měsíčně</option>
+      </select>
+    </div>
+    <!-- dny v týdnu — zobrazí se jen pro 'weekly' -->
+    <div class="form-group" id="tmpl-days-wrap" style="display:none">
+      <label>Dny v týdnu</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="tmpl-days">
+        <label class="day-pill"><input type="checkbox" value="1"> Po</label>
+        <label class="day-pill"><input type="checkbox" value="2"> Út</label>
+        <label class="day-pill"><input type="checkbox" value="3"> St</label>
+        <label class="day-pill"><input type="checkbox" value="4"> Čt</label>
+        <label class="day-pill"><input type="checkbox" value="5"> Pá</label>
+        <label class="day-pill"><input type="checkbox" value="6"> So</label>
+        <label class="day-pill"><input type="checkbox" value="0"> Ne</label>
+      </div>
+    </div>
+    <!-- den v měsíci — zobrazí se jen pro 'monthly' -->
+    <div class="form-group" id="tmpl-monthday-wrap" style="display:none">
+      <label>Den v měsíci</label>
+      <select id="tmpl-monthday">
+        <option value="1">1.</option><option value="5">5.</option><option value="10">10.</option>
+        <option value="15">15.</option><option value="20">20.</option><option value="25">25.</option>
+        <option value="last">Poslední den</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Deadline po vygenerování</label>
+      <select id="tmpl-deadline-offset">
+        <option value="0">Tentýž den</option>
+        <option value="1">Do 1 dne</option>
+        <option value="3" selected>Do 3 dnů</option>
+        <option value="7">Do 7 dnů</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Aktivní</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--sans)">
+        <input type="checkbox" id="tmpl-active" checked style="width:18px;height:18px;accent-color:var(--peacock)"> Šablona je aktivní (úkoly se generují automaticky)
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeTemplateModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="saveTemplate()">Uložit šablonu</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW/EDIT TASK MODAL -->
 <div class="modal-overlay" id="task-modal">
   <div class="modal wide">
@@ -1486,7 +1582,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 // ============================================================
 
 // ===== STATE =====
-let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [];
+let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [], taskTemplates = [];
 let currentUser = null;       // { id, name, role, dept } or role-user
 let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
 let authToken = '';           // session token ze serveru (posílá se s každým požadavkem)
@@ -1664,6 +1760,7 @@ async function enterApp() {
   }
   await loadData();
   await initTrzbyData();
+  checkAndSpawnTemplates();   // automaticky spustí šablony co mají dnes běžet
   initNotifications();
   generateInitialNotifs();
   switchTab(TABS[0].key);
@@ -1709,6 +1806,7 @@ async function loadData() {
     invoices      = res.invoices || [];
     worklog       = res.worklog || [];
     reports       = res.reports || [];
+    taskTemplates = res.taskTemplates || [];
     refreshAll();
   } catch(e) {
     showToast('Chyba při načítání dat: ' + e.message, 'error');
@@ -2310,7 +2408,7 @@ function renderAdmin() {
   renderAdminDocsList();
   renderConfirmations();
   renderEmployees();
-  // Owner: hide management buttons (can view but not manage employees/docs)
+  renderTemplates();
   applyOwnerRestrictions();
 }
 
@@ -4129,6 +4227,169 @@ async function deleteReport(id) {
 }
 
 // ============================================================
+// ŠABLONY ÚKOLŮ
+// ============================================================
+const FREQ_LABELS = { daily:'Denně', weekly:'Týdně', monthly:'Měsíčně' };
+const DAY_NAMES   = ['Ne','Po','Út','St','Čt','Pá','So'];
+
+function renderTemplates() {
+  const c = document.getElementById('templates-list');
+  if (!c) return;
+  if (taskTemplates.length === 0) { c.innerHTML = '<div class="dash-empty">Zatím žádné šablony. Vytvořte první opakující se úkol.</div>'; return; }
+  c.innerHTML = taskTemplates.map(t => {
+    const assigneeNames = (t.assignees||[]).map(id => { const e = employees.find(x=>x.id===id); return e?e.name:''; }).filter(Boolean).join(', ');
+    const daysLabel = t.freq==='weekly' && t.days?.length ? ' · ' + (t.days||[]).map(d=>DAY_NAMES[d]).join(', ') : t.freq==='monthly' && t.monthDay ? ' · ' + (t.monthDay==='last'?'poslední den':t.monthDay+'.')  : '';
+    const lastRunLabel = t.lastRun ? ' · naposledy ' + fmtDate(t.lastRun) : ' · ještě nespuštěno';
+    return `<div class="tmpl-row ${t.active?'':'tmpl-inactive'}">
+      <div class="tmpl-info">
+        <div class="tmpl-name">${esc(t.title)}</div>
+        <div class="tmpl-meta">${assigneeNames ? esc(assigneeNames) + ' · ' : ''}${esc(t.segment||'—')} · priorita ${t.priority==='high'?'vysoká':t.priority==='low'?'nízká':'střední'}${t.deadlineOffset>0?' · deadline +'+t.deadlineOffset+'d':''}</div>
+        <div class="tmpl-meta" style="margin-top:2px">${lastRunLabel}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="tmpl-freq-pill">🔁 ${FREQ_LABELS[t.freq]||t.freq}${daysLabel}</span>
+        <button class="btn-icon" onclick="runTemplateNow('${t.id}')" title="Spustit hned">▶</button>
+        <button class="btn-icon" onclick="openTemplateModal('${t.id}')" title="Upravit">✏️</button>
+        <button class="btn-icon danger" onclick="deleteTemplate('${t.id}')" title="Smazat">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onTmplFreqChange() {
+  const freq = document.getElementById('tmpl-freq').value;
+  document.getElementById('tmpl-days-wrap').style.display     = freq==='weekly'  ? 'block' : 'none';
+  document.getElementById('tmpl-monthday-wrap').style.display = freq==='monthly' ? 'block' : 'none';
+}
+
+function openTemplateModal(id) {
+  const t = id ? taskTemplates.find(x=>x.id===id) : null;
+  document.getElementById('template-modal-title').textContent = t ? 'Upravit šablonu' : 'Nová šablona úkolu';
+  document.getElementById('tmpl-edit-id').value = t?.id || '';
+  document.getElementById('tmpl-title').value   = t?.title || '';
+  document.getElementById('tmpl-desc').value    = t?.desc || '';
+  document.getElementById('tmpl-priority').value = t?.priority || 'medium';
+  document.getElementById('tmpl-freq').value     = t?.freq || 'weekly';
+  document.getElementById('tmpl-active').checked = t ? !!t.active : true;
+  document.getElementById('tmpl-deadline-offset').value = String(t?.deadlineOffset ?? 3);
+  document.getElementById('tmpl-monthday').value = t?.monthDay || '1';
+  onTmplFreqChange();
+
+  // segment select
+  const segSel = document.getElementById('tmpl-segment');
+  segSel.innerHTML = '<option value="">— bez segmentu —</option>' + SEGMENTS.map(s=>`<option value="${s}">${s}</option>`).join('');
+  segSel.value = t?.segment || '';
+
+  // assignees checklist
+  const wrap = document.getElementById('tmpl-assignees');
+  wrap.innerHTML = employees.map(e => `
+    <label class="check-item">
+      <input type="checkbox" value="${e.id}" ${(t?.assignees||[]).includes(e.id)?'checked':''}>
+      <div><div class="ci-name">${esc(e.name)}</div><div class="ci-dept">${esc(e.dept||e.role||'')}</div></div>
+    </label>`).join('');
+
+  // days checkboxes
+  document.querySelectorAll('#tmpl-days input').forEach(cb => { cb.checked = (t?.days||[]).map(Number).includes(Number(cb.value)); });
+
+  document.getElementById('template-modal').classList.add('open');
+  document.getElementById('tmpl-title').focus();
+}
+
+function closeTemplateModal() {
+  document.getElementById('template-modal').classList.remove('open');
+}
+
+async function saveTemplate() {
+  const title = document.getElementById('tmpl-title').value.trim();
+  if (!title) { showToast('Zadejte název šablony', 'error'); return; }
+  const freq  = document.getElementById('tmpl-freq').value;
+  const days  = freq==='weekly' ? [...document.querySelectorAll('#tmpl-days input:checked')].map(cb=>Number(cb.value)) : [];
+  if (freq==='weekly' && days.length===0) { showToast('Vyberte alespoň jeden den v týdnu', 'error'); return; }
+  const assignees = [...document.querySelectorAll('#tmpl-assignees input:checked')].map(cb=>cb.value);
+  const editId = document.getElementById('tmpl-edit-id').value;
+  const tmpl = {
+    id: editId || 'tmpl_' + Date.now(),
+    title, desc: document.getElementById('tmpl-desc').value.trim(),
+    segment: document.getElementById('tmpl-segment').value,
+    priority: document.getElementById('tmpl-priority').value,
+    assignees, freq, days,
+    monthDay: freq==='monthly' ? document.getElementById('tmpl-monthday').value : '',
+    deadlineOffset: parseInt(document.getElementById('tmpl-deadline-offset').value) || 0,
+    active: document.getElementById('tmpl-active').checked,
+    createdAt: editId ? (taskTemplates.find(x=>x.id===editId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+    lastRun: editId ? (taskTemplates.find(x=>x.id===editId)?.lastRun || '') : ''
+  };
+  if (editId) { taskTemplates = taskTemplates.map(x => x.id===editId ? tmpl : x); }
+  else { taskTemplates.unshift(tmpl); }
+  if (!DEMO_MODE()) {
+    try { await apiCall('saveTemplate', tmpl); } catch(e) { showToast('Šablona uložena lokálně, ale server selhal: '+e.message, 'error'); }
+  }
+  closeTemplateModal();
+  renderTemplates();
+  showToast(editId ? 'Šablona upravena' : 'Šablona vytvořena', 'success');
+}
+
+async function deleteTemplate(id) {
+  if (!confirm('Smazat tuto šablonu?')) return;
+  taskTemplates = taskTemplates.filter(t => t.id !== id);
+  if (!DEMO_MODE()) { try { await apiCall('deleteTemplate', { id }); } catch(e) {} }
+  renderTemplates();
+  showToast('Šablona smazána');
+}
+
+async function runTemplateNow(id) {
+  const t = taskTemplates.find(x => x.id === id);
+  if (!t) return;
+  if (!confirm(`Hned vytvořit úkol "${t.title}"?`)) return;
+  await spawnTaskFromTemplate(t);
+  showToast('Úkol vytvořen z šablony', 'success');
+}
+
+async function spawnTaskFromTemplate(t) {
+  const today = new Date();
+  const deadline = t.deadlineOffset > 0 ? new Date(today.getTime() + t.deadlineOffset*86400000).toISOString().slice(0,10) : today.toISOString().slice(0,10);
+  const taskId = 'task_' + Date.now();
+  const task = {
+    id: taskId, title: t.title, desc: t.desc||'', segment: t.segment||'', priority: t.priority||'medium',
+    status: 'todo', assignees: t.assignees||[], dependsOn: [], deadline, createdBy: '__system__',
+    createdByName: 'Systém (šablona)', createdAt: new Date().toISOString(), completedAt: '', attachments: [], remindedAt: ''
+  };
+  tasks.unshift(task);
+  t.lastRun = new Date().toISOString();
+  if (!DEMO_MODE()) {
+    try { await apiCall('addTask', task); } catch(e) {}
+    try { await apiCall('updateTemplateLastRun', { id: t.id, lastRun: t.lastRun }); } catch(e) {}
+  }
+  // notif na přiřazené zaměstnance
+  (t.assignees||[]).forEach(uid => pushNotif('task','📌',`Nový opakující se úkol: <strong>${esc(t.title)}</strong>`,{tab:'tasks'}));
+  renderTasks();
+  renderTemplates();
+}
+
+// Lokální kontrola šablon při přihlášení — spustí šablony co by měly dnes běžet
+async function checkAndSpawnTemplates() {
+  if (!isAdmin && !isOwner) return;
+  const today = new Date();
+  const dow = today.getDay();   // 0=Ne, 1=Po...
+  const dom = today.getDate();
+  const lastDay = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const todayKey = today.toISOString().slice(0,10);
+  for (const t of taskTemplates) {
+    if (!t.active) continue;
+    const lastRunKey = t.lastRun ? t.lastRun.slice(0,10) : '';
+    if (lastRunKey === todayKey) continue; // already ran today
+    let shouldRun = false;
+    if (t.freq==='daily') shouldRun=true;
+    else if (t.freq==='weekly') shouldRun=(t.days||[]).map(Number).includes(dow);
+    else if (t.freq==='monthly') {
+      if (t.monthDay==='last') shouldRun=(dom===lastDay);
+      else shouldRun=(dom===parseInt(t.monthDay));
+    }
+    if (shouldRun) await spawnTaskFromTemplate(t);
+  }
+}
+
+// ============================================================
 // DEMO DATA
 // ============================================================
 function loadDemoData() {
@@ -4170,6 +4431,11 @@ function loadDemoData() {
   ];
   buildFilterOptions();
   // trzby data se nactou async v initTrzbyData
+  taskTemplates = [
+    { id:'tmpl1', title:'Kontrola wellness zařízení', desc:'Zkontrolovat sauny, bazén, vybavení a doplnit spotřební materiál.', segment:'Wellness', priority:'medium', assignees:['e2'], freq:'weekly', days:[1,4], monthDay:'', deadlineOffset:1, active:true, createdAt:new Date().toISOString(), lastRun:'' },
+    { id:'tmpl2', title:'Uzávěrka pokladny', desc:'Spočítat denní tržby, porovnat s POS systémem a uložit do deníku.', segment:'Gastro', priority:'high', assignees:['e3'], freq:'daily', days:[], monthDay:'', deadlineOffset:0, active:true, createdAt:new Date().toISOString(), lastRun:'' },
+    { id:'tmpl3', title:'Měsíční report segmentu', desc:'Zpracovat měsíční přehled a nahrát do sekce Reporty.', segment:'Hotel', priority:'medium', assignees:['e1'], freq:'monthly', days:[], monthDay:'1', deadlineOffset:5, active:true, createdAt:new Date().toISOString(), lastRun:'' }
+  ];
 }
 </script>
 <!-- Chart.js a SheetJS se načítají na konci, ať neblokují přihlásení -->
