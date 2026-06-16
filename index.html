@@ -1487,6 +1487,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [];
 let currentUser = null;       // { id, name, role, dept } or role-user
 let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
+let authToken = '';           // session token ze serveru (posílá se s každým požadavkem)
 let isAdmin = false;          // gm or admin (full rights)
 let isOwner = false;          // owner (overview + create tasks)
 let canManage = false;        // can manage employees/docs (gm, admin)
@@ -1526,13 +1527,13 @@ function populateDropdowns() {
 
 // ===== SESSION =====
 function saveSession() {
-  try { sessionStorage.setItem('vista_session', JSON.stringify({ currentUser, currentRole })); } catch(e) {}
+  try { sessionStorage.setItem('vista_session', JSON.stringify({ currentUser, currentRole, authToken })); } catch(e) {}
 }
 function restoreSession() {
   try {
     const s = JSON.parse(sessionStorage.getItem('vista_session') || 'null');
     if (s && s.currentRole) {
-      currentUser = s.currentUser; currentRole = s.currentRole;
+      currentUser = s.currentUser; currentRole = s.currentRole; authToken = s.authToken || '';
       applyRole();
       enterApp();
     }
@@ -1543,30 +1544,52 @@ function clearSession() { try { sessionStorage.removeItem('vista_session'); } ca
 // ===== LOGIN =====
 async function doLogin() {
   const raw = document.getElementById('login-pin').value;
-  const pin = raw.trim().replace(/[\u200B-\u200D\uFEFF\s]/g, '');  // odstraň neviditelné znaky a mezery
+  const pin = raw.trim().replace(/[\u200B-\u200D\uFEFF\s]/g, '');
   const err = document.getElementById('login-error');
   err.style.display = 'none';
   if (!pin) { err.textContent = 'Zadejte PIN kód.'; err.style.display = 'block'; return; }
 
-  // Role PINs first (přesná shoda)
+  // DEMO režim — bez serveru, lokální PINy (žádná reálná data)
+  if (DEMO_MODE()) { await embeddedLogin(pin, err); return; }
+
+  // Produkce — ověření na serveru, PIN se nikdy neukládá do prohlížeče
+  showLoading('Přihlašuji...');
+  try {
+    const res = await apiCall('login', { pin });
+    hideLoading();
+    if (res && res.success && res.token) {
+      authToken = res.token;
+      currentRole = res.role;
+      currentUser = res.user;
+      applyRole(); saveSession(); enterApp();
+      return;
+    }
+    err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block';
+  } catch (e) {
+    hideLoading();
+    const msg = String(e.message || '');
+    // Nesprávný PIN ze serveru
+    if (msg.indexOf('Nesprávný') >= 0 || msg.indexOf('PIN') >= 0) {
+      err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return;
+    }
+    // Starý Code.gs (nezná 'login') nebo nedostupný server → nouzový lokální režim, ať se jde přihlásit
+    await embeddedLogin(pin, err);
+  }
+}
+
+// Nouzové/demo přihlášení lokálními PINy (záloha když server ještě neumí 'login', nebo demo).
+// Až bude server potvrzen, tyto PINy se z prohlížeče odstraní.
+async function embeddedLogin(pin, err) {
   if (pin === CONFIG.PINS.owner) { currentRole = 'owner'; currentUser = { id: '__owner__', name: 'Majitel', role: 'Majitel', dept: '' }; }
   else if (pin === CONFIG.PINS.gm) { currentRole = 'gm'; currentUser = { id: '__gm__', name: 'General Manager', role: 'GM', dept: '' }; }
   else if (pin === CONFIG.PINS.admin) { currentRole = 'admin'; currentUser = { id: '__admin__', name: 'Administrátor', role: 'Admin', dept: '' }; }
   else {
-    // Employee PIN — load employees first if not loaded
-    if (employees.length === 0 && !DEMO_MODE()) {
-      showLoading('Ověřuji přístup...');
-      try { await loadData(); } catch(e) {}
-      hideLoading();
-    }
+    if (employees.length === 0 && !DEMO_MODE()) { showLoading('Ověřuji přístup...'); try { await loadData(); } catch (e) {} hideLoading(); }
     const emp = employees.find(e => String(e.pin).trim() === pin);
     if (emp) { currentRole = 'employee'; currentUser = { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }; }
     else { err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return; }
   }
-
-  applyRole();
-  saveSession();
-  enterApp();
+  applyRole(); saveSession(); enterApp();
 }
 
 function applyRole() {
@@ -1646,7 +1669,7 @@ async function enterApp() {
 
 function logout() {
   clearSession();
-  currentUser = null; currentRole = null;
+  currentUser = null; currentRole = null; authToken = '';
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-pin').value = '';
@@ -2808,13 +2831,28 @@ function fileToB64(file) {
 async function apiCall(action, payload = {}) {
   const res = await fetch(CONFIG.SCRIPT_URL, {
     method: 'POST',
-    body: JSON.stringify({ action, ...payload }),
+    body: JSON.stringify({ action, token: authToken, ...payload }),
     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
+  // vypršelá/chybějící autorizace — zpět na přihlášení (kromě samotného loginu)
+  if (data.code === 401 && action !== 'login') { handleAuthExpired(); throw new Error(data.error || 'Neautorizováno'); }
   if (data.error) throw new Error(data.error);
   return data;
+}
+
+function handleAuthExpired() {
+  authToken = '';
+  clearSession();
+  const app = document.getElementById('app');
+  const login = document.getElementById('login-screen');
+  if (app) app.style.display = 'none';
+  if (login) login.style.display = 'flex';
+  const pin = document.getElementById('login-pin');
+  if (pin) pin.value = '';
+  const err = document.getElementById('login-error');
+  if (err) { err.textContent = 'Přihlášení vypršelo. Zadejte prosím PIN znovu.'; err.style.display = 'block'; }
 }
 
 // ============================================================
@@ -2915,7 +2953,7 @@ function closePreview() {
 // ============================================================
 // INVOICES (Faktury)
 // ============================================================
-function invStatusCz(s) { return s === 'approved' ? 'Schváleno' : s === 'rejected' ? 'Zamítnuto' : 'Čeká na schválení'; }
+function invStatusCz(s) { return s === 'approved' ? 'Schváleno k proplacení' : s === 'rejected' ? 'Zamítnuto' : 'Čeká na schválení'; }
 
 function visibleInvoices() {
   const sf = document.getElementById('inv-status-filter')?.value || '';
@@ -2978,13 +3016,13 @@ function openInvoiceDetail(invoiceId) {
   let decisionBlock = '';
   if (status === 'pending' && canApproveInv) {
     decisionBlock = `<div class="inv-decision-row">
-      <button class="btn-approve" onclick="decideInvoice('${inv.id}','approved')">✓ Schválit</button>
+      <button class="btn-approve" onclick="decideInvoice('${inv.id}','approved')">✓ Schválit k proplacení</button>
       <button class="btn-reject" onclick="decideInvoice('${inv.id}','rejected')">✕ Zamítnout</button>
     </div>`;
   } else if (status !== 'pending') {
-    decisionBlock = `<div class="inv-decided-banner ${status}">${status==='approved'?'✓ Schváleno':'✕ Zamítnuto'}${inv.decidedByName?' — '+esc(inv.decidedByName):''}${inv.decidedAt?' · '+fmtDate(inv.decidedAt):''}</div>`;
+    decisionBlock = `<div class="inv-decided-banner ${status}">${status==='approved'?'✓ Schváleno k proplacení':'✕ Zamítnuto'}${inv.decidedByName?' — '+esc(inv.decidedByName):''}${inv.decidedAt?' · '+fmtDate(inv.decidedAt):''}</div>`;
   } else {
-    decisionBlock = `<div class="inv-decided-banner" style="background:var(--amber-soft);color:var(--amber)">Čeká na schválení majitelem.</div>`;
+    decisionBlock = `<div class="inv-decided-banner" style="background:var(--amber-soft);color:var(--amber)">Čeká na schválení k proplacení.</div>`;
   }
 
   let commentsHtml = invComments.length ? invComments.map(cm => `
