@@ -1737,16 +1737,21 @@ const TASK_STATUSES = [
 ];
 
 function visibleTasks() {
-  // Everyone sees all tasks (owner/gm/admin/employee all see everything per requirements)
   const search = (document.getElementById('tasks-search')?.value || '').toLowerCase();
   const seg = document.getElementById('tasks-segment-filter')?.value || '';
   const assignee = document.getElementById('tasks-assignee-filter')?.value || '';
   const prio = document.getElementById('tasks-priority-filter')?.value || '';
+  const uid = currentUser?.id || '';
   return tasks.filter(t => {
+    // zaměstnanci vidí jen úkoly kde jsou řešitel nebo zadavatel
+    if (!isAdmin && !isOwner) {
+      const isMine = (t.assignees||[]).includes(uid) || t.createdBy === uid;
+      if (!isMine) return false;
+    }
     if (search && !(t.title.toLowerCase().includes(search) || (t.desc||'').toLowerCase().includes(search))) return false;
     if (seg && t.segment !== seg) return false;
     if (prio && t.priority !== prio) return false;
-    if (assignee === '__me__') { if (!(t.assignees||[]).includes(currentUser?.id)) return false; }
+    if (assignee === '__me__') { if (!(t.assignees||[]).includes(uid)) return false; }
     else if (assignee) { if (!(t.assignees||[]).includes(assignee)) return false; }
     return true;
   });
@@ -1756,11 +1761,23 @@ function renderTasks() {
   const c = document.getElementById('tasks-container');
   const list = visibleTasks();
   const sub = document.getElementById('tasks-subtitle');
-  const activeCount = tasks.filter(t => t.status !== 'done').length;
-  if (sub) sub.textContent = `${tasks.length} úkolů celkem · ${activeCount} aktivních`;
+  const filtersEl = document.getElementById('tasks-filters');
 
-  if (tasks.length === 0) {
-    c.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><h3>Zatím žádné úkoly</h3><p>Klikněte na „Nový úkol" a vytvořte první.</p></div>';
+  // zaměstnanci nemají filtry — vidí jen své úkoly
+  if (filtersEl) filtersEl.style.display = (!isAdmin && !isOwner) ? 'none' : 'flex';
+
+  const myCount = tasks.filter(t => (t.assignees||[]).includes(currentUser?.id)).length;
+  const activeCount = (!isAdmin && !isOwner)
+    ? list.filter(t => t.status !== 'done').length
+    : tasks.filter(t => t.status !== 'done').length;
+  if (sub) sub.textContent = (!isAdmin && !isOwner)
+    ? `${list.length} mých úkolů · ${list.filter(t=>t.status!=='done').length} aktivních`
+    : `${tasks.length} úkolů celkem · ${activeCount} aktivních`;
+
+  if (list.length === 0) {
+    c.innerHTML = (!isAdmin && !isOwner)
+      ? '<div class="empty-state"><div class="empty-icon">✓</div><h3>Žádné úkoly</h3><p>Zatím vám nikdo žádný úkol nepřiřadil.</p></div>'
+      : '<div class="empty-state"><div class="empty-icon">✓</div><h3>Zatím žádné úkoly</h3><p>Klikněte na „Nový úkol" a vytvořte první.</p></div>';
     return;
   }
 
