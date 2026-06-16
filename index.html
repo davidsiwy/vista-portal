@@ -822,11 +822,13 @@ a { color: inherit; }
 // ===== CONFIG =====
 const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyQwTgXJvlVocklxpOXhRYU7DJ6TwbtS40JqUZpQzOgS5R1DsbZqtC6myB1KdagYodS/exec',
-  // Role PINs (admin/gm/owner). Employees have their own PINs in the system.
+  // Role PINy jsou na serveru (Code.gs AUTH.pins) — zde jsou jen jako nouzový fallback
+  // pokud server vrátí Unknown action: login (starý Code.gs).
+  // Jakmile potvrdíš že server login funguje, tyto hodnoty lze vymazat.
   PINS: {
-    owner: 'VistaMajitel2050',
-    gm:    'VistaGM2050',
-    admin: 'VistaResort2050'
+    owner: '',
+    gm:    '',
+    admin: ''
   },
   VERSION: '4.0'
 };
