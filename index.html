@@ -1668,8 +1668,10 @@ async function enterApp() {
 }
 
 function logout() {
+  if (_notifPollTimer) { clearInterval(_notifPollTimer); _notifPollTimer = null; }
   clearSession();
   currentUser = null; currentRole = null; authToken = '';
+  notifications = [];
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-pin').value = '';
@@ -3468,12 +3470,52 @@ document.querySelectorAll('.modal-overlay').forEach(ov => {
 // ============================================================
 let notifications = [];   // { id, type, icon, text, time, read, action }
 
-function initNotifications() {
+// ── server-side notif poll interval (ms) ─────────────────────
+let _notifPollTimer = null;
+const NOTIF_POLL_MS = 60000; // 60s polling
+
+async function initNotifications() {
+  // load from sessionStorage immediately (fast)
   try {
     const saved = sessionStorage.getItem('vista_notifs_' + (currentUser?.id || ''));
     notifications = saved ? JSON.parse(saved) : [];
   } catch(e) { notifications = []; }
   renderNotifications();
+  // then fetch from server (authoritative, cross-device)
+  await fetchServerNotifications();
+  // start polling for new notifs
+  if (_notifPollTimer) clearInterval(_notifPollTimer);
+  _notifPollTimer = setInterval(fetchServerNotifications, NOTIF_POLL_MS);
+}
+
+async function fetchServerNotifications() {
+  if (DEMO_MODE() || !authToken) { generateInitialNotifs(); return; }
+  try {
+    const uid = currentUser?.id || '';
+    const role = currentRole || '';
+    const res = await apiCall('getNotifications', { uid, role, since: new Date(Date.now() - 30*86400000).toISOString() });
+    if (!res || !res.notifications) return;
+    // merge server notifs with local ones (local ones take priority for read state)
+    const localIds = new Set(notifications.map(n => n.id));
+    res.notifications.forEach(n => {
+      if (!localIds.has(n.id)) {
+        notifications.push({ id: n.id, type: n.type, icon: n.icon, text: n.message, time: n.createdAt, read: n.read, action: n.link ? { tab: n.link } : null });
+      }
+    });
+    notifications.sort((a,b) => new Date(b.time) - new Date(a.time));
+    notifications = notifications.slice(0, 60);
+    saveNotifications();
+    renderNotifications();
+    // animate bell if new unread
+    const unread = notifications.filter(n => !n.read).length;
+    if (unread > 0) {
+      const bell = document.getElementById('notif-bell');
+      if (bell) { bell.style.transform = 'scale(1.22)'; setTimeout(() => bell.style.transform = '', 250); }
+    }
+  } catch(e) {
+    // server nedostupný nebo starý Code.gs — nouzový fallback
+    if (notifications.length === 0) generateInitialNotifs();
+  }
 }
 
 function saveNotifications() {
@@ -3485,15 +3527,18 @@ function pushNotif(type, icon, text, action) {
   notifications.unshift(n);
   saveNotifications();
   renderNotifications();
-  // brief bell animation
   const bell = document.getElementById('notif-bell');
   if (bell) { bell.style.transform = 'scale(1.25)'; setTimeout(() => bell.style.transform = '', 200); }
 }
 
-function markAllRead() {
+async function markAllRead() {
+  const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
   notifications.forEach(n => n.read = true);
   saveNotifications();
   renderNotifications();
+  if (!DEMO_MODE() && authToken && unreadIds.length > 0) {
+    try { await apiCall('markNotifRead', { uid: currentUser?.id || '', ids: unreadIds }); } catch(e) {}
+  }
 }
 
 function clearNotifications() {
@@ -3507,16 +3552,12 @@ function toggleNotifPanel() {
   const panel = document.getElementById('notif-panel');
   const isOpen = panel.classList.contains('open');
   if (isOpen) { closeNotifPanel(); }
-  else {
-    panel.classList.add('open');
-    markAllRead();
-  }
+  else { panel.classList.add('open'); markAllRead(); }
 }
 function closeNotifPanel() {
   document.getElementById('notif-panel')?.classList.remove('open');
 }
 
-// Close panel on click outside
 document.addEventListener('click', e => {
   const wrap = document.getElementById('notif-wrap');
   if (wrap && !wrap.contains(e.target)) closeNotifPanel();
@@ -3545,19 +3586,22 @@ function renderNotifications() {
     <div class="notif-item ${n.read?'':'unread'}" onclick="handleNotifClick('${n.id}')">
       <div class="notif-icon ${n.type}">${n.icon}</div>
       <div class="notif-body">
-        <div class="notif-text">${n.text}</div>
-        <div class="notif-time">${fmtDateTime(n.time)}</div>
+        <div class="notif-text">${n.text || n.message || ''}</div>
+        <div class="notif-time">${fmtDateTime(n.time || n.createdAt)}</div>
       </div>
     </div>`).join('');
 }
 
-function handleNotifClick(id) {
+async function handleNotifClick(id) {
   const n = notifications.find(x => x.id === id);
   if (!n) return;
   n.read = true;
   saveNotifications();
   renderNotifications();
   closeNotifPanel();
+  if (!DEMO_MODE() && authToken) {
+    try { await apiCall('markNotifRead', { uid: currentUser?.id || '', ids: [id] }); } catch(e) {}
+  }
   if (n.action) {
     const { tab, taskId, invoiceId, docId } = n.action;
     if (tab) switchTab(tab);
@@ -3566,56 +3610,44 @@ function handleNotifClick(id) {
   }
 }
 
-// ── generate notifications after data loads ──────────────────
+// ── generate local notifs (demo mode or server fallback) ─────────────────────
 function generateInitialNotifs() {
-  // only once per session
   if (sessionStorage.getItem('vista_notifs_init_' + (currentUser?.id||''))) return;
   sessionStorage.setItem('vista_notifs_init_' + (currentUser?.id||''), '1');
 
   const uid = currentUser?.id || '';
   const now = Date.now();
-  const newish = 7 * 24 * 60 * 60 * 1000; // 7 days = "recent"
+  const newish = 7 * 24 * 60 * 60 * 1000;
 
-  // Tasks: assigned to me or created by me
   tasks.forEach(t => {
     const isAssigned = (t.assignees||[]).includes(uid);
     const isCreator = t.createdBy === uid;
     if (!isAssigned && !isCreator) return;
-    const age = now - new Date(t.createdAt).getTime();
-    if (age > newish) return;
-    if (isAssigned) {
-      pushNotif('task', '📋', `Byl vám přiřazen úkol <strong>${esc(t.title)}</strong>${t.createdByName ? ' od ' + esc(t.createdByName) : ''}`, { tab:'tasks', taskId: t.id });
-    }
+    if (now - new Date(t.createdAt).getTime() > newish) return;
+    if (isAssigned) pushNotif('task', '📋', `Byl vám přiřazen úkol <strong>${esc(t.title)}</strong>${t.createdByName ? ' od ' + esc(t.createdByName) : ''}`, { tab:'tasks', taskId: t.id });
   });
 
-  // Documents: pending for me
   const myConfs = new Set(confirmations.filter(c => c.employeeId === uid).map(c => c.docId));
   documents.forEach(doc => {
     const targets = docTargets(doc);
     if (!targets.some(e => e.id === uid)) return;
     if (myConfs.has(doc.id)) return;
-    const age = now - new Date(doc.uploadedAt).getTime();
-    if (age > newish) return;
+    if (now - new Date(doc.uploadedAt).getTime() > newish) return;
     const verb = doc.requiresSignature ? 'k podpisu' : 'k potvrzení';
     pushNotif('doc', '📄', `Nový dokument ${verb}: <strong>${esc(doc.title)}</strong>`, { tab:'docs' });
   });
 
-  // Invoices: pending — for canApproveInv
   if (canApproveInv) {
     invoices.filter(i => (i.status||'pending') === 'pending').forEach(inv => {
-      const age = now - new Date(inv.uploadedAt).getTime();
-      if (age > newish) return;
-      pushNotif('invoice', '🧾', `Nová faktura ke schválení: <strong>${esc(inv.title)}</strong>${inv.amount ? ' · ' + fmtMoney(inv.amount, inv.currency) : ''}`, { tab:'invoices', invoiceId: inv.id });
+      if (now - new Date(inv.uploadedAt).getTime() > newish) return;
+      pushNotif('invoice', '🧾', `Nová faktura k schválení: <strong>${esc(inv.title)}</strong>${inv.amount ? ' · ' + fmtMoney(inv.amount, inv.currency) : ''}`, { tab:'invoices', invoiceId: inv.id });
     });
   }
 
-  // Invoice decided — notify uploader
   invoices.filter(i => i.decidedAt && i.uploadedBy === uid).forEach(inv => {
-    const age = now - new Date(inv.decidedAt).getTime();
-    if (age > newish) return;
-    const label = inv.status === 'approved' ? '✓ schválena' : '✕ zamítnuta';
-    const icon = inv.status === 'approved' ? '✅' : '❌';
-    pushNotif('invoice', icon, `Faktura <strong>${esc(inv.title)}</strong> byla ${label}`, { tab:'invoices', invoiceId: inv.id });
+    if (now - new Date(inv.decidedAt).getTime() > newish) return;
+    const label = inv.status === 'approved' ? '✓ schválena k proplacení' : '✕ zamítnuta';
+    pushNotif(inv.status === 'approved' ? 'ok' : 'error', inv.status === 'approved' ? '✅' : '❌', `Faktura <strong>${esc(inv.title)}</strong> byla ${label}`, { tab:'invoices', invoiceId: inv.id });
   });
 }
 
