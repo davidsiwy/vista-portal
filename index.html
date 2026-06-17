@@ -1364,7 +1364,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     </div>
 
     <div id="trzby-empty" class="empty-state">
-      <div class="empty-icon">📊</div>
+      <div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
       <h3>Žádná data</h3>
       <p>Nahrajte report Excel (Výnosy dle středisek nebo Příjmy) tlačítkem výše.</p>
     </div>
@@ -2125,7 +2125,7 @@ function openTaskDetail(taskId) {
 
   let statusOpts = TASK_STATUSES.map(s => `<button class="status-opt ${ (t.status||'todo')===s.key ? 'active':''}" onclick="changeTaskStatus('${t.id}','${s.key}')">${s.label}</button>`).join('');
 
-  let attachHtml = (t.attachments || []).map(a => `<div class="attachment-item">📎 <a href="${esc(a.url)}" target="_blank">${esc(a.name)}</a> <span style="color:var(--ink-faint);font-size:11px;margin-left:auto">${fmtDate(a.uploadedAt)}</span></div>`).join('');
+  let attachHtml = (t.attachments || []).map(a => `<div class="attachment-item"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> <a href="${esc(a.url)}" target="_blank">${esc(a.name)}</a> <span style="color:var(--ink-faint);font-size:11px;margin-left:auto">${fmtDate(a.uploadedAt)}</span></div>`).join('');
 
   let commentsHtml = taskComments.length ? taskComments.map(cm => `
     <div class="comment">
@@ -2175,7 +2175,7 @@ function openTaskDetail(taskId) {
       <div class="attachments-list">${attachHtml || '<span style="color:var(--ink-faint);font-size:13px;font-family:var(--sans)">Žádné přílohy</span>'}</div>
       <div style="margin-top:10px">
         <input type="file" id="task-attach-input" class="file-hidden" onchange="onTaskAttachSelected(this)">
-        <button class="btn-sm secondary" onclick="document.getElementById('task-attach-input').click()">📎 Přidat přílohu</button>
+        <button class="btn-sm secondary" onclick="document.getElementById('task-attach-input').click()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Přidat přílohu</button>
         <span id="task-attach-name" style="font-size:12px;color:var(--ink-faint);margin-left:8px"></span>
       </div>
     </div>
@@ -2190,7 +2190,7 @@ function openTaskDetail(taskId) {
     </div>
 
     <div class="modal-actions" style="border-top:1px solid var(--line);padding-top:18px;margin-top:22px">
-      ${(isOwner || isAdmin) && t.status !== 'done' && assignees.length ? `<button class="urge-btn" onclick="openUrge('task','${t.id}')">🔔 Zaurgovat</button>` : ''}
+      ${(isOwner || isAdmin) && t.status !== 'done' && assignees.length ? `<button class="urge-btn" onclick="openUrge('task','${t.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Zaurgovat</button>` : ''}
       ${canEdit ? `<button class="btn-sm secondary" onclick="openEditTask('${t.id}')">Upravit úkol</button>` : ''}
       ${canDelete ? `<button class="btn-sm danger" onclick="deleteTask('${t.id}')">Smazat</button>` : ''}
       <button class="btn-sm secondary" onclick="closeTaskDetail()">Zavřít</button>
@@ -2447,7 +2447,7 @@ function renderDocuments() {
     card.innerHTML = `
       <div class="doc-icon">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-info">
-        <div class="doc-name">${esc(doc.title)} ${needsSign ? '<span class="sign-badge">✍ Podpis</span>' : ''}${isReadOnly ? '<span class="sign-badge" style="background:#e6eef4;color:#2f5d7a;border-color:#b8d0e8">👁 Jen čtení</span>' : ''}</div>
+        <div class="doc-name">${esc(doc.title)} ${needsSign ? '<span class="sign-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Podpis</span>' : ''}${isReadOnly ? '<span class="sign-badge" style="background:#e6eef4;color:#2f5d7a;border-color:#b8d0e8"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Jen čtení</span>' : ''}</div>
         <div class="doc-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span>` : ''}
           ${doc.desc ? `<span>${esc(doc.desc)}</span>` : ''}
@@ -2642,7 +2642,7 @@ function renderAdminDocsList() {
     row.innerHTML = `
       <div style="font-size:22px">${getDocIcon(doc.title, doc.category)}</div>
       <div class="doc-admin-info">
-        <div class="doc-admin-name">${esc(doc.title)}${(doc.version && doc.version > 1) ? ` <span class="doc-cat-pill" title="Počet verzí">v${doc.version}</span>` : ''}${doc.requiresSignature ? ' <span class="sign-badge">✍ Podpis</span>' : ''}</div>
+        <div class="doc-admin-name">${esc(doc.title)}${(doc.version && doc.version > 1) ? ` <span class="doc-cat-pill" title="Počet verzí">v${doc.version}</span>` : ''}${doc.requiresSignature ? ' <span class="sign-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Podpis</span>' : ''}</div>
         <div class="doc-admin-meta">
           ${doc.category ? `<span class="doc-cat-pill">${esc(doc.category)}</span> ` : ''}
           ${doc.desc ? esc(doc.desc) + ' · ' : ''}Nahráno ${fmtDate(doc.uploadedAt)}
@@ -2658,7 +2658,7 @@ function renderAdminDocsList() {
         <div class="conf-detail" id="detail-${doc.id}">
           <div class="conf-detail-section">
             <div class="conf-detail-title done">Potvrdili (${confirmed.length})</div>
-            ${confirmed.length ? confirmed.map(e => { const cf = docConfs.find(c => c.employeeId===e.id); const signLink = cf && cf.signedFileId ? ` <a class="signed-link" href="${driveDownloadUrl(cf.signedFileId)}" target="_blank">✍ podepsaný</a>` : (cf && cf.signedUrl && cf.signedUrl!=='#' ? ` <a class="signed-link" href="${esc(cf.signedUrl)}" target="_blank">✍ podepsaný</a>` : ''); return `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${cf?fmtDateTime(cf.confirmedAt):''}${signLink}</span></div>`; }).join('') : '<div style="font-size:13px;color:var(--ink-faint)">Zatím nikdo</div>'}
+            ${confirmed.length ? confirmed.map(e => { const cf = docConfs.find(c => c.employeeId===e.id); const signLink = cf && cf.signedFileId ? ` <a class="signed-link" href="${driveDownloadUrl(cf.signedFileId)}" target="_blank"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> podepsaný</a>` : (cf && cf.signedUrl && cf.signedUrl!=='#' ? ` <a class="signed-link" href="${esc(cf.signedUrl)}" target="_blank"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> podepsaný</a>` : ''); return `<div class="conf-person"><span class="conf-person-name">${esc(e.name)}${e.dept?` <span class="conf-person-meta">· ${esc(e.dept)}</span>`:''}</span><span class="conf-person-meta">${cf?fmtDateTime(cf.confirmedAt):''}${signLink}</span></div>`; }).join('') : '<div style="font-size:13px;color:var(--ink-faint)">Zatím nikdo</div>'}
           </div>
           <div class="conf-detail-section">
             <div class="conf-detail-title pending">Čekají (${pending.length})</div>
@@ -2667,7 +2667,7 @@ function renderAdminDocsList() {
         </div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap" data-manage>
-        ${pending.length ? `<button class="urge-btn" onclick="openUrge('doc','${doc.id}')" title="Připomenout těm, kdo ještě nepotvrdili">🔔 Zaurgovat (${pending.length})</button>` : ''}
+        ${pending.length ? `<button class="urge-btn" onclick="openUrge('doc','${doc.id}')" title="Připomenout těm, kdo ještě nepotvrdili"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> Zaurgovat (${pending.length})</button>` : ''}
         <button class="btn-sm secondary" onclick="openUpdateDoc('${doc.id}')" title="Aktualizovat dokument">Aktualizovat</button>
         <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${escAttr(doc.title)}')" title="Smazat">${ICONS.trash}</button>
       </div>`;
@@ -2700,7 +2700,7 @@ function renderConfirmations() {
   });
   rows.sort((a,b) => (a.cf?1:0) - (b.cf?1:0));
   if (rows.length === 0) {
-    c.innerHTML = '<div class="empty-state" style="padding:28px"><div class="empty-icon">📊</div><h3>Žádné záznamy</h3><p>Zkuste změnit filtry.</p></div>';
+    c.innerHTML = '<div class="empty-state" style="padding:28px"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><h3>Žádné záznamy</h3><p>Zkuste změnit filtry.</p></div>';
     return;
   }
   let html = '<table class="data-table"><thead><tr><th>Zaměstnanec</th><th>Segment</th><th>Dokument</th><th>Datum potvrzení</th><th>Status</th></tr></thead><tbody>';
@@ -3243,7 +3243,7 @@ function renderInvoices() {
   document.getElementById('invoices-subtitle').textContent = invoices.length === 0 ? 'Zatím žádné faktury' : `${invoices.length} ${plural(invoices.length,'faktura','faktury','faktur')} · ${pending} ke schválení`;
   const list = visibleInvoices();
   if (list.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">🧾</div><h3>${invoices.length===0?'Žádné faktury':'Nic nenalezeno'}</h3><p>${invoices.length===0?'Nahrajte fakturu tlačítkem výše.':'Zkuste jiný filtr.'}</p></div>`;
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg></div><h3>${invoices.length===0?'Žádné faktury':'Nic nenalezeno'}</h3><p>${invoices.length===0?'Nahrajte fakturu tlačítkem výše.':'Zkuste jiný filtr.'}</p></div>`;
     return;
   }
   c.innerHTML = '';
@@ -3694,7 +3694,7 @@ function renderOverview() {
     } else {
       mdWrap.innerHTML = pendingDocs.map(doc => `
         <div class="dash-inv-row" onclick="switchTab('docs')">
-          <div class="dash-block-icon" style="width:38px;height:38px;font-size:16px;background:var(--warn-soft)">${doc.requiresSignature?'✍️':'📄'}</div>
+          <div class="dash-block-icon" style="width:38px;height:38px;background:var(--warn-soft)">${doc.requiresSignature?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'}</div>
           <div style="flex:1;min-width:0">
             <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(doc.title)}</div>
             <div style="font-size:12px;color:var(--ink-faint)">${doc.requiresSignature?'Vyžaduje podpis':'K potvrzení'}${doc.deadline?' · do '+fmtDate(doc.deadline):''}</div>
@@ -3912,7 +3912,7 @@ function renderNotifications() {
   const list = document.getElementById('notif-list');
   if (!list) return;
   if (notifications.length === 0) {
-    list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon">🔔</div>Žádné notifikace</div>';
+    list.innerHTML = '<div class="notif-empty"><div class="notif-empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>Žádné notifikace</div>';
     return;
   }
   list.innerHTML = notifications.slice(0, 40).map(n => `
@@ -4107,7 +4107,7 @@ function renderTrzby() {
   if (!data || !data.length) {
     document.getElementById('trzby-controls').style.display = 'block';
     document.getElementById('trzby-empty').style.display = 'block';
-    document.getElementById('trzby-empty').innerHTML = '<div class="empty-icon">📊</div><h3>Tento pohled nemá data</h3><p>Nahrajte odpovídající report.</p>';
+    document.getElementById('trzby-empty').innerHTML = '<div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div><h3>Tento pohled nemá data</h3><p>Nahrajte odpovídající report.</p>';
     document.getElementById('trzby-kpi').style.display = 'none';
     document.getElementById('trzby-charts').style.display = 'none';
     return;
@@ -4369,7 +4369,7 @@ function renderReports() {
 
   const c = document.getElementById('reports-list');
   if (filtered.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
       <h3>${reports.length === 0 ? 'Zatím žádné reporty' : 'Nic v této kategorii'}</h3>
       <p>${reports.length === 0 ? 'Nahrajte první report nebo zápis z porady.' : 'Zkuste jinou kategorii.'}</p></div>`;
     return;
