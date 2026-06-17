@@ -745,7 +745,7 @@ function getEssential() {
       authorId:r.authorId||'', authorName:r.authorName||'', text:r.text||'', createdAt:r.createdAt||'' };
   });
   return { employees, tasks, comments, invoices,
-    documents:[], confirmations:[], worklog:[], reports:[], taskTemplates:[] };
+    documents:[], confirmations:[], worklog:[], reports:[], taskTemplates:[], requests:[] };
 }
 
 function isTruthy(v) { return v===true||v==='true'||v==='ANO'||v===1||v==='1'; }
