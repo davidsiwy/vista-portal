@@ -224,9 +224,18 @@ a { color: inherit; }
   cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;
   transition: all 0.16s var(--ease); font-family: var(--sans); text-decoration: none; color: var(--ink-soft, #5f6357);
 }
+.btn-icon svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .btn-icon:hover { background: var(--paper-2, #efeadf); border-color: var(--warm-tan, #9c7852); color: var(--ink, #23271f); }
 .btn-icon.danger { color: var(--danger, #9c3a2e); }
 .btn-icon.danger:hover { background: var(--danger, #9c3a2e); border-color: var(--danger, #9c3a2e); color: #fff; }
+/* dash block icons */
+.dash-block-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+/* upload area icons */
+.upload-icon svg { width: 30px; height: 30px; stroke: currentColor; fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; }
+/* task foot icons */
+.task-foot-item svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* notif bell */
+#notif-bell svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ===== ADMIN CARDS ===== */
 .admin-section { margin-bottom: 28px; }
@@ -849,6 +858,39 @@ a { color: inherit; }
 <body>
 <script>
 // ===== CONFIG =====
+// ── SVG Icon Library (Lucide-style, inline) ──────────────────
+const ICONS = {
+  edit:     '<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+  trash:    '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>',
+  play:     '<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>',
+  download: '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  upload:   '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  eye:      '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  bell:     '<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  check:    '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:        '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  plus:     '<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  file:     '<svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>',
+  fileText: '<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+  receipt:  '<svg viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>',
+  chart:    '<svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
+  clipboardList: '<svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+  users:    '<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  repeat:   '<svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>',
+  send:     '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+  alertCircle: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  checkCircle: '<svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  xCircle:  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+  pin:      '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+  pen:      '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+  paperclip:'<svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+  messageSquare: '<svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  logOut:   '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+};
+function icon(name, cls) { return `<span class="icon-wrap${cls?' '+cls:''}">${ICONS[name]||''}</span>`; }
+
 const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyQwTgXJvlVocklxpOXhRYU7DJ6TwbtS40JqUZpQzOgS5R1DsbZqtC6myB1KdagYodS/exec',
   // Role PINy jsou na serveru (Code.gs AUTH.pins) — zde jsou jen jako nouzový fallback
@@ -915,7 +957,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
           <div class="notif-list" id="notif-list"></div>
         </div>
       </div>
-      <button class="btn-logout" onclick="logout()">Odhlásit</button>
+      <button class="btn-logout" onclick="logout()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-2px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Odhlásit</button>
     </div>
   </div>
 
@@ -991,7 +1033,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         </div>
         <div id="upload-section" style="display:none">
           <div class="upload-area" id="upload-area" onclick="document.getElementById('upload-file-input').click()">
-            <div class="upload-icon">⬆</div>
+            <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <p>Klikněte pro výběr souboru nebo přetáhněte sem</p>
             <span>PDF, Word, Excel, obrázky — max 20 MB</span>
           </div>
@@ -1098,7 +1140,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div id="invoice-upload-section" style="display:none">
       <div class="admin-card">
         <div class="upload-area" id="inv-upload-area" onclick="document.getElementById('inv-file-input').click()">
-          <div class="upload-icon">⬆</div>
+          <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <p>Klikněte pro výběr faktury (PDF) nebo přetáhněte sem</p>
           <span>PDF nebo obrázek — max 20 MB</span>
         </div>
@@ -1135,7 +1177,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div class="section-title" id="worklog-title">Můj deník</div>
         <div class="section-subtitle" id="worklog-subtitle">Zapište co jste dnes udělal</div>
       </div>
-      <button class="btn-sm secondary" id="worklog-weekly-btn" onclick="toggleWeeklySummary()" style="display:none">📅 Týdenní souhrn</button>
+      <button class="btn-sm secondary" id="worklog-weekly-btn" onclick="toggleWeeklySummary()" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-1px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Týdenní souhrn</button>
     </div>
     <div id="worklog-weekly-summary" style="display:none"></div>
     <div class="worklog-compose" id="worklog-compose">
@@ -1160,7 +1202,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <!-- moje úkoly (zaměstnanci + vedení) -->
     <div class="dash-block" id="dash-mytasks-block" style="display:none">
       <div class="dash-block-head">
-        <div class="dash-block-icon dark" style="color:var(--tan)">✓</div>
+        <div class="dash-block-icon dark" style="color:var(--tan)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
         <div class="dash-block-title">Moje úkoly</div>
         <div class="dash-block-count" id="dash-mytasks-count">0</div>
       </div>
@@ -1170,7 +1212,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <!-- dokumenty k potvrzení (zaměstnanci + vedení) -->
     <div class="dash-block" id="dash-mydocs-block" style="display:none">
       <div class="dash-block-head">
-        <div class="dash-block-icon gold">📄</div>
+        <div class="dash-block-icon gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div class="dash-block-title">K potvrzení</div>
         <div class="dash-block-count" id="dash-mydocs-count">0</div>
       </div>
@@ -1180,7 +1222,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <!-- faktury ke schválení (majitel + vedení) -->
     <div class="dash-block" id="dash-inv-block" style="display:none">
       <div class="dash-block-head">
-        <div class="dash-block-icon gold">🧾</div>
+        <div class="dash-block-icon gold"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg></div>
         <div class="dash-block-title">Faktury ke schválení</div>
         <div class="dash-block-count" id="dash-inv-count">0</div>
       </div>
@@ -1189,7 +1231,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 
     <div class="dash-block" id="dash-trzby-block" style="display:none">
       <div class="dash-block-head">
-        <div class="dash-block-icon green">📊</div>
+        <div class="dash-block-icon green"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg></div>
         <div class="dash-block-title" id="dash-trzby-title">Tržby</div>
       </div>
       <div id="dash-trzby"></div>
@@ -1354,7 +1396,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       </div>
       <div class="form-group"><label>Popis (nepovinné)</label><input type="text" id="rep-desc" placeholder="Krátký popis"></div>
       <div class="upload-area" id="rep-upload-area" onclick="document.getElementById('rep-file-input').click()">
-        <div class="upload-icon">⬆</div>
+        <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
         <p id="rep-file-label">Klikněte pro výběr souboru</p>
         <span>PDF, Word, Excel, obrázky — max 20 MB</span>
       </div>
@@ -1390,7 +1432,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <p id="confirm-modal-text">Potvrzuji, že jsem tento dokument přečetl/a a beru jeho obsah na vědomí.</p>
     <div id="confirm-sign-area" style="display:none">
       <div class="upload-area" id="sign-upload-area" onclick="document.getElementById('sign-file-input').click()" style="padding:24px">
-        <div class="upload-icon" style="font-size:24px">✍️</div>
+        <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
         <p id="sign-file-label">Klikněte a nahrajte podepsaný dokument</p>
         <span>PDF nebo foto podpisu (sken / mobil)</span>
       </div>
@@ -1580,7 +1622,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div class="form-group">
       <label>Nahradit soubor (nepovinné)</label>
       <div class="upload-area" id="upd-upload-area" onclick="document.getElementById('upd-file-input').click()" style="padding:22px">
-        <div class="upload-icon" style="font-size:22px">⬆</div>
+        <div class="upload-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="32" height="32"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
         <p id="upd-file-label">Ponechat stávající soubor, nebo klikněte pro nahrání nového</p>
         <span>PDF, Word, obrázek</span>
       </div>
@@ -2063,8 +2105,8 @@ function taskCardHtml(t) {
     <div class="task-card-foot">
       ${dl ? `<span class="deadline-pill ${dl.cls}" style="font-size:10px">${dl.txt}</span>` : ''}
       ${ageBadge}
-      ${cmtCount ? `<span class="task-foot-item">💬 ${cmtCount}</span>` : ''}
-      ${attCount ? `<span class="task-foot-item">📎 ${attCount}</span>` : ''}
+      ${cmtCount ? `<span class="task-foot-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> ${cmtCount}</span>` : ''}
+      ${attCount ? `<span class="task-foot-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${attCount}</span>` : ''}
     </div>
   </div>`;
 }
@@ -2627,7 +2669,7 @@ function renderAdminDocsList() {
       <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap" data-manage>
         ${pending.length ? `<button class="urge-btn" onclick="openUrge('doc','${doc.id}')" title="Připomenout těm, kdo ještě nepotvrdili">🔔 Zaurgovat (${pending.length})</button>` : ''}
         <button class="btn-sm secondary" onclick="openUpdateDoc('${doc.id}')" title="Aktualizovat dokument">Aktualizovat</button>
-        <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${escAttr(doc.title)}')" title="Smazat">🗑</button>
+        <button class="btn-icon danger" onclick="deleteDocument('${doc.id}','${escAttr(doc.title)}')" title="Smazat">${ICONS.trash}</button>
       </div>`;
     c.appendChild(row);
   });
@@ -2711,7 +2753,7 @@ function renderEmployees() {
       <td><span class="pin-display" onclick="togglePin('${emp.id}')">${show ? esc(emp.pin) : '••••'}<span class="pin-toggle">${show?'skrýt':'zobrazit'}</span></span></td>
       <td style="text-align:right;white-space:nowrap" data-manage>
         <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">✎</button>
-        <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">🗑</button>
+        <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">${ICONS.trash}</button>
       </td>
     </tr>`;
   });
@@ -3211,7 +3253,7 @@ function renderInvoices() {
     const card = document.createElement('div'); card.className = 'invoice-card';
     card.onclick = () => openInvoiceDetail(inv.id);
     card.innerHTML = `
-      <div class="invoice-icon">🧾</div>
+      <div class="invoice-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg></div>
       <div class="invoice-info">
         <div class="invoice-title">${esc(inv.title)}</div>
         <div class="invoice-meta">
@@ -3263,7 +3305,7 @@ function openInvoiceDetail(invoiceId) {
 
   document.getElementById('invoice-modal-content').innerHTML = `
     <div class="task-detail-header">
-      <div class="invoice-icon" style="width:38px;height:38px;font-size:17px">🧾</div>
+      <div class="invoice-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg></div>
       <div class="task-detail-title">${esc(inv.title)}</div>
       <button class="btn-icon" onclick="closeInvoiceDetail()" title="Zavřít">✕</button>
     </div>
@@ -3449,8 +3491,8 @@ function renderWorklog() {
         <div class="worklog-entry-head">
           <div><span class="worklog-author">${esc(w.employeeName)}</span>${w.segment?` <span class="emp-dept dept-${segSlug(w.segment)}" style="margin-left:6px">${esc(w.segment)}</span>`:''}</div>
           <div style="display:flex;gap:6px">
-            ${canEdit ? `<button class="btn-icon" onclick="openEditWorklog('${w.id}')" title="Upravit">✏️</button>` : ''}
-            ${canDel  ? `<button class="btn-icon danger" onclick="deleteWorklogEntry('${w.id}')" title="Smazat">🗑</button>` : ''}
+            ${canEdit ? `<button class="btn-icon" onclick="openEditWorklog('${w.id}')" title="Upravit">${ICONS.pen}</button>` : ''}
+            ${canDel  ? `<button class="btn-icon danger" onclick="deleteWorklogEntry('${w.id}')" title="Smazat">${ICONS.trash}</button>` : ''}
           </div>
         </div>
         <div class="worklog-text" id="wlt-${w.id}">${esc(w.text)}</div>
@@ -3536,7 +3578,7 @@ function toggleWeeklySummary() {
     renderWeeklySummary();
   } else {
     el.style.display = 'none';
-    btn.textContent = '📅 Týdenní souhrn';
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;vertical-align:-1px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Týdenní souhrn';
   }
 }
 
@@ -3626,7 +3668,7 @@ function renderOverview() {
         const overdue = t.deadline && new Date(t.deadline) < new Date();
         const statusLabel = { todo:'Zadáno', inprogress:'Probíhá', review:'Ke kontrole' }[t.status] || t.status;
         return `<div class="dash-inv-row" onclick="switchTab('tasks');setTimeout(()=>openTaskDetail('${t.id}'),60)">
-          <div class="dash-block-icon" style="width:38px;height:38px;font-size:16px;background:var(--paper)">📌</div>
+          <div class="dash-block-icon" style="width:38px;height:38px;background:var(--paper)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
           <div style="flex:1;min-width:0">
             <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(t.title)}</div>
             <div style="font-size:12px;color:var(--ink-faint)">${statusLabel}${t.deadline?` · <span style="color:${overdue?'var(--danger)':'var(--ink-faint)'}">${overdue?'po termínu ':'do '}${fmtDate(t.deadline)}</span>`:''}</div>
@@ -3673,7 +3715,7 @@ function renderOverview() {
     } else {
       invWrap.innerHTML = pending.map(inv => `
         <div class="dash-inv-row" onclick="openInvoiceDetail('${inv.id}')">
-          <div class="invoice-icon" style="width:40px;height:40px;font-size:18px">🧾</div>
+          <div class="invoice-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg></div>
           <div style="flex:1;min-width:0">
             <div style="font-family:var(--sans);font-weight:600;color:var(--ink);font-size:15px">${esc(inv.title)}</div>
             <div style="font-size:12px;color:var(--ink-faint)">${inv.supplier?esc(inv.supplier)+' · ':''}nahrál ${esc(inv.uploadedByName||'—')}${inv.dueDate?' · splatnost '+fmtDate(inv.dueDate):''}</div>
@@ -4352,7 +4394,7 @@ function renderReports() {
       const icon = r.category === 'Zápis z porady' ? '📝' : r.category === 'Měsíční report' ? '📊' : r.category === 'Provozní report' ? '🔧' : '📄';
       const previewBtn = r.fileId ? `<button class="btn-download" onclick="openPreview('${escAttr(r.title)}','${r.fileId}','')">Zobrazit</button>` : '';
       const dlBtn = r.fileId ? `<a href="${driveDownloadUrl(r.fileId)}" target="_blank" class="btn-download">Stáhnout</a>` : (r.url && r.url !== '#' ? `<a href="${esc(r.url)}" target="_blank" class="btn-download">Stáhnout</a>` : '');
-      const delBtn = canDel ? `<button class="btn-icon danger" onclick="deleteReport('${r.id}')" title="Smazat">🗑</button>` : '';
+      const delBtn = canDel ? `<button class="btn-icon danger" onclick="deleteReport('${r.id}')" title="Smazat">${ICONS.trash}</button>` : '';
       return `<div class="doc-card">
         <div class="doc-icon">${icon}</div>
         <div class="doc-info">
@@ -4438,10 +4480,10 @@ function renderTemplates() {
         <div class="tmpl-meta" style="margin-top:2px">${lastRunLabel}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span class="tmpl-freq-pill">🔁 ${FREQ_LABELS[t.freq]||t.freq}${daysLabel}</span>
-        <button class="btn-icon" onclick="runTemplateNow('${t.id}')" title="Spustit hned">▶</button>
-        <button class="btn-icon" onclick="openTemplateModal('${t.id}')" title="Upravit">✏️</button>
-        <button class="btn-icon danger" onclick="deleteTemplate('${t.id}')" title="Smazat">🗑</button>
+        <span class="tmpl-freq-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> ${FREQ_LABELS[t.freq]||t.freq}${daysLabel}</span>
+        <button class="btn-icon" onclick="runTemplateNow('${t.id}')" title="Spustit hned">${ICONS.play}</button>
+        <button class="btn-icon" onclick="openTemplateModal('${t.id}')" title="Upravit">${ICONS.pen}</button>
+        <button class="btn-icon danger" onclick="deleteTemplate('${t.id}')" title="Smazat">${ICONS.trash}</button>
       </div>
     </div>`;
   }).join('');
