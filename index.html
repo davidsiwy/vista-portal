@@ -1048,6 +1048,16 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       </div>
       <div id="templates-list" style="margin-top:16px"><div class="dash-empty">Zatím žádné šablony. Vytvořte první opakující se úkol.</div></div>
     </div>
+
+    <div class="admin-card" style="margin-top:18px" id="template-log-card" style="display:none">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">Naposledy vygenerované úkoly</div>
+          <div class="admin-card-sub">Úkoly vytvořené automaticky ze šablon (posledních 20)</div>
+        </div>
+      </div>
+      <div id="template-log-list" style="margin-top:14px"></div>
+    </div>
   </div><!-- /admin -->
 
   <!-- ============ FAKTURY TAB ============ -->
@@ -1099,7 +1109,9 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div class="section-title" id="worklog-title">Můj deník</div>
         <div class="section-subtitle" id="worklog-subtitle">Zapište co jste dnes udělal</div>
       </div>
+      <button class="btn-sm secondary" id="worklog-weekly-btn" onclick="toggleWeeklySummary()" style="display:none">📅 Týdenní souhrn</button>
     </div>
+    <div id="worklog-weekly-summary" style="display:none"></div>
     <div class="worklog-compose" id="worklog-compose">
       <div class="form-group" style="margin-bottom:12px"><label>Datum</label><input type="date" id="worklog-date" style="max-width:200px"></div>
       <div class="form-group" style="margin-bottom:12px"><label>Co jste dnes udělal/a?</label><textarea id="worklog-text" placeholder="Stručně popište svou dnešní práci..."></textarea></div>
@@ -1155,6 +1167,14 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <div class="dash-block-title" id="dash-trzby-title">Tržby</div>
       </div>
       <div id="dash-trzby"></div>
+    </div>
+
+    <div class="dash-block" id="dash-pozornost-block" style="display:none">
+      <div class="dash-block-head">
+        <div class="dash-block-icon" style="background:var(--warn-soft);color:var(--warn)">⚡</div>
+        <div class="dash-block-title">Pozornost</div>
+      </div>
+      <div id="dash-pozornost"></div>
     </div>
   </div>
   <!-- ============ TRŽBY TAB ============ -->
@@ -1930,6 +1950,15 @@ function taskCardHtml(t) {
   const attCount = (t.attachments || []).length;
   const dl = deadlineInfo(t.deadline, t.status);
   const segClass = t.segment ? 'dept-' + segSlug(t.segment) : '';
+  // age indicator — days since entered current status
+  const statusAt = t.statusChangedAt || t.createdAt || '';
+  const ageDays = statusAt ? Math.floor((Date.now() - new Date(statusAt).getTime()) / 86400000) : 0;
+  let ageBadge = '';
+  if (t.status !== 'done' && ageDays > 0) {
+    const ageCls = ageDays >= 7 ? 'age-late' : ageDays >= 3 ? 'age-warn' : 'age-ok';
+    const ageLabel = ageDays === 1 ? '1 den' : ageDays < 5 ? ageDays + ' dny' : ageDays + ' dní';
+    ageBadge = `<span class="task-age ${ageCls}">⏱ ${ageLabel}</span>`;
+  }
   return `<div class="task-card tc-${t.priority || 'medium'}" onclick="openTaskDetail('${t.id}')">
     <div class="task-card-top">
       <div class="task-card-title">${esc(t.title)}</div>
@@ -1941,6 +1970,7 @@ function taskCardHtml(t) {
     </div>
     <div class="task-card-foot">
       ${dl ? `<span class="deadline-pill ${dl.cls}" style="font-size:10px">${dl.txt}</span>` : ''}
+      ${ageBadge}
       ${cmtCount ? `<span class="task-foot-item">💬 ${cmtCount}</span>` : ''}
       ${attCount ? `<span class="task-foot-item">📎 ${attCount}</span>` : ''}
     </div>
@@ -2409,6 +2439,7 @@ function renderAdmin() {
   renderConfirmations();
   renderEmployees();
   renderTemplates();
+  renderTemplateLog();
   applyOwnerRestrictions();
 }
 
@@ -3291,6 +3322,8 @@ function renderWorklog() {
   document.getElementById('worklog-filters').style.display = isStaff ? 'none' : 'flex';
   document.getElementById('worklog-title').textContent = isStaff ? 'Můj deník' : 'Deník zaměstnanců';
   document.getElementById('worklog-subtitle').textContent = isStaff ? 'Zapište co jste dnes udělal' : 'Denní zápisy všech zaměstnanců';
+  const wkBtn = document.getElementById('worklog-weekly-btn');
+  if (wkBtn) wkBtn.style.display = isAdmin ? '' : 'none';
 
   const c = document.getElementById('worklog-container');
   let entries = worklog.slice();
@@ -3398,6 +3431,71 @@ async function saveEditWorklog(id) {
   }
   renderWorklog();
   showToast('Zápis upraven', 'success');
+}
+
+let _weeklySummaryOpen = false;
+function toggleWeeklySummary() {
+  _weeklySummaryOpen = !_weeklySummaryOpen;
+  const el = document.getElementById('worklog-weekly-summary');
+  const btn = document.getElementById('worklog-weekly-btn');
+  if (_weeklySummaryOpen) {
+    el.style.display = 'block';
+    btn.textContent = '✕ Zavřít souhrn';
+    renderWeeklySummary();
+  } else {
+    el.style.display = 'none';
+    btn.textContent = '📅 Týdenní souhrn';
+  }
+}
+
+function renderWeeklySummary() {
+  const el = document.getElementById('worklog-weekly-summary');
+  if (!el) return;
+  // Monday of this week
+  const now = new Date();
+  const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0=Mon
+  const monday = new Date(now.getTime() - dayOfWeek * 86400000);
+  monday.setHours(0,0,0,0);
+
+  const weekEntries = worklog.filter(w => new Date(w.date || w.createdAt) >= monday);
+
+  // group by employee
+  const byEmp = {};
+  weekEntries.forEach(w => {
+    const key = w.employeeId;
+    if (!byEmp[key]) byEmp[key] = { name: w.employeeName, dept: w.segment || '', entries: [] };
+    byEmp[key].entries.push(w);
+  });
+
+  const mondayLabel = monday.toLocaleDateString('cs-CZ', { day:'numeric', month:'long' });
+  const todayLabel  = now.toLocaleDateString('cs-CZ', { day:'numeric', month:'long' });
+
+  if (Object.keys(byEmp).length === 0) {
+    el.innerHTML = `<div class="admin-card" style="margin-bottom:18px"><div class="dash-empty">Tento týden zatím žádné zápisy (od ${mondayLabel}).</div></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="admin-card" style="margin-bottom:18px">
+    <div class="admin-card-header" style="margin-bottom:16px">
+      <div class="admin-card-title">Týdenní souhrn</div>
+      <div style="font-size:12px;color:var(--ink-faint);font-family:var(--sans)">${mondayLabel} — ${todayLabel}</div>
+    </div>
+    ${Object.values(byEmp).map(emp => `
+      <div style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--line)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div class="emp-avatar" style="width:32px;height:32px;font-size:12px;flex-shrink:0">${initials(emp.name)}</div>
+          <div>
+            <div style="font-family:var(--sans);font-weight:700;font-size:14px;color:var(--peacock)">${esc(emp.name)}</div>
+            <div style="font-size:11px;color:var(--ink-faint)">${esc(emp.dept || '')} · ${emp.entries.length} ${emp.entries.length===1?'zápis':emp.entries.length<5?'záznamy':'záznamů'}</div>
+          </div>
+        </div>
+        ${emp.entries.sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt)).map(e => `
+          <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--paper)">
+            <div style="font-size:11px;color:var(--ink-faint);font-family:var(--sans);white-space:nowrap;min-width:60px;padding-top:1px">${new Date(e.date||e.createdAt).toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})}</div>
+            <div style="font-size:13px;color:var(--ink-soft);font-family:var(--sans);line-height:1.5">${esc(e.text)}</div>
+          </div>`).join('')}
+      </div>`).join('')}
+  </div>`;
 }
 
 // ============================================================
@@ -3547,6 +3645,50 @@ function renderOverview() {
         <button class="btn-sm secondary" onclick="switchTab('trzby')" style="font-size:12px;padding:7px 14px">Zobrazit celé Tržby →</button>
       </div>`;
   } else { blkTrzby.style.display = 'none'; }
+
+  // ── POZORNOST — outlier detection (owner + admin) ──
+  const pozBlock = document.getElementById('dash-pozornost-block');
+  if ((isOwner || isAdmin) && trzbyData && trzbyData.length >= 7) {
+    const alerts = [];
+    const todayRow = trzbyData[trzbyData.length - 1];
+    const last30 = trzbyData.slice(-30);
+    const avg30 = last30.reduce((s,r) => s+r.celkem, 0) / last30.length;
+
+    // today vs 30-day average
+    if (todayRow && avg30 > 0) {
+      const pct = (todayRow.celkem - avg30) / avg30 * 100;
+      if (pct <= -30) alerts.push({ icon:'📉', text:`Poslední den byl o ${Math.abs(pct).toFixed(0)} % pod průměrem — ${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč vs průměr ${Math.round(avg30).toLocaleString('cs-CZ')} Kč` });
+      else if (pct >= 40) alerts.push({ icon:'📈', text:`Výborný den! Poslední den byl o ${pct.toFixed(0)} % nad průměrem (${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč)` });
+    }
+
+    // segment that dropped to zero for 3 days
+    const last3 = trzbyData.slice(-3);
+    ['Hotel','F&B','Wellness','Sport'].forEach(seg => {
+      const tot3 = last3.reduce((s,r) => s+(r.segs?.[seg]||0), 0);
+      const avg30s = last30.reduce((s,r) => s+(r.segs?.[seg]||0), 0) / 30;
+      if (tot3 === 0 && avg30s > 500) alerts.push({ icon:'⚠️', text:`${seg}: 0 Kč za poslední 3 dny (obvyklý průměr ${Math.round(avg30s).toLocaleString('cs-CZ')} Kč/den)` });
+    });
+
+    // best day this month
+    if (todayRow) {
+      const mRows = trzbyData.filter(r => r.y===todayRow.y && r.m===todayRow.m);
+      if (mRows.length >= 5) {
+        const best = mRows.reduce((b,r) => r.celkem>b.celkem?r:b);
+        if (best.date===todayRow.date || (todayRow.date && best.date===todayRow.date)) {
+          alerts.push({ icon:'🏆', text:`Poslední den byl nejlepší den tohoto měsíce! (${Math.round(best.celkem).toLocaleString('cs-CZ')} Kč)` });
+        }
+      }
+    }
+
+    // overdue tasks
+    const ov = tasks.filter(t => t.status!=='done' && t.deadline && new Date(t.deadline)<new Date()).length;
+    if (ov > 0) alerts.push({ icon:'🔴', text:`${ov} ${ov===1?'úkol je':'úkolů je'} po termínu` });
+
+    pozBlock.style.display = 'block';
+    document.getElementById('dash-pozornost').innerHTML = alerts.length
+      ? alerts.map(a => `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line, #e7e0d2);align-items:flex-start"><span style="font-size:20px;flex-shrink:0">${a.icon}</span><span style="font-size:14px;font-family:var(--sans, 'Outfit');color:var(--ink-soft, #5f6357);line-height:1.5">${esc(a.text)}</span></div>`).join('')
+      : '<div class="dash-empty">Nic výjimečného. Vše v normálu. ✓</div>';
+  } else if (pozBlock) { pozBlock.style.display = 'none'; }
 }
 
 function fmtMoney(amount, currency) {
@@ -4364,6 +4506,33 @@ async function spawnTaskFromTemplate(t) {
   (t.assignees||[]).forEach(uid => pushNotif('task','📌',`Nový opakující se úkol: <strong>${esc(t.title)}</strong>`,{tab:'tasks'}));
   renderTasks();
   renderTemplates();
+  renderTemplateLog();
+}
+
+function renderTemplateLog() {
+  const card = document.getElementById('template-log-card');
+  const list = document.getElementById('template-log-list');
+  if (!card || !list) return;
+  // system-generated tasks from templates, newest first
+  const genTasks = tasks
+    .filter(t => t.createdBy === '__system__')
+    .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 20);
+  if (genTasks.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  const STATUS_ICONS = { todo:'⬜', inprogress:'🔄', review:'👀', done:'✅' };
+  list.innerHTML = genTasks.map(t => {
+    const assigneeNames = (t.assignees||[]).map(id => { const e=employees.find(x=>x.id===id); return e?e.name:''; }).filter(Boolean).join(', ');
+    const statusIcon = STATUS_ICONS[t.status||'todo'] || '⬜';
+    return `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line, #e7e0d2);align-items:flex-start">
+      <span style="font-size:16px;flex-shrink:0">${statusIcon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--sans);font-weight:600;font-size:14px;color:var(--ink)">${esc(t.title)}</div>
+        <div style="font-size:11px;color:var(--ink-faint);margin-top:2px">${assigneeNames ? esc(assigneeNames)+' · ':'' }vygenerováno ${fmtDate(t.createdAt)}${t.deadline?' · deadline '+fmtDate(t.deadline):''}</div>
+      </div>
+      <span style="font-size:11px;color:var(--ink-faint);white-space:nowrap">${statusCz(t.status||'todo')}</span>
+    </div>`;
+  }).join('');
 }
 
 // Lokální kontrola šablon při přihlášení — spustí šablony co by měly dnes běžet
