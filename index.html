@@ -128,7 +128,26 @@ a { color: inherit; }
 .login-error { color: #f0b8ad; font-size: 13px; text-align: center; margin-top: 16px; display: none; }
 
 /* ===== TOPBAR ===== */
-#app { display: none; opacity: 0; transition: opacity 0.18s; }
+/* Loading state on login screen */
+#login-loading {
+  display: none; flex-direction: column; align-items: center; gap: 20px;
+  position: absolute; inset: 0; z-index: 10; background: var(--peacock-deep, #0c1f1d);
+  justify-content: center;
+}
+.login-spinner {
+  width: 48px; height: 48px; border: 3px solid rgba(223,193,150,0.2); border-top-color: var(--tan, #dfc196);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.login-loading-text {
+  font-family: var(--sans); font-size: 14px; color: rgba(240,226,200,0.7);
+  letter-spacing: 0.06em;
+}
+.login-loading-sub {
+  font-family: var(--sans); font-size: 12px; color: rgba(240,226,200,0.4);
+  margin-top: -10px;
+}
+#app { display: none; opacity: 0; transition: opacity 0.25s ease; }
 .topbar {
   background: var(--peacock, #13302e); color: #fff; height: 66px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px; position: sticky; top: 0; z-index: 200;
@@ -849,6 +868,13 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 
 <!-- LOGIN -->
 <div id="login-screen">
+  <!-- loading overlay — zobrazí se po kliknutí Vstoupit -->
+  <div id="login-loading">
+    <img src="assets/vista-mark-white.png" alt="Vista" style="width:56px;height:auto;opacity:0.6;margin-bottom:8px">
+    <div class="login-spinner"></div>
+    <div class="login-loading-text" id="login-loading-text">Přihlašuji se…</div>
+    <div class="login-loading-sub" id="login-loading-sub">Načítám data portálu</div>
+  </div>
   <div class="login-card">
     <div class="login-logo">
       <img class="brand-full" src="assets/vista-logo-white.png" alt="Vista Resort">
@@ -859,7 +885,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
         <label>Přístupový PIN</label>
         <input type="password" id="login-pin" placeholder="••••" maxlength="32" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()" autofocus>
       </div>
-      <button class="btn-primary" onclick="doLogin()">Vstoupit</button>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">Vstoupit</button>
       <p class="login-error" id="login-error">Nesprávný PIN kód.</p>
     </div>
   </div>
@@ -1672,7 +1698,20 @@ function restoreSession() {
 function clearSession() { try { sessionStorage.removeItem('vista_session'); } catch(e) {} }
 
 // ===== LOGIN =====
-async function doLogin() {
+function showLoginLoading(text, sub) {
+  const el = document.getElementById('login-loading');
+  if (el) {
+    el.style.display = 'flex';
+    const t = document.getElementById('login-loading-text');
+    const s = document.getElementById('login-loading-sub');
+    if (t) t.textContent = text || 'Přihlašuji se…';
+    if (s) s.textContent = sub || 'Načítám data portálu';
+  }
+}
+function hideLoginLoading() {
+  const el = document.getElementById('login-loading');
+  if (el) el.style.display = 'none';
+}
   const raw = document.getElementById('login-pin').value;
   const pin = raw.trim().replace(/[\u200B-\u200D\uFEFF\s]/g, '');
   const err = document.getElementById('login-error');
@@ -1682,27 +1721,25 @@ async function doLogin() {
   // DEMO režim — bez serveru, lokální PINy (žádná reálná data)
   if (DEMO_MODE()) { await embeddedLogin(pin, err); return; }
 
-  // Produkce — ověření na serveru, PIN se nikdy neukládá do prohlížeče
-  showLoading('Přihlašuji...');
+  // Produkce — ověření na serveru
+  showLoginLoading('Ověřuji přístup…', 'Kontrola PIN kódu');
   try {
     const res = await apiCall('login', { pin });
-    hideLoading();
     if (res && res.success && res.token) {
-      authToken = res.token;
-      currentRole = res.role;
-      currentUser = res.user;
-      applyRole(); saveSession(); enterApp();
+      authToken = res.token; currentRole = res.role; currentUser = res.user;
+      applyRole(); saveSession();
+      showLoginLoading('Načítám data…', 'Přehled se připravuje');
+      await enterApp();
       return;
     }
+    hideLoginLoading();
     err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block';
-  } catch (e) {
-    hideLoading();
+  } catch(e) {
+    hideLoginLoading();
     const msg = String(e.message || '');
-    // Nesprávný PIN ze serveru
     if (msg.indexOf('Nesprávný') >= 0 || msg.indexOf('PIN') >= 0) {
       err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return;
     }
-    // Starý Code.gs (nezná 'login') nebo nedostupný server → nouzový lokální režim, ať se jde přihlásit
     await embeddedLogin(pin, err);
   }
 }
@@ -1781,29 +1818,29 @@ const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','tr
 async function enterApp() {
   const appEl = document.getElementById('app');
   const loginEl = document.getElementById('login-screen');
-  loginEl.style.display = 'none';
-  appEl.style.display = 'block';
-  appEl.style.opacity = '0';   // skryté dokud není přehled ready
   if (DEMO_MODE()) {
     document.getElementById('setup-banner').style.display = 'block';
     loadDemoData();
     await initTrzbyData();
     initNotifications();
     generateInitialNotifs();
+    loginEl.style.display = 'none';
+    appEl.style.display = 'block';
     switchTab(TABS[0].key);
-    appEl.style.opacity = '1';
+    requestAnimationFrame(() => { appEl.style.opacity = '1'; });
     return;
   }
-  // produkce: nejdřív načti data, pak zobraz
-  showLoading('Přihlašuji...');
+  // produkce — data se načítají, loading overlay na login screenu je viditelný
   await loadData();
   await initTrzbyData();
-  hideLoading();
   checkAndSpawnTemplates();
   initNotifications();
   generateInitialNotifs();
+  // přepni na app — crossfade
   switchTab(TABS[0].key);
-  appEl.style.opacity = '1';
+  loginEl.style.display = 'none';
+  appEl.style.display = 'block';
+  requestAnimationFrame(() => { appEl.style.opacity = '1'; });
 }
 
 function logout() {
