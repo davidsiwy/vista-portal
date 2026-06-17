@@ -1712,6 +1712,8 @@ function hideLoginLoading() {
   const el = document.getElementById('login-loading');
   if (el) el.style.display = 'none';
 }
+
+async function doLogin() {
   const raw = document.getElementById('login-pin').value;
   const pin = raw.trim().replace(/[\u200B-\u200D\uFEFF\s]/g, '');
   const err = document.getElementById('login-error');
