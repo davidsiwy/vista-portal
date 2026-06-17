@@ -128,7 +128,7 @@ a { color: inherit; }
 .login-error { color: #f0b8ad; font-size: 13px; text-align: center; margin-top: 16px; display: none; }
 
 /* ===== TOPBAR ===== */
-#app { display: none; }
+#app { display: none; opacity: 0; transition: opacity 0.18s; }
 .topbar {
   background: var(--peacock, #13302e); color: #fff; height: 66px; display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px; position: sticky; top: 0; z-index: 200;
@@ -896,7 +896,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
   <div class="tabs" id="tab-nav"></div>
 
   <!-- ============ TASKS TAB ============ -->
-  <div id="tab-tasks" class="main">
+  <div id="tab-tasks" class="main" style="display:none">
     <div class="section-header">
       <div>
         <div class="section-title">Úkoly</div>
@@ -1049,7 +1049,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
       <div id="templates-list" style="margin-top:16px"><div class="dash-empty">Zatím žádné šablony. Vytvořte první opakující se úkol.</div></div>
     </div>
 
-    <div class="admin-card" style="margin-top:18px" id="template-log-card" style="display:none">
+    <div class="admin-card" style="margin-top:18px;display:none" id="template-log-card">
       <div class="admin-card-header">
         <div>
           <div class="admin-card-title">Naposledy vygenerované úkoly</div>
@@ -1320,7 +1320,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     </div>
 
     <!-- upload form -->
-    <div id="report-upload-section" style="display:none" class="admin-card" style="margin-bottom:18px">
+    <div id="report-upload-section" class="admin-card" style="display:none;margin-bottom:18px">
       <div class="form-row" style="margin-bottom:12px">
         <div class="form-group" style="margin:0"><label>Název</label><input type="text" id="rep-title" placeholder="např. Zápis z porady 10.6.2026"></div>
         <div class="form-group" style="margin:0">
@@ -1653,7 +1653,19 @@ function restoreSession() {
     if (s && s.currentRole) {
       currentUser = s.currentUser; currentRole = s.currentRole; authToken = s.authToken || '';
       applyRole();
-      enterApp();
+      // zobraz UI okamžitě bez čekání na server
+      const appEl = document.getElementById('app');
+      document.getElementById('login-screen').style.display = 'none';
+      appEl.style.display = 'block';
+      if (DEMO_MODE()) { loadDemoData(); initNotifications(); }
+      initTrzbyData().then(() => {});
+      switchTab(TABS[0].key);
+      appEl.style.opacity = '1';
+      // refresh dat na pozadí (without blocking UI)
+      if (!DEMO_MODE()) {
+        loadData().then(() => { if (activeTab !== 'overview') return; renderOverview(); }).catch(() => {});
+        initNotifications();
+      }
     }
   } catch(e) {}
 }
@@ -1767,8 +1779,11 @@ function buildTabs() {
 const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby','reports'];
 
 async function enterApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  const appEl = document.getElementById('app');
+  const loginEl = document.getElementById('login-screen');
+  loginEl.style.display = 'none';
+  appEl.style.display = 'block';
+  appEl.style.opacity = '0';   // skryté dokud není přehled ready
   if (DEMO_MODE()) {
     document.getElementById('setup-banner').style.display = 'block';
     loadDemoData();
@@ -1776,14 +1791,19 @@ async function enterApp() {
     initNotifications();
     generateInitialNotifs();
     switchTab(TABS[0].key);
+    appEl.style.opacity = '1';
     return;
   }
+  // produkce: nejdřív načti data, pak zobraz
+  showLoading('Přihlašuji...');
   await loadData();
   await initTrzbyData();
-  checkAndSpawnTemplates();   // automaticky spustí šablony co mají dnes běžet
+  hideLoading();
+  checkAndSpawnTemplates();
   initNotifications();
   generateInitialNotifs();
   switchTab(TABS[0].key);
+  appEl.style.opacity = '1';
 }
 
 function logout() {
@@ -1808,7 +1828,7 @@ function switchTab(tab) {
   if (tab === 'docs') renderDocuments();
   if (tab === 'admin') renderAdmin();
   if (tab === 'invoices') renderInvoices();
-  if (tab === 'worklog') renderWorklog();
+  if (tab === 'worklog') { _weeklySummaryOpen = false; const ws=document.getElementById('worklog-weekly-summary'); if(ws)ws.style.display='none'; const wb=document.getElementById('worklog-weekly-btn'); if(wb){wb.textContent='📅 Týdenní souhrn';} renderWorklog(); }
   if (tab === 'overview') renderOverview();
   if (tab === 'trzby') { if (trzbyData || prijmyData) renderTrzby(); else renderTrzbyEmpty(); }
   if (tab === 'reports') renderReports();
