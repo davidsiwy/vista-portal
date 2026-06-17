@@ -456,7 +456,7 @@ function updateTask(data) {
   return { success: true };
 }
 function updateTaskStatus(data) {
-  const obj = { status: data.status };
+  const obj = { status: data.status, statusChangedAt: new Date().toISOString() };
   if (data.status === 'done') obj.completedAt = new Date().toISOString();
   updateRowByHeaders(SHEETS.TASKS, 'id', data.id, obj);
   const task = readSheet(SHEETS.TASKS).items.find(t => t.id === data.id);
