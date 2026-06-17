@@ -1096,6 +1096,12 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
           </div>
           <div class="form-row">
             <div class="form-group" style="margin:0"><label>Segment</label><select id="new-emp-dept"><option value="">Vyberte...</option></select></div>
+            <div class="form-group" style="margin:0"><label>Přístupová úroveň</label>
+              <select id="new-emp-access">
+                <option value="standard">Zaměstnanec (standard)</option>
+                <option value="segment_manager">Vedoucí segmentu — vidí tržby svého segmentu</option>
+              </select>
+            </div>
             <div class="form-group" style="margin:0"><label>PIN kód</label><div class="pin-gen-wrap"><input type="text" id="new-emp-pin" placeholder="min. 3 znaky" maxlength="8"><button class="btn-sm gold" onclick="generatePin('new-emp-pin')">PIN</button></div><div class="hint">PIN bude po uložení krátce viditelný.</div></div>
           </div>
           <div class="form-group"><label>Email (pro notifikace)</label><input type="email" id="new-emp-email" placeholder="jmeno@vistaresort.cz"><div class="hint">Na tento email chodí úkoly, dokumenty a připomínky.</div></div>
@@ -1470,6 +1476,12 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     </div>
     <div class="form-row">
       <div class="form-group" style="margin:0"><label>Segment</label><select id="edit-emp-dept"><option value="">Vyberte...</option></select></div>
+      <div class="form-group" style="margin:0"><label>Přístupová úroveň</label>
+        <select id="edit-emp-access">
+          <option value="standard">Zaměstnanec (standard)</option>
+          <option value="segment_manager">Vedoucí segmentu — vidí tržby svého segmentu</option>
+        </select>
+      </div>
       <div class="form-group" style="margin:0"><label>PIN</label><div class="pin-gen-wrap"><input type="text" id="edit-emp-pin" maxlength="8"><button class="btn-sm gold" onclick="generatePin('edit-emp-pin')">PIN</button></div></div>
     </div>
     <div class="form-group"><label>Email</label><input type="email" id="edit-emp-email" placeholder="email@vistaresort.cz"></div>
@@ -1669,6 +1681,7 @@ let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
 let authToken = '';           // session token ze serveru (posílá se s každým požadavkem)
 let isAdmin = false;          // gm or admin (full rights)
 let isOwner = false;          // owner (overview + create tasks)
+let isSegmentManager = false; // vedoucí segmentu — vidí tržby svého segmentu
 let canManage = false;        // can manage employees/docs (gm, admin)
 let activeTab = 'tasks';
 let pinVisible = {};
@@ -1797,17 +1810,21 @@ async function embeddedLogin(pin, err) {
   else {
     if (employees.length === 0 && !DEMO_MODE()) { showLoading('Ověřuji přístup...'); try { await loadData(); } catch (e) {} hideLoading(); }
     const emp = employees.find(e => String(e.pin).trim() === pin);
-    if (emp) { currentRole = 'employee'; currentUser = { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }; }
+    if (emp) {
+      currentRole = emp.accessLevel === 'segment_manager' ? 'segment_manager' : 'employee';
+      currentUser = { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept, accessLevel: emp.accessLevel || 'standard' };
+    }
     else { err.textContent = 'Nesprávný PIN kód.'; err.style.display = 'block'; return; }
   }
   applyRole(); saveSession(); enterApp();
 }
 
 function applyRole() {
-  isOwner   = currentRole === 'owner';
-  isAdmin   = currentRole === 'gm' || currentRole === 'admin';
-  canManage = currentRole === 'gm' || currentRole === 'admin';
-  canApproveInv = isOwner || isAdmin;
+  isOwner          = currentRole === 'owner';
+  isAdmin          = currentRole === 'gm' || currentRole === 'admin';
+  isSegmentManager = currentRole === 'segment_manager';
+  canManage        = currentRole === 'gm' || currentRole === 'admin';
+  canApproveInv    = isOwner || isAdmin;
   const badge = document.getElementById('role-badge');
   const labels = { owner: 'Majitel', gm: 'General Manager', admin: 'Administrátor', employee: 'Zaměstnanec' };
   badge.textContent = labels[currentRole] || 'Zaměstnanec';
@@ -1833,6 +1850,14 @@ function tabsForRole() {
     { key:'reports',  label:'Reporty' },
     { key:'worklog',  label:'Deník' },
     { key:'admin',    label:'Správa' }
+  ];
+  if (isSegmentManager) return [
+    { key:'overview', label:'Přehled' },
+    { key:'tasks',    label:'Úkoly' },
+    { key:'trzby',    label:'Tržby' },
+    { key:'docs',     label:'Dokumenty' },
+    { key:'reports',  label:'Reporty' },
+    { key:'worklog',  label:'Můj deník' }
   ];
   return [
     { key:'overview', label:'Přehled' },
@@ -2742,17 +2767,18 @@ function renderEmployees() {
     c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><h3>Žádní zaměstnanci</h3><p>Přidejte prvního zaměstnance výše.</p></div>';
     return;
   }
-  let html = '<table class="data-table"><thead><tr><th>Jméno</th><th>Pozice</th><th>Segment</th><th>Email</th><th>PIN</th><th></th></tr></thead><tbody>';
+  let html = '<table class="data-table"><thead><tr><th>Jméno</th><th>Pozice / Přístup</th><th>Segment</th><th>Email</th><th>PIN</th><th></th></tr></thead><tbody>';
   employees.forEach(emp => {
     const show = pinVisible[emp.id];
+    const isSegMgr = emp.accessLevel === 'segment_manager';
     html += `<tr>
       <td><strong>${esc(emp.name)}</strong></td>
-      <td>${esc(emp.role||'—')}</td>
+      <td>${esc(emp.role||'—')}${isSegMgr ? ' <span class="sign-badge" style="background:#e6eef4;color:#2f5d7a;border-color:#b8d0e8;font-size:10px">Vedoucí segmentu</span>' : ''}</td>
       <td>${emp.dept ? `<span class="emp-dept dept-${segSlug(emp.dept)}">${esc(emp.dept)}</span>` : '—'}</td>
       <td style="font-size:13px;color:var(--ink-soft)">${esc(emp.email||'—')}</td>
       <td><span class="pin-display" onclick="togglePin('${emp.id}')">${show ? esc(emp.pin) : '••••'}<span class="pin-toggle">${show?'skrýt':'zobrazit'}</span></span></td>
       <td style="text-align:right;white-space:nowrap" data-manage>
-        <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">✎</button>
+        <button class="btn-icon" onclick="openEditEmp('${emp.id}')" title="Upravit">${ICONS.pen}</button>
         <button class="btn-icon danger" onclick="deleteEmployee('${emp.id}')" title="Smazat">${ICONS.trash}</button>
       </td>
     </tr>`;
@@ -2778,6 +2804,7 @@ async function addEmployee() {
   const name = document.getElementById('new-emp-name').value.trim();
   const role = document.getElementById('new-emp-role').value.trim();
   const dept = document.getElementById('new-emp-dept').value;
+  const accessLevel = document.getElementById('new-emp-access').value;
   const pin = document.getElementById('new-emp-pin').value.trim();
   const email = document.getElementById('new-emp-email').value.trim();
   if (!name) { showToast('Zadejte jméno', 'error'); return; }
@@ -2786,10 +2813,10 @@ async function addEmployee() {
   // role PIN collision guard
   if (Object.values(CONFIG.PINS).includes(pin)) { showToast('Tento PIN je vyhrazen pro vedení', 'error'); return; }
 
-  const emp = { id: 'emp_'+Date.now(), name, role, dept, pin, email };
+  const emp = { id: 'emp_'+Date.now(), name, role, dept, accessLevel, pin, email };
   if (!DEMO_MODE()) {
     showLoading('Přidávám zaměstnance...');
-    try { const res = await apiCall('addEmployee', { name, role, dept, pin, email }); emp.id = res.id; }
+    try { const res = await apiCall('addEmployee', { name, role, dept, accessLevel, pin, email }); emp.id = res.id; }
     catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
     hideLoading();
   }
@@ -2800,6 +2827,7 @@ async function addEmployee() {
   toggleAddEmpForm();
   ['new-emp-name','new-emp-role','new-emp-pin','new-emp-email'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('new-emp-dept').value = '';
+  document.getElementById('new-emp-access').value = 'standard';
   showToast(`${name} přidán/a · PIN: ${pin}`, 'success');
   setTimeout(() => { pinVisible[emp.id] = false; renderEmployees(); }, 8000);
 }
@@ -2811,6 +2839,7 @@ function openEditEmp(id) {
   document.getElementById('edit-emp-name').value = emp.name;
   document.getElementById('edit-emp-role').value = emp.role || '';
   document.getElementById('edit-emp-dept').value = emp.dept || '';
+  document.getElementById('edit-emp-access').value = emp.accessLevel || 'standard';
   document.getElementById('edit-emp-pin').value = emp.pin;
   document.getElementById('edit-emp-email').value = emp.email || '';
   document.getElementById('edit-emp-modal').classList.add('open');
@@ -2822,6 +2851,7 @@ async function saveEditEmployee() {
   const name = document.getElementById('edit-emp-name').value.trim();
   const role = document.getElementById('edit-emp-role').value.trim();
   const dept = document.getElementById('edit-emp-dept').value;
+  const accessLevel = document.getElementById('edit-emp-access').value;
   const pin = document.getElementById('edit-emp-pin').value.trim();
   const email = document.getElementById('edit-emp-email').value.trim();
   if (!name || !pin) { showToast('Jméno a PIN jsou povinné', 'error'); return; }
@@ -2832,12 +2862,12 @@ async function saveEditEmployee() {
 
   if (!DEMO_MODE()) {
     showLoading('Ukládám změny...');
-    try { await apiCall('updateEmployee', { id, name, role, dept, pin, email }); }
+    try { await apiCall('updateEmployee', { id, name, role, dept, accessLevel, pin, email }); }
     catch(e) { hideLoading(); showToast('Chyba: ' + e.message, 'error'); return; }
     hideLoading();
   }
   const emp = employees.find(e => e.id === id);
-  if (emp) Object.assign(emp, { name, role, dept, pin, email });
+  if (emp) Object.assign(emp, { name, role, dept, accessLevel, pin, email });
   closeEditModal();
   pinVisible[id] = true;
   buildFilterOptions();
@@ -4237,7 +4267,56 @@ function renderCompare() {
 
 // ── init: načte uložené reporty ze serveru, jinak výchozí Vista data ──
 async function initTrzbyData() {
-  if (!isOwner && !isAdmin) return;
+  if (!isOwner && !isAdmin && !isSegmentManager) return;
+
+  // localStorage first
+  try {
+    const lsV = localStorage.getItem('vista_trzby_vynosy');
+    const lsP = localStorage.getItem('vista_trzby_prijmy');
+    const lsT = localStorage.getItem('vista_trzby_time');
+    if (lsV) { const p = JSON.parse(lsV); if (p.length) trzbyData  = p.map(r=>({...r,date:new Date(r.date)})); }
+    if (lsP) { const p = JSON.parse(lsP); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
+    if (lsT) trzbyUploadedAt = lsT;
+  } catch(e) {}
+
+  // server
+  if (!DEMO_MODE()) {
+    try {
+      const res = await apiCall('getTrzby', {});
+      if (res) {
+        if (res.json)  { const p = JSON.parse(res.json);  if (p.length) trzbyData  = p.map(r=>({...r,date:new Date(r.date)})); }
+        if (res.json2) { const p = JSON.parse(res.json2); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
+        if (res.uploadedAt) trzbyUploadedAt = res.uploadedAt;
+      }
+    } catch(e) {}
+  }
+
+  // fallback — JSON file
+  if (!trzbyData || !prijmyData) {
+    try {
+      const base = window.location.hostname.includes('github.io') ? '/vista-portal' : '';
+      const r2 = await fetch(base + '/trzby-data.json');
+      if (r2.ok) {
+        const d2 = await r2.json();
+        if (!trzbyData && d2.vynosy) trzbyData = d2.vynosy.map(r=>({...r, date:new Date(r.date)}));
+        if (!prijmyData && d2.prijmy) prijmyData = d2.prijmy.map(r=>({...r, date:new Date(r.date)}));
+      }
+    } catch(e2) {}
+  }
+
+  // Segment manager — filter to their own segment only
+  if (isSegmentManager && currentUser?.dept && trzbyData) {
+    const seg = currentUser.dept;
+    trzbyData = trzbyData.map(r => {
+      const segVal = r.segs?.[seg] ?? 0;
+      return { ...r, celkem: segVal, segs: { [seg]: segVal } };
+    });
+    prijmyData = null; // příjmy dle plateb nedávají smysl pro segment view
+  }
+
+  buildPeriodOptions();
+  buildSegFilter();
+}
 
   // 1) localStorage — funguje vždy, hned, bez serveru
   try {
