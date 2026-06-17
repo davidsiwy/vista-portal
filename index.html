@@ -527,7 +527,7 @@ a { color: inherit; }
 .spinner { width: 30px; height: 30px; border: 3px solid var(--paper-2, #efeadf); border-top-color: var(--fern, #586845); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 14px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .empty-state { text-align: center; padding: 56px 24px; color: var(--ink-faint, #9a9b8c); }
-.empty-state .empty-icon { font-size: 40px; margin-bottom: 14px; }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 14px; display:flex; justify-content:center; align-items:center; color:var(--line-strong, #d6cdb9); }
 .empty-state h3 { font-family: var(--serif); font-size: 20px; color: var(--ink-soft, #5f6357); margin-bottom: 7px; font-weight: 500; }
 .empty-state p { font-size: 13.5px; font-family: var(--sans); }
 .toast { position: fixed; bottom: 26px; right: 26px; background: var(--peacock, #13302e); color: var(--tan, #dfc196); padding: 15px 24px; border-radius: var(--r); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); transform: translateY(80px); opacity: 0; transition: all 0.34s var(--ease); z-index: 1000; max-width: 380px; font-family: var(--sans); }
@@ -2055,8 +2055,8 @@ function renderTasks() {
 
   if (list.length === 0) {
     c.innerHTML = (!isAdmin && !isOwner)
-      ? '<div class="empty-state"><div class="empty-icon">✓</div><h3>Žádné úkoly</h3><p>Zatím vám nikdo žádný úkol nepřiřadil.</p></div>'
-      : '<div class="empty-state"><div class="empty-icon">✓</div><h3>Zatím žádné úkoly</h3><p>Klikněte na „Nový úkol" a vytvořte první.</p></div>';
+      ? '<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg></div><h3>Žádné úkoly</h3><p>Zatím vám nikdo žádný úkol nepřiřadil.</p></div>'
+      : '<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg></div><h3>Zatím žádné úkoly</h3><p>Klikněte na „Nový úkol" a vytvořte první.</p></div>';
     return;
   }
 
@@ -2431,7 +2431,7 @@ function renderDocuments() {
   document.getElementById('docs-subtitle').textContent = total === 0 ? 'Žádné dokumenty' : total + ' ' + plural(total, 'dokument','dokumenty','dokumentů');
 
   if (filtered.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📂</div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Zatím pro vás nejsou žádné dokumenty.':'Zkuste jiný výraz.'}</p></div>`;
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><h3>${total===0?'Zatím žádné dokumenty':'Nic nenalezeno'}</h3><p>${total===0?'Zatím pro vás nejsou žádné dokumenty.':'Zkuste jiný výraz.'}</p></div>`;
     return;
   }
   const myConf = confirmations.filter(cf => cf.employeeId === (currentUser?.id || ''));
@@ -2626,7 +2626,7 @@ function audienceLabel(doc) {
 function renderAdminDocsList() {
   const c = document.getElementById('admin-docs-list');
   if (documents.length === 0) {
-    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">📂</div><h3>Žádné dokumenty</h3><p>Klikněte „Přidat dokument" výše.</p></div>';
+    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><h3>Žádné dokumenty</h3><p>Klikněte „Přidat dokument" výše.</p></div>';
     return;
   }
   c.innerHTML = '';
@@ -2739,7 +2739,7 @@ function exportConfirmations() {
 function renderEmployees() {
   const c = document.getElementById('employees-container');
   if (employees.length === 0) {
-    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon">👤</div><h3>Žádní zaměstnanci</h3><p>Přidejte prvního zaměstnance výše.</p></div>';
+    c.innerHTML = '<div class="empty-state" style="padding:32px"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><h3>Žádní zaměstnanci</h3><p>Přidejte prvního zaměstnance výše.</p></div>';
     return;
   }
   let html = '<table class="data-table"><thead><tr><th>Jméno</th><th>Pozice</th><th>Segment</th><th>Email</th><th>PIN</th><th></th></tr></thead><tbody>';
@@ -3472,7 +3472,7 @@ function renderWorklog() {
   entries.sort((a,b) => new Date(b.date||b.createdAt) - new Date(a.date||a.createdAt));
 
   if (entries.length === 0) {
-    c.innerHTML = `<div class="empty-state"><div class="empty-icon">📓</div><h3>Žádné zápisy</h3><p>${isStaff?'Napište svůj první zápis výše.':'Zatím žádné zápisy v deníku.'}</p></div>`;
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><h3>Žádné zápisy</h3><p>${isStaff?'Napište svůj první zápis výše.':'Zatím žádné zápisy v deníku.'}</p></div>`;
     return;
   }
 
@@ -4100,7 +4100,7 @@ function renderTrzby() {
   if (typeof Chart === 'undefined') {
     document.getElementById('trzby-empty').style.display = 'block';
     document.getElementById('trzby-empty').innerHTML = '<div class="loading"><div class="spinner"></div>Načítám grafy...</div>';
-    let a = 0; const w = setInterval(() => { a++; if (typeof Chart !== 'undefined') { clearInterval(w); renderTrzby(); } else if (a > 30) { clearInterval(w); document.getElementById('trzby-empty').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><h3>Grafy se nenačetly</h3><p>Obnov stránku (Cmd+Shift+R).</p></div>'; } }, 300);
+    let a = 0; const w = setInterval(() => { a++; if (typeof Chart !== 'undefined') { clearInterval(w); renderTrzby(); } else if (a > 30) { clearInterval(w); document.getElementById('trzby-empty').innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><h3>Grafy se nenačetly</h3><p>Obnov stránku (Cmd+Shift+R).</p></div>'; } }, 300);
     return;
   }
   const data = activeData();
