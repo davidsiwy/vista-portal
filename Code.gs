@@ -79,7 +79,10 @@ function doLoginAction(data) {
   if (pin === AUTH.pins.gm)    return { success: true, role: 'gm',    user: { id: '__gm__', name: 'General Manager', role: 'GM', dept: '' }, token: makeToken('gm', '__gm__', 'General Manager') };
   if (pin === AUTH.pins.admin) return { success: true, role: 'admin', user: { id: '__admin__', name: 'Administrátor', role: 'Admin', dept: '' }, token: makeToken('admin', '__admin__', 'Administrátor') };
   const emp = readSheet(SHEETS.EMPLOYEES).items.find(function(e){ return String(e.pin).trim() === pin; });
-  if (emp) return { success: true, role: 'employee', user: { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept }, token: makeToken('employee', emp.id, emp.name) };
+  if (emp) {
+    var role = emp.accessLevel === 'segment_manager' ? 'segment_manager' : 'employee';
+    return { success: true, role: role, user: { id: emp.id, name: emp.name, role: emp.role, dept: emp.dept, accessLevel: emp.accessLevel||'standard' }, token: makeToken(role, emp.id, emp.name) };
+  }
   return { error: 'Nesprávný PIN', code: 401 };
 }
 
@@ -170,7 +173,7 @@ function jsonResponse(data) {
 // ============================================================
 function initSheets() {
   const ss = getSS();
-  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
+  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','accessLevel','pin','email','createdAt']);
   ensureSheet(ss, SHEETS.DOCUMENTS, ['id','title','category','desc','url','fileId','fileName','uploadedAt','deadline','audienceType','audienceList','version','requiresSignature','readOnly','remindedAt']);
   ensureSheet(ss, SHEETS.CONFIRMATIONS, ['docId','docTitle','employeeId','employeeName','confirmedAt','signedUrl','signedFileId','signedFileName']);
   ensureSheet(ss, SHEETS.TASKS, ['id','title','desc','segment','priority','status','assignees','dependsOn','deadline','createdBy','createdByName','createdAt','completedAt','attachments','remindedAt']);
@@ -263,11 +266,11 @@ function getEmployees() {
 }
 function addEmployee(data) {
   const id = data.id || 'emp_' + Date.now();
-  appendByHeaders(SHEETS.EMPLOYEES, { id, name: data.name||'', role: data.role||'', dept: data.dept||'', pin: data.pin||'', email: data.email||'', createdAt: new Date().toISOString() });
+  appendByHeaders(SHEETS.EMPLOYEES, { id, name: data.name||'', role: data.role||'', dept: data.dept||'', accessLevel: data.accessLevel||'standard', pin: data.pin||'', email: data.email||'', createdAt: new Date().toISOString() });
   return { success: true, id };
 }
 function updateEmployee(data) {
-  updateRowByHeaders(SHEETS.EMPLOYEES, 'id', data.id, { name: data.name||'', role: data.role||'', dept: data.dept||'', pin: data.pin||'', email: data.email||'' });
+  updateRowByHeaders(SHEETS.EMPLOYEES, 'id', data.id, { name: data.name||'', role: data.role||'', dept: data.dept||'', accessLevel: data.accessLevel||'standard', pin: data.pin||'', email: data.email||'' });
   return { success: true };
 }
 function deleteEmployee(id) { deleteRowByCol(SHEETS.EMPLOYEES, 'id', id); return { success: true }; }
@@ -631,7 +634,7 @@ function getAll() {
   // employees
   const empItems = readSheetFromCache(cache, SHEETS.EMPLOYEES).items;
   const employees = empItems.map(function(r) {
-    return { id:r.id, name:r.name||'', role:r.role||'', dept:r.dept||'', email:r.email||'', createdAt:r.createdAt||'' };
+    return { id:r.id, name:r.name||'', role:r.role||'', dept:r.dept||'', accessLevel:r.accessLevel||'standard', pin:r.pin||'', email:r.email||'', createdAt:r.createdAt||'' };
   }).filter(function(r){ return r.id; });
 
   // documents
@@ -712,7 +715,7 @@ function getEssential() {
   const cache = batchReadAll();
   const empItems = readSheetFromCache(cache, SHEETS.EMPLOYEES).items;
   const employees = empItems.filter(function(r){ return r.id; }).map(function(r){
-    return { id:r.id, name:r.name||'', role:r.role||'', dept:r.dept||'', email:r.email||'', createdAt:r.createdAt||'' };
+    return { id:r.id, name:r.name||'', role:r.role||'', dept:r.dept||'', accessLevel:r.accessLevel||'standard', pin:r.pin||'', email:r.email||'', createdAt:r.createdAt||'' };
   });
   const taskItems = readSheetFromCache(cache, SHEETS.TASKS).items;
   const tasks = taskItems.filter(function(r){ return r.id; }).map(function(r){
@@ -1199,7 +1202,7 @@ function resetEmployees() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const old = ss.getSheetByName(SHEETS.EMPLOYEES);
   if (old) ss.deleteSheet(old);
-  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','pin','email','createdAt']);
+  ensureSheet(ss, SHEETS.EMPLOYEES, ['id','name','role','dept','accessLevel','pin','email','createdAt']);
   Logger.log('List Zaměstnanci resetován.');
 }
 
