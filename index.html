@@ -1672,23 +1672,15 @@ function restoreSession() {
     if (!s || !s.currentRole) return;
     currentUser = s.currentUser; currentRole = s.currentRole; authToken = s.authToken || '';
     applyRole();
-
-    // ukaž loading overlay na login screenu — žádná bílá prázdná stránka
-    showLoginLoading('Obnovuji session…', 'Připravuji přehled');
-
-    // malý setTimeout aby prohlížeč stihl vykreslit loading overlay
+    showLoginLoading('Načítám data…', 'Připravuji přehled');
     setTimeout(async () => {
       try {
         if (DEMO_MODE()) {
           loadDemoData();
           initNotifications();
         } else {
-          // načti tržby okamžitě (localStorage = bez sítě)
           await initTrzbyData();
-          // essential data pro přehled
-          loadData().then(() => {
-            if (activeTab === 'overview') renderOverview();
-          }).catch(() => {});
+          await loadData();   // čekáme — jinak enterApp a restoreSession kolidují
           initNotifications();
         }
         const appEl = document.getElementById('app');
@@ -1825,7 +1817,11 @@ function buildTabs() {
 
 const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby','reports'];
 
+let _appReady = false;
+
 async function enterApp() {
+  if (_appReady) return;
+  _appReady = true;
   const appEl = document.getElementById('app');
   const loginEl = document.getElementById('login-screen');
   if (DEMO_MODE()) {
@@ -1834,20 +1830,19 @@ async function enterApp() {
     await initTrzbyData();
     initNotifications();
     generateInitialNotifs();
+    switchTab(TABS[0].key);
     loginEl.style.display = 'none';
     appEl.style.display = 'block';
-    switchTab(TABS[0].key);
     requestAnimationFrame(() => { appEl.style.opacity = '1'; });
     return;
   }
-  // produkce — data se načítají, loading overlay na login screenu je viditelný
   await loadData();
   await initTrzbyData();
   checkAndSpawnTemplates();
   initNotifications();
   generateInitialNotifs();
-  // přepni na app — crossfade
   switchTab(TABS[0].key);
+  hideLoginLoading();
   loginEl.style.display = 'none';
   appEl.style.display = 'block';
   requestAnimationFrame(() => { appEl.style.opacity = '1'; });
@@ -1855,6 +1850,7 @@ async function enterApp() {
 
 function logout() {
   if (_notifPollTimer) { clearInterval(_notifPollTimer); _notifPollTimer = null; }
+  _appReady = false;
   clearSession();
   currentUser = null; currentRole = null; authToken = '';
   notifications = [];
