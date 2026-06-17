@@ -30,7 +30,8 @@ const SHEETS = {
   TRZBY: 'Tržby',
   REPORTS: 'Reporty',
   NOTIFICATIONS: 'Notifikace',
-  TEMPLATES: 'Šablony'
+  TEMPLATES: 'Šablony',
+  REQUESTS: 'Požadavky'
 };
 
 // ============================================================
@@ -146,6 +147,10 @@ function doPost(e) {
       case 'saveTemplate':           result = saveTemplate(data); break;
       case 'deleteTemplate':         result = deleteTemplate(data.id); break;
       case 'updateTemplateLastRun':  result = updateTemplateLastRun(data); break;
+      // requests
+      case 'addRequest':    result = addRequest(data); break;
+      case 'updateRequest': result = updateRequest(data); break;
+      case 'deleteRequest': result = deleteRequest_fn(data.id); break;
       case 'addWorklog':      result = addWorklog(data); break;
       case 'updateWorklog':   result = updateWorklog(data); break;
       case 'deleteWorklog':   result = deleteWorklog(data.id); break;
@@ -184,6 +189,7 @@ function initSheets() {
   ensureSheet(ss, SHEETS.REPORTS, ['id','title','category','desc','url','fileId','fileName','uploadedBy','uploadedByName','uploadedAt']);
   ensureSheet(ss, SHEETS.NOTIFICATIONS, ['id','recipientId','type','icon','message','link','createdAt','readBy']);
   ensureSheet(ss, SHEETS.TEMPLATES, ['id','title','desc','segment','priority','assignees','freq','days','monthDay','deadlineOffset','active','createdAt','lastRun']);
+  ensureSheet(ss, SHEETS.REQUESTS, ['id','category','text','status','createdBy','createdByName','createdAt','response']);
   return { success: true };
 }
 
@@ -705,7 +711,7 @@ function getAll() {
       active: isTruthy(r.active), createdAt:r.createdAt||'', lastRun:r.lastRun||'' };
   }).filter(function(r){ return r.id; });
 
-  return { employees, documents, confirmations, tasks, comments, invoices, worklog, reports, taskTemplates };
+  return { employees, documents, confirmations, tasks, comments, invoices, worklog, reports, taskTemplates, requests: getRequests().requests };
 }
 
 // getEssential — rychlý subset pro první zobrazení Přehledu
@@ -1327,3 +1333,27 @@ function runDailyTemplates() {
     Logger.log('Vygenerován úkol z šablony: '+t.title+' ('+taskId+')');
   });
 }
+
+// ============================================================
+// POŽADAVKY ZAMĚSTNANCŮ
+// ============================================================
+function getRequests() {
+  var { items } = readSheet(SHEETS.REQUESTS);
+  return { requests: items.filter(function(r){ return r.id; }).map(function(r){
+    return { id:r.id, category:r.category||'Ostatní', text:r.text||'', status:r.status||'open',
+      createdBy:r.createdBy||'', createdByName:r.createdByName||'', createdAt:r.createdAt||'', response:r.response||'' };
+  }).sort(function(a,b){ return new Date(b.createdAt)-new Date(a.createdAt); }) };
+}
+function addRequest(data) {
+  appendByHeaders(SHEETS.REQUESTS, { id:data.id||('req_'+Date.now()), category:data.category||'Ostatní',
+    text:data.text||'', status:'open', createdBy:data.createdBy||'', createdByName:data.createdByName||'',
+    createdAt:data.createdAt||new Date().toISOString(), response:'' });
+  // notify admin + gm
+  notifyManagement('doc', '💬', 'Nový požadavek od ' + (data.createdByName||'zaměstnance') + ': ' + (data.text||'').slice(0,60), '');
+  return { success:true };
+}
+function updateRequest(data) {
+  updateRowByHeaders(SHEETS.REQUESTS, 'id', data.id, { status:data.status||'resolved', response:data.response||'' });
+  return { success:true };
+}
+function deleteRequest_fn(id) { deleteRowByCol(SHEETS.REQUESTS, 'id', id); return { success:true }; }
