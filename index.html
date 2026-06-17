@@ -1428,6 +1428,18 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
     <div id="reports-list"></div>
   </div>
 
+  <!-- ============ POŽADAVKY TAB ============ -->
+  <div id="tab-requests" class="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title" id="requests-title">Požadavky</div>
+        <div class="section-subtitle" id="requests-subtitle">Podněty a požadavky pro vedení</div>
+      </div>
+      <button class="btn-sm primary" id="new-request-btn" onclick="openRequestModal()" style="display:none">+ Nový požadavek</button>
+    </div>
+    <div id="requests-list"></div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- CONFIRM DOCUMENT MODAL -->
@@ -1566,6 +1578,27 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
   </div>
 </div>
 
+<!-- REQUEST MODAL -->
+<div class="modal-overlay" id="request-modal">
+  <div class="modal wide">
+    <h2>Nový požadavek</h2>
+    <div class="form-group">
+      <label>Kategorie</label>
+      <select id="req-category">
+        <option value="Problém">Problém / závada</option>
+        <option value="Žádost">Žádost / potřeba</option>
+        <option value="Návrh">Návrh na zlepšení</option>
+        <option value="Ostatní">Ostatní</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Popis *</label><textarea id="req-text" placeholder="Popište co potřebujete nebo co je problém..." style="min-height:100px"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-sm secondary" onclick="closeRequestModal()">Zrušit</button>
+      <button class="btn-sm primary" onclick="submitRequest()">Odeslat</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW/EDIT TASK MODAL -->
 <div class="modal-overlay" id="task-modal">
   <div class="modal wide">
@@ -1675,7 +1708,7 @@ const DEMO_MODE = () => CONFIG.SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'
 // ============================================================
 
 // ===== STATE =====
-let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [], taskTemplates = [];
+let employees = [], documents = [], confirmations = [], tasks = [], comments = [], invoices = [], worklog = [], reports = [], taskTemplates = [], requests = [];
 let currentUser = null;       // { id, name, role, dept } or role-user
 let currentRole = null;       // 'owner' | 'gm' | 'admin' | 'employee'
 let authToken = '';           // session token ze serveru (posílá se s každým požadavkem)
@@ -1842,14 +1875,15 @@ function tabsForRole() {
     { key:'reports',  label:'Reporty' }
   ];
   if (isAdmin) return [
-    { key:'overview', label:'Přehled' },
-    { key:'tasks',    label:'Úkoly' },
-    { key:'docs',     label:'Dokumenty' },
-    { key:'invoices', label:'Faktury' },
-    { key:'trzby',    label:'Tržby' },
-    { key:'reports',  label:'Reporty' },
-    { key:'worklog',  label:'Deník' },
-    { key:'admin',    label:'Správa' }
+    { key:'overview',  label:'Přehled' },
+    { key:'tasks',     label:'Úkoly' },
+    { key:'docs',      label:'Dokumenty' },
+    { key:'invoices',  label:'Faktury' },
+    { key:'trzby',     label:'Tržby' },
+    { key:'reports',   label:'Reporty' },
+    { key:'requests',  label:'Požadavky' },
+    { key:'worklog',   label:'Deník' },
+    { key:'admin',     label:'Správa' }
   ];
   if (isSegmentManager) return [
     { key:'overview', label:'Přehled' },
@@ -1857,14 +1891,16 @@ function tabsForRole() {
     { key:'trzby',    label:'Tržby' },
     { key:'docs',     label:'Dokumenty' },
     { key:'reports',  label:'Reporty' },
+    { key:'requests', label:'Požadavky' },
     { key:'worklog',  label:'Můj deník' }
   ];
   return [
-    { key:'overview', label:'Přehled' },
-    { key:'tasks',    label:'Úkoly' },
-    { key:'docs',     label:'Dokumenty' },
-    { key:'reports',  label:'Reporty' },
-    { key:'worklog',  label:'Můj deník' }
+    { key:'overview',  label:'Přehled' },
+    { key:'tasks',     label:'Úkoly' },
+    { key:'docs',      label:'Dokumenty' },
+    { key:'reports',   label:'Reporty' },
+    { key:'requests',  label:'Požadavky' },
+    { key:'worklog',   label:'Můj deník' }
   ];
 }
 
@@ -1882,7 +1918,7 @@ function buildTabs() {
   });
 }
 
-const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby','reports'];
+const ALL_TAB_KEYS = ['tasks','docs','admin','invoices','worklog','overview','trzby','reports','requests'];
 
 let _appReady = false;
 
@@ -1945,6 +1981,7 @@ function switchTab(tab) {
   if (tab === 'overview') renderOverview();
   if (tab === 'trzby') { if (trzbyData || prijmyData) renderTrzby(); else renderTrzbyEmpty(); }
   if (tab === 'reports') renderReports();
+  if (tab === 'requests') renderRequests();
 }
 
 // ===== LOAD DATA =====
@@ -1968,6 +2005,7 @@ async function loadData() {
     worklog       = essential.worklog || [];
     reports       = essential.reports || [];
     taskTemplates = essential.taskTemplates || [];
+    requests      = essential.requests || [];
     buildFilterOptions();
     // Fáze 2 — zbytek na pozadí pokud essential nemělo vše
     if (!essential.documents?.length && !essential.worklog?.length) {
@@ -1983,6 +2021,7 @@ async function loadData() {
           worklog       = full.worklog || [];
           reports       = full.reports || [];
           taskTemplates = full.taskTemplates || [];
+          requests      = full.requests || [];
           refreshAll();
         } catch(e) {}
       }, 100);
@@ -2001,6 +2040,7 @@ function refreshAll() {
   if (activeTab === 'worklog') renderWorklog();
   if (activeTab === 'overview') renderOverview();
   if (activeTab === 'reports') renderReports();
+  if (activeTab === 'requests') renderRequests();
 }
 
 function buildFilterOptions() {
@@ -3480,20 +3520,29 @@ function cancelInvoiceUpload() {
 // WORKLOG (Deník)
 // ============================================================
 function renderWorklog() {
-  const isStaff = currentRole === 'employee';
-  // employees write + see their own; admin/gm see all (no compose)
+  const isStaff = currentRole === 'employee' || currentRole === 'segment_manager';
+  const myDept = currentUser?.dept || '';
+
   document.getElementById('worklog-compose').style.display = isStaff ? 'block' : 'none';
-  document.getElementById('worklog-filters').style.display = isStaff ? 'none' : 'flex';
-  document.getElementById('worklog-title').textContent = isStaff ? 'Můj deník' : 'Deník zaměstnanců';
-  document.getElementById('worklog-subtitle').textContent = isStaff ? 'Zapište co jste dnes udělal' : 'Denní zápisy všech zaměstnanců';
+  document.getElementById('worklog-filters').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('worklog-title').textContent = isStaff ? (myDept ? `Deník — ${myDept}` : 'Můj deník') : 'Deník zaměstnanců';
+  document.getElementById('worklog-subtitle').textContent = isStaff
+    ? (myDept ? `Vaše záznamy a záznamy kolegů z ${myDept}` : 'Vaše denní záznamy')
+    : 'Denní zápisy všech zaměstnanců';
   const wkBtn = document.getElementById('worklog-weekly-btn');
   if (wkBtn) wkBtn.style.display = isAdmin ? '' : 'none';
 
   const c = document.getElementById('worklog-container');
   let entries = worklog.slice();
+
   if (isStaff) {
-    entries = entries.filter(w => w.employeeId === currentUser?.id);
-  } else {
+    // sees own entries + colleagues from same segment (if dept is set)
+    entries = entries.filter(w => {
+      if (w.employeeId === currentUser?.id) return true;
+      if (myDept && w.segment === myDept) return true;
+      return false;
+    });
+  } else if (isAdmin) {
     const ef = document.getElementById('worklog-emp-filter')?.value || '';
     const sf = document.getElementById('worklog-seg-filter')?.value || '';
     if (ef) entries = entries.filter(w => w.employeeId === ef);
@@ -4729,6 +4778,125 @@ async function checkAndSpawnTemplates() {
 }
 
 // ============================================================
+// POŽADAVKY (employee requests to admin/GM)
+// ============================================================
+let requests = [];
+
+function renderRequests() {
+  const isStaff = !isAdmin && !isOwner;
+  const newBtn = document.getElementById('new-request-btn');
+  if (newBtn) newBtn.style.display = isStaff ? '' : 'none';
+
+  const title = document.getElementById('requests-title');
+  const sub = document.getElementById('requests-subtitle');
+  if (title) title.textContent = isStaff ? 'Moje požadavky' : 'Požadavky zaměstnanců';
+  if (sub) {
+    const open = requests.filter(r => r.status !== 'resolved').length;
+    sub.textContent = isStaff
+      ? `${requests.filter(r=>r.createdBy===currentUser?.id).length} odeslaných požadavků`
+      : `${requests.length} celkem · ${open} nevyřešených`;
+  }
+
+  const c = document.getElementById('requests-list');
+  if (!c) return;
+
+  const mine = isStaff ? requests.filter(r => r.createdBy === currentUser?.id) : requests;
+  const sorted = mine.slice().sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (sorted.length === 0) {
+    const msg = isStaff ? 'Zatím jste nepodali žádný požadavek.' : 'Žádné požadavky od zaměstnanců.';
+    c.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>Žádné požadavky</h3><p>${msg}</p></div>`;
+    return;
+  }
+
+  const STATUS_STYLES = {
+    open:     'background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)',
+    inprogress: 'background:var(--info-soft,#e8f0f6);color:var(--info,#2f5d7a);border-color:#b8d0e8',
+    resolved: 'background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)'
+  };
+  const STATUS_CZ = { open:'Otevřeno', inprogress:'Řeší se', resolved:'Vyřešeno' };
+
+  c.innerHTML = sorted.map(r => {
+    const statusStyle = STATUS_STYLES[r.status||'open'] || STATUS_STYLES.open;
+    const statusCzLabel = STATUS_CZ[r.status||'open'] || r.status;
+    const canResolve = isAdmin && r.status !== 'resolved';
+    const canDelete = isAdmin || r.createdBy === currentUser?.id;
+    return `<div class="admin-card" style="margin-bottom:12px">
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span class="doc-cat-pill">${esc(r.category||'Ostatní')}</span>
+            <span class="sign-badge" style="${statusStyle}">${statusCzLabel}</span>
+            <span style="font-size:11px;color:var(--ink-faint);font-family:var(--sans)">${esc(r.createdByName||'—')} · ${fmtDate(r.createdAt)}</span>
+          </div>
+          <div style="font-family:var(--sans);font-size:14px;color:var(--ink-soft);line-height:1.6;white-space:pre-wrap">${esc(r.text)}</div>
+          ${r.response ? `<div style="margin-top:10px;padding:10px 14px;background:var(--ok-soft);border-radius:var(--r);border-left:3px solid var(--ok)"><div style="font-size:11px;font-weight:700;color:var(--ok);font-family:var(--sans);margin-bottom:4px">Odpověď vedení</div><div style="font-size:13px;color:var(--ink-soft);font-family:var(--sans)">${esc(r.response)}</div></div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;flex-direction:column;align-items:flex-end">
+          ${canResolve ? `<button class="btn-sm primary" onclick="resolveRequest('${r.id}')" style="font-size:12px;padding:7px 12px">Vyřešit</button>` : ''}
+          ${canDelete ? `<button class="btn-icon danger" onclick="deleteRequest('${r.id}')" title="Smazat">${ICONS.trash}</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openRequestModal() {
+  document.getElementById('req-text').value = '';
+  document.getElementById('req-category').value = 'Žádost';
+  document.getElementById('request-modal').classList.add('open');
+  setTimeout(() => document.getElementById('req-text').focus(), 50);
+}
+function closeRequestModal() { document.getElementById('request-modal').classList.remove('open'); }
+
+async function submitRequest() {
+  const text = document.getElementById('req-text').value.trim();
+  const category = document.getElementById('req-category').value;
+  if (!text) { showToast('Napište popis požadavku', 'error'); return; }
+  const req = {
+    id: 'req_' + Date.now(),
+    category, text,
+    status: 'open',
+    createdBy: currentUser?.id || '',
+    createdByName: currentUser?.name || '',
+    createdAt: new Date().toISOString(),
+    response: ''
+  };
+  requests.unshift(req);
+  if (!DEMO_MODE()) {
+    try { await apiCall('addRequest', req); }
+    catch(e) { showToast('Chyba při odesílání: ' + e.message, 'error'); }
+  }
+  closeRequestModal();
+  renderRequests();
+  showToast('Požadavek odeslán', 'success');
+  // notify admins
+  pushNotif('doc', ICONS.messageSquare, `Nový požadavek od ${esc(currentUser?.name||'zaměstnance')}: ${esc(text.slice(0,40))}`, { tab:'requests' });
+}
+
+async function resolveRequest(id) {
+  const response = prompt('Odpověď zaměstnanci (nepovinné):') ?? '';
+  const req = requests.find(r => r.id === id);
+  if (!req) return;
+  req.status = 'resolved';
+  req.response = response;
+  if (!DEMO_MODE()) {
+    try { await apiCall('updateRequest', { id, status: 'resolved', response }); }
+    catch(e) { showToast('Chyba při ukládání', 'error'); }
+  }
+  renderRequests();
+  showToast('Požadavek vyřešen', 'success');
+}
+
+async function deleteRequest(id) {
+  if (!confirm('Smazat tento požadavek?')) return;
+  requests = requests.filter(r => r.id !== id);
+  if (!DEMO_MODE()) { try { await apiCall('deleteRequest', { id }); } catch(e) {} }
+  renderRequests();
+  showToast('Smazáno');
+}
+
+// ============================================================
 // DEMO DATA
 // ============================================================
 function loadDemoData() {
@@ -4774,6 +4942,11 @@ function loadDemoData() {
     { id:'tmpl1', title:'Kontrola wellness zařízení', desc:'Zkontrolovat sauny, bazén, vybavení a doplnit spotřební materiál.', segment:'Wellness', priority:'medium', assignees:['e2'], freq:'weekly', days:[1,4], monthDay:'', deadlineOffset:1, active:true, createdAt:new Date().toISOString(), lastRun:'' },
     { id:'tmpl2', title:'Uzávěrka pokladny', desc:'Spočítat denní tržby, porovnat s POS systémem a uložit do deníku.', segment:'Gastro', priority:'high', assignees:['e3'], freq:'daily', days:[], monthDay:'', deadlineOffset:0, active:true, createdAt:new Date().toISOString(), lastRun:'' },
     { id:'tmpl3', title:'Měsíční report segmentu', desc:'Zpracovat měsíční přehled a nahrát do sekce Reporty.', segment:'Hotel', priority:'medium', assignees:['e1'], freq:'monthly', days:[], monthDay:'1', deadlineOffset:5, active:true, createdAt:new Date().toISOString(), lastRun:'' }
+  ];
+  requests = [
+    { id:'rq1', category:'Problém', text:'V šatně č. 3 nefunguje osvětlení. Zákazníci si stěžují.', status:'open', createdBy:'e2', createdByName:'Petr Svoboda', createdAt:new Date(Date.now()-86400000).toISOString(), response:'' },
+    { id:'rq2', category:'Žádost', text:'Potřebujeme nové ručníky do wellness — ty současné jsou opotřebované.', status:'inprogress', createdBy:'e2', createdByName:'Petr Svoboda', createdAt:new Date(Date.now()-86400000*3).toISOString(), response:'Objednávka vyřízena, dodání do 5 dní.' },
+    { id:'rq3', category:'Návrh', text:'Na recepci by pomohl druhý monitor pro snadnější odbavení hostů.', status:'resolved', createdBy:'e1', createdByName:'Jana Nováková', createdAt:new Date(Date.now()-86400000*7).toISOString(), response:'Schváleno, monitor objednán.' }
   ];
 }
 </script>
