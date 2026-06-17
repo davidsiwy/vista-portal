@@ -4176,6 +4176,9 @@ function getPeriodRows() {
 
 function renderTrzby() {
   if (!trzbyData && !prijmyData) { renderTrzbyEmpty(); return; }
+  // vedoucí segmentu nevidí příjmy dle plateb (jen výnosy svého segmentu)
+  const vtPrijmy = document.getElementById('vt-prijmy');
+  if (vtPrijmy) vtPrijmy.style.display = isSegmentManager ? 'none' : '';
   if (typeof Chart === 'undefined') {
     document.getElementById('trzby-empty').style.display = 'block';
     document.getElementById('trzby-empty').innerHTML = '<div class="loading"><div class="spinner"></div>Načítám grafy...</div>';
@@ -4363,44 +4366,6 @@ async function initTrzbyData() {
     prijmyData = null; // příjmy dle plateb nedávají smysl pro segment view
   }
 
-  buildPeriodOptions();
-  buildSegFilter();
-}
-
-  // 1) localStorage — funguje vždy, hned, bez serveru
-  try {
-    const lsV = localStorage.getItem('vista_trzby_vynosy');
-    const lsP = localStorage.getItem('vista_trzby_prijmy');
-    const lsT = localStorage.getItem('vista_trzby_time');
-    if (lsV) { const p = JSON.parse(lsV); if (p.length) trzbyData = p.map(r=>({...r,date:new Date(r.date)})); }
-    if (lsP) { const p = JSON.parse(lsP); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
-    if (lsT) trzbyUploadedAt = lsT;
-  } catch(e) {}
-
-  // 2) server (pokud je Code.gs nasazen a má novější data) — nepovinné
-  if (!DEMO_MODE()) {
-    try {
-      const res = await apiCall('getTrzby', {});
-      if (res && (res.json || res.json2)) {
-        if (res.json)  { const p = JSON.parse(res.json);  if (p.length) trzbyData  = p.map(r=>({...r,date:new Date(r.date)})); }
-        if (res.json2) { const p = JSON.parse(res.json2); if (p.length) prijmyData = p.map(r=>({...r,date:new Date(r.date)})); }
-        if (res.uploadedAt) trzbyUploadedAt = res.uploadedAt;
-      }
-    } catch(e) { /* server nedostupný nebo starý Code.gs — nevadí, máme localStorage */ }
-  }
-
-  // 3) výchozí Vista data z JSON souboru (jen pokud nemáme vůbec nic)
-  if (!trzbyData || !prijmyData) {
-    try {
-      const base = window.location.hostname.includes('github.io') ? '/vista-portal' : '';
-      const r2 = await fetch(base + '/trzby-data.json');
-      if (r2.ok) {
-        const d2 = await r2.json();
-        if (!trzbyData && d2.vynosy) trzbyData = d2.vynosy.map(r=>({...r, date:new Date(r.date)}));
-        if (!prijmyData && d2.prijmy) prijmyData = d2.prijmy.map(r=>({...r, date:new Date(r.date)}));
-      }
-    } catch(e2) {}
-  }
   buildPeriodOptions();
   buildSegFilter();
 }
@@ -4780,8 +4745,6 @@ async function checkAndSpawnTemplates() {
 // ============================================================
 // POŽADAVKY (employee requests to admin/GM)
 // ============================================================
-let requests = [];
-
 function renderRequests() {
   const isStaff = !isAdmin && !isOwner;
   const newBtn = document.getElementById('new-request-btn');
@@ -4871,7 +4834,7 @@ async function submitRequest() {
   renderRequests();
   showToast('Požadavek odeslán', 'success');
   // notify admins
-  pushNotif('doc', ICONS.messageSquare, `Nový požadavek od ${esc(currentUser?.name||'zaměstnance')}: ${esc(text.slice(0,40))}`, { tab:'requests' });
+  pushNotif('doc', '💬', `Nový požadavek od ${esc(currentUser?.name||'zaměstnance')}: ${esc(text.slice(0,40))}`, { tab:'requests' });
 }
 
 async function resolveRequest(id) {
