@@ -1876,17 +1876,35 @@ function switchTab(tab) {
 // ===== LOAD DATA =====
 async function loadData() {
   try {
-    const res = await apiCall('getAll', {});
-    employees     = res.employees || [];
-    documents     = res.documents || [];
-    confirmations = res.confirmations || [];
-    tasks         = res.tasks || [];
-    comments      = res.comments || [];
-    invoices      = res.invoices || [];
-    worklog       = res.worklog || [];
-    reports       = res.reports || [];
-    taskTemplates = res.taskTemplates || [];
-    refreshAll();
+    // Fáze 1 — rychlé načtení dat pro Přehled (faktury, úkoly, zaměstnanci)
+    const essential = await apiCall('getEssential', {});
+    employees     = essential.employees || [];
+    tasks         = essential.tasks || [];
+    comments      = essential.comments || [];
+    invoices      = essential.invoices || [];
+    // ostatní prázdné — naplní se ve fázi 2
+    documents     = essential.documents || [];
+    confirmations = essential.confirmations || [];
+    worklog       = essential.worklog || [];
+    reports       = essential.reports || [];
+    taskTemplates = essential.taskTemplates || [];
+    buildFilterOptions();
+    // Fáze 2 — zbytek na pozadí (dokumenty, deník, reporty, šablony)
+    setTimeout(async () => {
+      try {
+        const full = await apiCall('getAll', {});
+        employees     = full.employees || employees;
+        documents     = full.documents || [];
+        confirmations = full.confirmations || [];
+        tasks         = full.tasks || tasks;
+        comments      = full.comments || comments;
+        invoices      = full.invoices || invoices;
+        worklog       = full.worklog || [];
+        reports       = full.reports || [];
+        taskTemplates = full.taskTemplates || [];
+        refreshAll();
+      } catch(e) { /* getAll selhal, jedeme dál s essential daty */ }
+    }, 100);
   } catch(e) {
     showToast('Chyba při načítání dat: ' + e.message, 'error');
   }
