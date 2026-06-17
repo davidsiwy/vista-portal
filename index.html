@@ -1676,23 +1676,38 @@ function saveSession() {
 function restoreSession() {
   try {
     const s = JSON.parse(sessionStorage.getItem('vista_session') || 'null');
-    if (s && s.currentRole) {
-      currentUser = s.currentUser; currentRole = s.currentRole; authToken = s.authToken || '';
-      applyRole();
-      // zobraz UI okamžitě bez čekání na server
-      const appEl = document.getElementById('app');
-      document.getElementById('login-screen').style.display = 'none';
-      appEl.style.display = 'block';
-      if (DEMO_MODE()) { loadDemoData(); initNotifications(); }
-      initTrzbyData().then(() => {});
-      switchTab(TABS[0].key);
-      appEl.style.opacity = '1';
-      // refresh dat na pozadí (without blocking UI)
-      if (!DEMO_MODE()) {
-        loadData().then(() => { if (activeTab !== 'overview') return; renderOverview(); }).catch(() => {});
-        initNotifications();
+    if (!s || !s.currentRole) return;
+    currentUser = s.currentUser; currentRole = s.currentRole; authToken = s.authToken || '';
+    applyRole();
+
+    // ukaž loading overlay na login screenu — žádná bílá prázdná stránka
+    showLoginLoading('Obnovuji session…', 'Připravuji přehled');
+
+    // malý setTimeout aby prohlížeč stihl vykreslit loading overlay
+    setTimeout(async () => {
+      try {
+        if (DEMO_MODE()) {
+          loadDemoData();
+          initNotifications();
+        } else {
+          // načti tržby okamžitě (localStorage = bez sítě)
+          await initTrzbyData();
+          // essential data pro přehled
+          loadData().then(() => {
+            if (activeTab === 'overview') renderOverview();
+          }).catch(() => {});
+          initNotifications();
+        }
+        const appEl = document.getElementById('app');
+        switchTab(TABS[0].key);
+        document.getElementById('login-screen').style.display = 'none';
+        appEl.style.display = 'block';
+        requestAnimationFrame(() => { appEl.style.opacity = '1'; });
+      } catch(e) {
+        document.getElementById('login-screen').style.display = 'flex';
+        hideLoginLoading();
       }
-    }
+    }, 50);
   } catch(e) {}
 }
 function clearSession() { try { sessionStorage.removeItem('vista_session'); } catch(e) {} }
