@@ -3760,8 +3760,8 @@ function renderOverview() {
     // today vs 30-day average
     if (todayRow && avg30 > 0) {
       const pct = (todayRow.celkem - avg30) / avg30 * 100;
-      if (pct <= -30) alerts.push({ icon:'📉', text:`Poslední den byl o ${Math.abs(pct).toFixed(0)} % pod průměrem — ${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč vs průměr ${Math.round(avg30).toLocaleString('cs-CZ')} Kč` });
-      else if (pct >= 40) alerts.push({ icon:'📈', text:`Výborný den! Poslední den byl o ${pct.toFixed(0)} % nad průměrem (${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč)` });
+      if (pct <= -30) alerts.push({ icon:'📉', text:`Tržby ${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč — o ${Math.abs(pct).toFixed(0)} % pod průměrem` });
+      else if (pct >= 40) alerts.push({ icon:'📈', text:`Tržby ${Math.round(todayRow.celkem).toLocaleString('cs-CZ')} Kč — o ${pct.toFixed(0)} % nad průměrem` });
     }
 
     // segment that dropped to zero for 3 days
@@ -3769,7 +3769,7 @@ function renderOverview() {
     ['Hotel','F&B','Wellness','Sport'].forEach(seg => {
       const tot3 = last3.reduce((s,r) => s+(r.segs?.[seg]||0), 0);
       const avg30s = last30.reduce((s,r) => s+(r.segs?.[seg]||0), 0) / 30;
-      if (tot3 === 0 && avg30s > 500) alerts.push({ icon:'⚠️', text:`${seg}: 0 Kč za poslední 3 dny (obvyklý průměr ${Math.round(avg30s).toLocaleString('cs-CZ')} Kč/den)` });
+      if (tot3 === 0 && avg30s > 500) alerts.push({ icon:'⚠️', text:`${seg}: 3 dny bez tržeb` });
     });
 
     // best day this month
@@ -3777,15 +3777,13 @@ function renderOverview() {
       const mRows = trzbyData.filter(r => r.y===todayRow.y && r.m===todayRow.m);
       if (mRows.length >= 5) {
         const best = mRows.reduce((b,r) => r.celkem>b.celkem?r:b);
-        if (best.date===todayRow.date || (todayRow.date && best.date===todayRow.date)) {
-          alerts.push({ icon:'🏆', text:`Poslední den byl nejlepší den tohoto měsíce! (${Math.round(best.celkem).toLocaleString('cs-CZ')} Kč)` });
-        }
+        if (best.date === todayRow.date) alerts.push({ icon:'🏆', text:`Nejlepší den měsíce — ${Math.round(best.celkem).toLocaleString('cs-CZ')} Kč` });
       }
     }
 
     // overdue tasks
     const ov = tasks.filter(t => t.status!=='done' && t.deadline && new Date(t.deadline)<new Date()).length;
-    if (ov > 0) alerts.push({ icon:'🔴', text:`${ov} ${ov===1?'úkol je':'úkolů je'} po termínu` });
+    if (ov > 0) alerts.push({ icon:'🔴', text:`${ov} ${ov===1?'úkol po termínu':`úkoly po termínu`}` });
 
     pozBlock.style.display = 'block';
     document.getElementById('dash-pozornost').innerHTML = alerts.length
